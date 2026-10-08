@@ -1,0 +1,796 @@
+{
+  "users": [
+    {
+      "id": "usr-admin-1",
+      "phone": "0988888888",
+      "passwordHash": "$2b$10$.ZlaaEr1ineQWlRC.GsTKe66jDqjxAa.N4cEmv/dDkAYCS9p8dn96",
+      "name": "Boss Hải",
+      "role": "ADMIN",
+      "address": "Văn phòng NovaBeauty, Hà Nội",
+      "createdAt": "2026-10-08T06:47:17.648Z"
+    },
+    {
+      "id": "usr-staff-1",
+      "phone": "0977777777",
+      "passwordHash": "$2b$10$6ADPzCohP/2CS4nozEZ0Pen7tNFvNm9XBqf70H71yQWMpHHBbTyku",
+      "name": "Nhân Viên Bán Hàng",
+      "role": "STAFF",
+      "address": "Showroom NovaBeauty, Vientiane",
+      "createdAt": "2026-10-08T09:00:00.000Z"
+    },
+    {
+      "id": "usr-customer-1",
+      "phone": "0912345678",
+      "passwordHash": "$2b$10$NeKlLH63Nhxl/3WXd3i1Nu40TMzAguQturL5r.HuUwfb70pXa0WO6",
+      "name": "Nguyễn Thu Trang",
+      "role": "USER",
+      "address": "Số 123 Đường Kim Mã, Ba Đình, Hà Nội",
+      "createdAt": "2026-10-08T06:47:17.648Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": "cat-skincare",
+      "name": "Chăm Sóc Da Mặt",
+      "nameLao": "ບຳລຸງຜິວໜ້າ",
+      "slug": "cham-soc-da-mat",
+      "icon": "Sparkles",
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "subCategories": [
+        {
+          "id": "sub-serum",
+          "name": "Serum & Tinh Chất",
+          "nameLao": "ເຊຣັ່ມ & ຫົວເຊື້ອ",
+          "slug": "serum-tinh-chat",
+          "categoryId": "cat-skincare"
+        },
+        {
+          "id": "sub-sunscreen",
+          "name": "Kem Chống Nắng",
+          "nameLao": "ຄີມກັນແດດ",
+          "slug": "kem-chong-nang",
+          "categoryId": "cat-skincare"
+        },
+        {
+          "id": "sub-cream",
+          "name": "Kem Dưỡng & Phục Hồi",
+          "nameLao": "ຄີມບຳລຸງ & ຟື້ນຟູຜິວ",
+          "slug": "kem-duong-phuc-hoi",
+          "categoryId": "cat-skincare"
+        },
+        {
+          "id": "sub-cleanser",
+          "name": "Tẩy Trang & Rửa Mặt",
+          "nameLao": "ນ້ຳລ້າງເຄື່ອງສຳອາງ & ລ້າງໜ້າ",
+          "slug": "tay-trang-sua-rua-mat",
+          "categoryId": "cat-skincare"
+        },
+        {
+          "id": "sub-mask",
+          "name": "Mặt Nạ Dưỡng Da",
+          "nameLao": "ມາດສ໌ໜ້າ",
+          "slug": "mat-na-duong-da",
+          "categoryId": "cat-skincare"
+        }
+      ]
+    },
+    {
+      "id": "cat-lipstick",
+      "name": "Son Môi Cao Cấp",
+      "nameLao": "ລິບສະຕິກພຣີມຽມ",
+      "slug": "son-moi",
+      "icon": "Heart",
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "subCategories": [
+        {
+          "id": "sub-matte-lip",
+          "name": "Son Thỏi Lì",
+          "nameLao": "ລິບແທ່ງເນື້ອແມັດ",
+          "slug": "son-thoi-li",
+          "categoryId": "cat-lipstick"
+        },
+        {
+          "id": "sub-tint-lip",
+          "name": "Son Kem Lì & Tint",
+          "nameLao": "ລິບຄີມກຳມະຫຍີ່ & ທິນ",
+          "slug": "son-kem-tint",
+          "categoryId": "cat-lipstick"
+        },
+        {
+          "id": "sub-care-lip",
+          "name": "Dưỡng Môi & Ủ Môi",
+          "nameLao": "ລິບບຳລຸງ & ມາດສ໌ປາກ",
+          "slug": "duong-moi-mat-na-ngu",
+          "categoryId": "cat-lipstick"
+        }
+      ]
+    },
+    {
+      "id": "cat-makeup",
+      "name": "Trang Điểm (Makeup)",
+      "nameLao": "ແຕ່ງໜ້າ",
+      "slug": "trang-diem",
+      "icon": "Palette",
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "subCategories": [
+        {
+          "id": "sub-cushion",
+          "name": "Cushion & Kem Nền",
+          "nameLao": "ຄຸຊຊັ່ນ & ຮອງພື້ນ",
+          "slug": "cushion-kem-nen",
+          "categoryId": "cat-makeup"
+        },
+        {
+          "id": "sub-powder",
+          "name": "Phấn Phủ & Che Khuyết Điểm",
+          "nameLao": "ແປ້ງຝຸ່ນ & ຄອນຊີລເລີ",
+          "slug": "phan-phu-che-khuyet-diem",
+          "categoryId": "cat-makeup"
+        },
+        {
+          "id": "sub-eyes-blush",
+          "name": "Mascara & Má Hồng",
+          "nameLao": "ແຕ່ງຕາ & ປັດແກ້ມ",
+          "slug": "mat-ma-hong",
+          "categoryId": "cat-makeup"
+        }
+      ]
+    },
+    {
+      "id": "cat-perfume",
+      "name": "Nước Hoa Chính Hãng",
+      "nameLao": "ນ້ຳຫອມແທ້",
+      "slug": "nuoc-hoa",
+      "icon": "Flame",
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "subCategories": [
+        {
+          "id": "sub-women-perfume",
+          "name": "Nước Hoa Nữ",
+          "nameLao": "ນ້ຳຫອມຍິງ",
+          "slug": "nuoc-hoa-nu",
+          "categoryId": "cat-perfume"
+        },
+        {
+          "id": "sub-men-perfume",
+          "name": "Nước Hoa Nam",
+          "nameLao": "ນ້ຳຫອມຊາຍ",
+          "slug": "nuoc-hoa-nam",
+          "categoryId": "cat-perfume"
+        },
+        {
+          "id": "sub-body-mist",
+          "name": "Xịt Thơm Body Mist",
+          "nameLao": "ສະເປຣນ້ຳຫອມ Body Mist",
+          "slug": "xit-thom-body-mist",
+          "categoryId": "cat-perfume"
+        }
+      ]
+    },
+    {
+      "id": "cat-body-hair",
+      "name": "Chăm Sóc Tóc & Body",
+      "nameLao": "ດູແລຜົມ & ຜິວກາຍ",
+      "slug": "cham-soc-toc-body",
+      "icon": "Droplets",
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "subCategories": [
+        {
+          "id": "sub-hair-oil",
+          "name": "Tinh Dầu Dưỡng Tóc",
+          "nameLao": "ນ້ຳມັນບຳລຸງຜົມ",
+          "slug": "tinh-dau-duong-toc",
+          "categoryId": "cat-body-hair"
+        },
+        {
+          "id": "sub-shampoo",
+          "name": "Dầu Gội, Xả & Ủ Tóc",
+          "nameLao": "ຢາສະຜົມ & ຄຣີມນວດ",
+          "slug": "dau-goi-xa-u-toc",
+          "categoryId": "cat-body-hair"
+        },
+        {
+          "id": "sub-body-wash",
+          "name": "Sữa Tắm & Tẩy Da Chết",
+          "nameLao": "ຄຣີມອາບນ້ຳ & ສະຄຣັບ",
+          "slug": "sua-tam-tay-da-chet",
+          "categoryId": "cat-body-hair"
+        },
+        {
+          "id": "sub-body-lotion",
+          "name": "Dưỡng Thể Trắng Da",
+          "nameLao": "ໂລຊັ່ນບຳລຸງຜິວກາຍ",
+          "slug": "duong-the-trang-da",
+          "categoryId": "cat-body-hair"
+        }
+      ]
+    }
+  ],
+  "products": [
+    {
+      "id": "prod-1",
+      "sku": "ESTEE-ANR-50ML",
+      "name": "Serum Phục Hồi & Trẻ Hóa Da Estée Lauder Advanced Night Repair 50ml",
+      "slug": "serum-estee-lauder-advanced-night-repair-50ml",
+      "description": "Tinh chất phục hồi số 1 thế giới với công nghệ Chronolux Power Signal độc quyền. Giúp da chống lại các tác nhân gây lão hóa từ môi trường, cấp ẩm sâu 72 giờ, thu nhỏ lỗ chân lông và làm mờ nếp nhăn rõ rệt chỉ sau 3 tuần sử dụng.",
+      "price": 2750000,
+      "stock": 25,
+      "categoryId": "cat-skincare",
+      "subCategoryId": "sub-serum",
+      "subCategoryName": "Serum & Tinh Chất",
+      "subCategoryNameLao": "ເຊຣັ່ມ & ຫົວເຊື້ອ",
+      "brand": "Estée Lauder",
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1608248597359-543598739d48?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "nameLao": "ເຊຣັ່ມຟື້ນຟູ & ຊະລໍໄວ Estée Lauder Advanced Night Repair 50ml",
+      "descriptionLao": "ຫົວເຊື້ອຟື້ນຟູຜິວອັນດັບ 1 ຂອງໂລກ ດ້ວຍເທັກໂນໂລຢີ Chronolux Power Signal. ຊ່ວຍປົກປ້ອງຜິວຈາກມົນລະພິດ, ເຕີມຄວາມຊຸ່ມຊື່ນເລິກ 72 ຊົ່ວໂມງ, ຮັດຮູຂຸມຂົນ ແລະ ຫຼຸດຮອຍຫ່ຽວຍົ່ນພາຍໃນ 3 ອາທິດ."
+    },
+    {
+      "id": "prod-2",
+      "sku": "LRP-ANTHELIOS-50ML",
+      "name": "Kem Chống Nắng Kiểm Soát Dầu La Roche-Posay Anthelios Oil Control 50ml",
+      "slug": "kem-chong-nang-la-roche-posay-anthelios-50ml",
+      "description": "Kem chống nắng kiểm soát dầu hàng đầu từ Pháp dành riêng cho da dầu mụn nhạy cảm. Màng lọc Mexoryl 400 độc quyền ngăn chặn tia UVA siêu dài, kiềm dầu khô thoáng suốt 12 giờ, không bết dính và không vệt trắng.",
+      "price": 465000,
+      "stock": 58,
+      "categoryId": "cat-skincare",
+      "subCategoryId": "sub-sunscreen",
+      "subCategoryName": "Kem Chống Nắng",
+      "subCategoryNameLao": "ຄີມກັນແດດ",
+      "brand": "La Roche-Posay",
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "nameLao": "ຄີມກັນແດດຄຸມມັນ La Roche-Posay Anthelios Oil Control 50ml",
+      "descriptionLao": "ຄີມກັນແດດຄຸມມັນອັນດັບ 1 ຈາກປະເທດຝຣັ່ງ ສຳລັບຜິວມັນແລະເປັນສິວງ່າຍ. ນະວັດຕະກຳ Mexoryl 400 ປ້ອງກັນລັງສີ Ultra-long UVA, ຄຸມມັນແຫ້ງສະບາຍຍາວນານ 12 ຊົ່ວໂມງ ບໍ່ໜຽວໜຶບ."
+    },
+    {
+      "id": "prod-3",
+      "sku": "DIOR-999-VELVET",
+      "name": "Son Thỏi Dior Rouge Dior Forever Matte 999 Velvet Red",
+      "slug": "son-dior-rouge-dior-999-velvet",
+      "description": "Huyền thoại đỏ thuần kiêu kỳ của thương hiệu Dior Pháp. Công thức chuyển giao không lem bền màu suốt 16 giờ, chiết xuất hoa mẫu đơn đỏ dưỡng ẩm môi căng mịn tự nhiên suốt cả ngày dài.",
+      "price": 1150000,
+      "stock": 18,
+      "categoryId": "cat-lipstick",
+      "subCategoryId": "sub-matte-lip",
+      "subCategoryName": "Son Thỏi Lì",
+      "subCategoryNameLao": "ລິບແທ່ງເນື້ອແມັດ",
+      "brand": "Dior",
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1586495777744-4413f21062fa?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1625093742435-6fa192b6fb10?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "nameLao": "ລິບສະຕິກ Dior Rouge Dior Forever Matte 999 Velvet ແດງຄລາສສິກ",
+      "descriptionLao": "ຕຳນານສີແດງສຸດຫຼູຫຼາຈາກແບຣນ Dior ຝຣັ່ງ. ສູດຕິດທົນບໍ່ເລິະຕະຫຼອດ 16 ຊົ່ວໂມງ, ສານສະກັດຈາກດອກໂບຕັນແດງບຳລຸງຮິມສົບນຸ່ມນຽນຕະຫຼອດມື້."
+    },
+    {
+      "id": "prod-4",
+      "sku": "CHANEL-COCO-100ML",
+      "name": "Nước Hoa Nữ Chanel Coco Mademoiselle Eau De Parfum 100ml",
+      "slug": "nuoc-hoa-chanel-coco-mademoiselle-100ml",
+      "description": "Hương thơm biểu tượng thanh lịch, quý phái và đầy mê hoặc từ Paris. Nốt hương cam tươi mát bùng nổ, hòa quyện cùng cánh hoa hồng Thổ Nhĩ Kỳ và hoắc hương phương Đông vương vấn khó quên.",
+      "price": 4250000,
+      "stock": 12,
+      "categoryId": "cat-perfume",
+      "subCategoryId": "sub-women-perfume",
+      "subCategoryName": "Nước Hoa Nữ",
+      "subCategoryNameLao": "ນ້ຳຫອມຍິງ",
+      "brand": "Chanel",
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "nameLao": "ນ້ຳຫອມຜູ້ຍິງ Chanel Coco Mademoiselle Eau De Parfum 100ml",
+      "descriptionLao": "ກິ່ນຫອມສັນຍະລັກແຫ່ງຄວາມຫຼູຫຼາ, ມີສະເໜ່ ແລະ ໂດດເດັ່ນຈາກ ປາຣີ. ກິ່ນສົ້ມສົດຊື່ນຜະສົມຜະສານກັບດອກກຸຫຼາບຕວັກກີ ແລະ ດອກມະລິສຸດໂຣແມນຕິກ."
+    },
+    {
+      "id": "prod-5",
+      "sku": "YSL-CUSHION-B20",
+      "name": "Phấn Nước Cao Cấp YSL Le Cushion Encre De Peau SPF50 / PA+++ 14g",
+      "slug": "phan-nuoc-ysl-le-cushion-encre-de-peau-14g",
+      "description": "Thiết kế vỏ da chevron sang chảnh bậc nhất thế giới. Kết cấu hạt phấn nano siêu nhẹ tiệp vào da, che phủ khuyết điểm hoàn hảo, kiềm dầu giữ lớp nền mịn màng bền màu suốt 24 giờ.",
+      "price": 1650000,
+      "stock": 22,
+      "categoryId": "cat-makeup",
+      "subCategoryId": "sub-cushion",
+      "subCategoryName": "Cushion & Kem Nền",
+      "subCategoryNameLao": "ຄຸຊຊັ່ນ & ຮອງພື້ນ",
+      "brand": "YSL",
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "nameLao": "ຄູຊັ່ນຜິວເນຽນທຳມະຊາດ YSL Le Cushion Encre De Peau SPF50 14g",
+      "descriptionLao": "ຄູຊັ່ນລະດັບໄຮເອນຈາກ YSL ມອບງານຜິວແມັດເປັ່ງປະກາຍແບບ luminous matte. ປົກປິດຮອຍດ່າງດຳດີຢ້ຽມ, ບາງເບົາສະບາຍຜິວ ແລະ ຄຸມມັນຕະຫຼອດມື້."
+    },
+    {
+      "id": "prod-6",
+      "sku": "DIOR-SAUVAGE-100ML",
+      "name": "Nước Hoa Nam Dior Sauvage Eau De Parfum 100ml",
+      "slug": "nuoc-hoa-nam-dior-sauvage-edp-100ml",
+      "description": "Mùi hương nam tính quyến rũ vượt thời gian. Sự giao thoa của cam Bergamot Calabria cay nồng, hổ phách phương Đông ấm áp và vani Papua New Guinea mang lại phong độ lịch lãm cho phái mạnh.",
+      "price": 3690000,
+      "stock": 4,
+      "categoryId": "cat-perfume",
+      "subCategoryId": "sub-men-perfume",
+      "subCategoryName": "Nước Hoa Nam",
+      "subCategoryNameLao": "ນ້ຳຫອມຊາຍ",
+      "brand": "Dior",
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "nameLao": "ນ້ຳຫອມຜູ້ຊາຍ Dior Sauvage Eau De Parfum 100ml",
+      "descriptionLao": "ກິ່ນຫອມຜູ້ຊາຍສຸດຮັອດຈາກ Dior. ຄວາມສົດຊື່ນຂອງໝາກກ້ຽງ Bergamot ປະສານກັບກິ່ນໄມ້ແອມບຣອກຊານ ແລະ ວານິລາ ມອບຄວາມເທ່ ແລະ ໜ້າຫຼົງໄຫຼ."
+    },
+    {
+      "id": "prod-7",
+      "sku": "LRP-B5-BAUME-100ML",
+      "name": "Kem Dưỡng Phục Hồi Làm Dịu Da La Roche-Posay Cicaplast Baume B5+ 100ml",
+      "slug": "kem-duong-la-roche-posay-b5-100ml",
+      "description": "Kem dưỡng phục hồi da quốc dân số 1 từ Pháp. Chứa 5% Panthenol B5 kết hợp Madecassoside rau má và phức hợp vi sinh Tribioma, làm dịu tức thì kích ứng, mẩn đỏ sau nặn mụn hoặc treatment.",
+      "price": 385000,
+      "stock": 65,
+      "categoryId": "cat-skincare",
+      "subCategoryId": "sub-cream",
+      "subCategoryName": "Kem Dưỡng & Phục Hồi",
+      "subCategoryNameLao": "ຄີມບຳລຸງ & ຟື້ນຟູຜິວ",
+      "brand": "La Roche-Posay",
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1608248597359-543598739d48?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "nameLao": "ຄີມບຳລຸງຟື້ນຟູຜິວ La Roche-Posay Cicaplast Baume B5+ 100ml",
+      "descriptionLao": "ຄີມຟື້ນຟູຜິວລະຄາຍເຄືອງ, ແພ້ງ່າຍ ແລະ ຫຼັງເຮັດເລເຊີ. ມີ Tribioma, ວິຕາມິນ B5 5% ແລະ Madecassoside ຊ່ວຍຟື້ນຟູເກາະປ້ອງກັນຜິວພາຍໃນ 1 ຊົ່ວໂມງ."
+    },
+    {
+      "id": "prod-8",
+      "sku": "BLACK-ROUGE-A12",
+      "name": "Son Kem Lì Mịn Như Nhung Black Rouge Air Fit Velvet Tint A12 Nâu Đỏ",
+      "slug": "son-kem-black-rouge-a12",
+      "description": "Tone màu đỏ nâu gạch huyền thoại làm mưa làm gió toàn châu Á. Chất son xốp mềm mỏng mịn, lên màu chuẩn chỉ với một lần quẹt, dưỡng ẩm sâu giúp môi mềm mịn không lộ rãnh.",
+      "price": 215000,
+      "stock": 80,
+      "categoryId": "cat-lipstick",
+      "subCategoryId": "sub-tint-lip",
+      "subCategoryName": "Son Kem Lì & Tint",
+      "subCategoryNameLao": "ລິບຄີມກຳມະຫຍີ່ & ທິນ",
+      "brand": "Black Rouge",
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1586495777744-4413f21062fa?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "nameLao": "ລິບຄີມແມັດ Black Rouge Air Fit Velvet Tint A12 ສີນ້ຳຕານແດງອິດ",
+      "descriptionLao": "ໂທນສີແດງຕຸ່ນນ້ຳຕານຂາຍດີທີ່ສຸດ, ເນື້ອຄຣີມນຸ່ມເໝືອນກຳມະຫຍີ່, ບາງເບົາບໍ່ໜັກປາກ, ສີຊັດເຈນຕິດທົນນານຕະຫຼອດມື້."
+    },
+    {
+      "id": "prod-9",
+      "sku": "MOROCCAN-OIL-100ML",
+      "name": "Tinh Dầu Dưỡng Tóc Moroccanoil Treatment Original 100ml",
+      "slug": "tinh-dau-duong-toc-moroccanoil-100ml",
+      "description": "Tinh dầu Argan tự nhiên quý giá nuôi dưỡng mái tóc suôn mượt óng ả chuẩn salon. Giúp giảm gãy rụng, phục hồi tóc hư tổn do uốn nhuộm và tạo lớp màng chống nhiệt, chống tia UV hiệu quả.",
+      "price": 850000,
+      "stock": 32,
+      "categoryId": "cat-body-hair",
+      "subCategoryId": "sub-hair-oil",
+      "subCategoryName": "Tinh Dầu Dưỡng Tóc",
+      "subCategoryNameLao": "ນ້ຳມັນບຳລຸງຜົມ",
+      "brand": "Moroccanoil",
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1608248597359-543598739d48?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "nameLao": "ນ້ຳມັນບຳລຸງຜົມ Moroccanoil Treatment Original 100ml",
+      "descriptionLao": "ນ້ຳມັນອາຣ໌ແກນອັນດັບ 1 ຂອງໂລກ ຊ່ວຍຟື້ນຟູຜົມແຫ້ງເສຍ, ຫຼຸດຜົມຊີ້ຟູ, ມອບຄວາມເງົາງາມນຸ່ມສະຫຼວຍຕັ້ງແຕ່ຄັ້ງທຳອິດທີ່ໃຊ້."
+    },
+    {
+      "id": "prod-10",
+      "sku": "BIODERMA-HONG-500ML",
+      "name": "Nước Tẩy Trang Cho Da Nhạy Cảm Bioderma Sensibio H2O Nắp Hồng 500ml",
+      "slug": "nuoc-tay-trang-bioderma-hong-500ml",
+      "description": "Nước tẩy trang lành tính hàng đầu thế giới với công nghệ hạt micelle thông minh. Cuốn bay sạch bụi bẩn và lớp trang điểm mà vẫn giữ màng ẩm tự nhiên, cực kỳ êm dịu cho da mắt và môi.",
+      "price": 395000,
+      "stock": 45,
+      "categoryId": "cat-skincare",
+      "subCategoryId": "sub-cleanser",
+      "subCategoryName": "Tẩy Trang & Rửa Mặt",
+      "subCategoryNameLao": "ນ້ຳລ້າງເຄື່ອງສຳອາງ & ລ້າງໜ້າ",
+      "brand": "Bioderma",
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "nameLao": "ນ້ຳເຊັດເຄື່ອງສຳອາງຜິວແພ້ງ່າຍ Bioderma Sensibio H2O ສີບົວ 500ml",
+      "descriptionLao": "ນ້ຳເຊັດລ້າງເຄື່ອງສຳອາງອ່ອນໂຍນອັນດັບ 1 ຂອງໂລກ. ເທັກໂນໂລຢີ Micellar Water ເຊັດສະອາດໝົດຈົດ ໂດຍບໍ່ຕ້ອງລ້າງນ້ຳຊ້ຳ, ອ່ອນໂຍນຕໍ່ຜິວບອບບາງ."
+    },
+    {
+      "id": "prod-11",
+      "sku": "LANEIGE-LIP-BERRY",
+      "name": "Mặt Nạ Ngủ Dưỡng Môi Laneige Lip Sleeping Mask Berry 20g",
+      "slug": "mat-na-ngu-moi-laneige-berry-20g",
+      "description": "Chăm sóc đôi môi căng mọng quyến rũ khi bạn ngủ. Chiết xuất phức hợp quả mọng giàu Vitamin C và chất chống oxy hóa, làm tan tế bào da chết cho đôi môi mềm mượt, ửng hồng tự nhiên.",
+      "price": 310000,
+      "stock": 3,
+      "categoryId": "cat-lipstick",
+      "subCategoryId": "sub-care-lip",
+      "subCategoryName": "Dưỡng Môi & Ủ Môi",
+      "subCategoryNameLao": "ລິບບຳລຸງ & ມາດສ໌ປາກ",
+      "brand": "Laneige",
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1586495777744-4413f21062fa?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "nameLao": "ມາດສ໌ບຳລຸງປາກກາງຄືນ Laneige Lip Sleeping Mask Berry 20g",
+      "descriptionLao": "ບຳລຸງຮິມສົບໃຫ້ອວບອີ່ມ, ນຸ່ມນວນຂະນະທີ່ທ່ານນອນຫຼັບ. ສານສະກັດຈາກໝາກໄມ້ຕະກູນເບີຣີອຸດົມດ້ວຍວິຕາມິນ C ຫຼຸດປາກແຫ້ງແຕກ."
+    },
+    {
+      "id": "prod-12",
+      "sku": "TESORI-LOTUS-500ML",
+      "name": "Sữa Tắm Dưỡng Thể Nước Hoa Ý Tesori d'Oriente Hoa Sen 500ml",
+      "slug": "sua-tam-tesori-doriente-hoa-sen-500ml",
+      "description": "Hương thơm hoa sen quý phái từ nước Ý lan tỏa ngát hương. Bọt kem giàu dưỡng chất bơ hạt mỡ dưỡng da ẩm mượt, mịn màng như nhung và lưu giữ hương thơm quyến rũ trên da suốt 8 giờ.",
+      "price": 230000,
+      "stock": 50,
+      "categoryId": "cat-body-hair",
+      "subCategoryId": "sub-body-wash",
+      "subCategoryName": "Sữa Tắm & Tẩy Da Chết",
+      "subCategoryNameLao": "ຄຣີມອາບນ້ຳ & ສະຄຣັບ",
+      "brand": "Tesori d'Oriente",
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "nameLao": "ສະບູ່ອາບນ້ຳນ້ຳຫອມອີຕາລີ Tesori d'Oriente ດອກບົວ 500ml",
+      "descriptionLao": "ກິ່ນຫອມດອກບົວຫຼູຫຼາຈາກປະເທດອີຕາລີ. ຟອງຄຣີມນຸ່ມບຳລຸງຜິວຊຸ່ມຊື່ນເໝືອນແພໄໝ ພ້ອມກິ່ນຫອມຕິດຜິວຍາວນານ 8 ຊົ່ວໂມງ."
+    },
+    {
+      "id": "prod-13",
+      "sku": "KIEHLS-DARK-SPOT-50ML",
+      "name": "Serum Dưỡng Trắng & Mờ Thâm Nám Kiehl's Clearly Corrective Dark Spot 50ml",
+      "slug": "serum-kiehls-clearly-corrective-dark-spot-50ml",
+      "description": "Dẫn xuất Vitamin C thế hệ mới hoạt tính cao kết hợp chiết xuất Bạch Dương Trắng và Hoa Mẫu Đơn. Làm sáng đều màu da, mờ vết thâm mụn và nám tàn nhang nhanh chóng, mang lại làn da trong suốt rạng rỡ.",
+      "price": 2450000,
+      "stock": 19,
+      "categoryId": "cat-skincare",
+      "subCategoryId": "sub-serum",
+      "subCategoryName": "Serum & Tinh Chất",
+      "subCategoryNameLao": "ເຊຣັ່ມ & ຫົວເຊື້ອ",
+      "brand": "Kiehl's",
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1608248597359-543598739d48?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "nameLao": "ເຊຣັ່ມຫຼຸດຮອຍດຳ Kiehl's Clearly Corrective Dark Spot 50ml",
+      "descriptionLao": "ເຊຣັ່ມປັບຜິວຂາວໃສອັນດັບ 1. ວິຕາມິນ C ຮຸ່ນໃໝ່ ແລະ ສານສະກັດຈາກ White Birch ຊ່ວຍຫຼຸດຮອຍດຳ, ຮອຍສິວ ແລະ ປັບສີຜິວໃຫ້ສະໝ່ຳສະເໝີພາຍໃນ 2 ອາທິດ."
+    },
+    {
+      "id": "prod-14",
+      "sku": "ANESSA-MILK-60ML",
+      "name": "Sữa Chống Nắng Dưỡng Da Kiềm Dầu Anessa Perfect UV Sunscreen Milk SPF50+ 60ml",
+      "slug": "sua-chong-nang-anessa-perfect-uv-milk-60ml",
+      "description": "Công nghệ Auto Booster độc quyền từ Shiseido Nhật Bản tăng cường màng bảo vệ khi gặp nhiệt độ cao, độ ẩm và nước. Chống trôi tới 80 phút, bảo vệ da toàn diện dưới ánh nắng gay gắt.",
+      "price": 585000,
+      "stock": 36,
+      "categoryId": "cat-skincare",
+      "subCategoryId": "sub-sunscreen",
+      "subCategoryName": "Kem Chống Nắng",
+      "subCategoryNameLao": "ຄີມກັນແດດ",
+      "brand": "Anessa",
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "nameLao": "ຄີມກັນແດດຄຸມມັນ Anessa Perfect UV Sunscreen Milk SPF50+ 60ml",
+      "descriptionLao": "ຄີມກັນແດດອັນດັບ 1 ຈາກປະເທດຍີ່ປຸ່ນ 21 ປີຊ້ອນ. ເທັກໂນໂລຢີ Auto Booster ເພີ່ມການປົກປ້ອງເມື່ອຖືກຄວາມຮ້ອນ, ເຫື່ອ ແລະ ນ້ຳ, ເນື້ອນ້ຳນົມບາງເບົາ."
+    },
+    {
+      "id": "prod-15",
+      "sku": "MAC-RUBY-WOO",
+      "name": "Son Thỏi Lì MAC Matte Lipstick 707 Ruby Woo Đỏ Cổ Điển",
+      "slug": "son-mac-matte-ruby-woo-707",
+      "description": "Cây son đỏ huyền thoại quyền lực nhất thế giới phù hợp với mọi tông da châu Á. Chất son retro matte siêu lì, bám màu đỉnh cao lên tới 10 giờ, tôn làn da và hàm răng trắng sáng.",
+      "price": 590000,
+      "stock": 40,
+      "categoryId": "cat-lipstick",
+      "subCategoryId": "sub-matte-lip",
+      "subCategoryName": "Son Thỏi Lì",
+      "subCategoryNameLao": "ລິບແທ່ງເນື້ອແມັດ",
+      "brand": "MAC",
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1586495777744-4413f21062fa?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1625093742435-6fa192b6fb10?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "nameLao": "ລິບສະຕິກ MAC Matte Lipstick 707 Ruby Woo ແດງຄລາສສິກ",
+      "descriptionLao": "ສີແດງຣູບບີ້ໃນຕຳນານທີ່ຜູ້ຍິງທົ່ວໂລກຕ້ອງມີ. ເນື້ອແມັດເນຽນແໜ້ນ, ສີຊັດເຈນຕິດທົນນານຕະຫຼອດ 12 ຊົ່ວໂມງ, ຂັບຜິວໃຫ້ໂດດເດັ່ນ."
+    },
+    {
+      "id": "prod-16",
+      "sku": "LAURA-MERCIER-POWDER",
+      "name": "Phấn Phủ Bột Kiềm Dầu Không Màu Laura Mercier Loose Setting Powder 29g",
+      "slug": "phan-phu-laura-mercier-translucent-29g",
+      "description": "Bảo bối kiềm dầu số 1 của các chuyên gia trang điểm hàng đầu. Hạt phấn siêu mịn không màu giúp cố định lớp trang điểm suốt 16 giờ, làm mờ lỗ chân lông và kiểm soát bã nhờn hoàn hảo.",
+      "price": 890000,
+      "stock": 24,
+      "categoryId": "cat-makeup",
+      "subCategoryId": "sub-powder",
+      "subCategoryName": "Phấn Phủ & Che Khuyết Điểm",
+      "subCategoryNameLao": "ແປ້ງຝຸ່ນ & ຄອນຊີລເລີ",
+      "brand": "Laura Mercier",
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "nameLao": "ແປ້ງຝຸ່ນຄຸມມັນ Laura Mercier Translucent Loose Powder 29g",
+      "descriptionLao": "ແປ້ງຝຸ່ນໂປ່ງແສງອັນດັບ 1 ຂອງໂລກ. ເນື້ອແປ້ງລະອຽດນຽນນຸ່ມ, ຄຸມມັນຕະຫຼອດ 16 ຊົ່ວໂມງ, ລັອກເມຄອັບໃຫ້ຕິດທົນໂດຍບໍ່ເປັນຄາບ."
+    },
+    {
+      "id": "prod-17",
+      "sku": "MAYBELLINE-SKY-HIGH",
+      "name": "Mascara Dài & Cong Mi Maybelline Lash Sensational Sky High 7.2ml",
+      "slug": "mascara-maybelline-sky-high",
+      "description": "Đầu cọ Flex Tower độc quyền uốn cong linh hoạt chạm đến từng sợi mi ngắn nhất. Chiết xuất tre tự nhiên nuôi dưỡng sợi mi dày dài vươn tới trời mây, chống nước chống lem suốt cả ngày.",
+      "price": 225000,
+      "stock": 55,
+      "categoryId": "cat-makeup",
+      "subCategoryId": "sub-eyes-blush",
+      "subCategoryName": "Mascara & Má Hồng",
+      "subCategoryNameLao": "ແຕ່ງຕາ & ປັດແກ້ມ",
+      "brand": "Maybelline",
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "nameLao": "ມາສຄາຣາຂົນຕາຍາວງອນ Maybelline Lash Sensational Sky High 7.2ml",
+      "descriptionLao": "ມາສຄາຣາປັດຂົນຕາຍາວແລະງອນເດັ່ນຈາກທຸກມຸມມອງ. ຫົວແປງ Flex Tower ຢືດຢຸ່ນເຂົ້າຮອດທຸກເສັ້ນ, ສູດກັນນ້ຳຕິດທົນຕະຫຼອດ 24 ຊົ່ວໂມງ."
+    },
+    {
+      "id": "prod-18",
+      "sku": "BLEU-DE-CHANEL-100ML",
+      "name": "Nước Hoa Nam Bleu de Chanel Parfum 100ml",
+      "slug": "nuoc-hoa-nam-bleu-de-chanel-parfum-100ml",
+      "description": "Đỉnh cao nước hoa nam phái mạnh từ nhà mốt Chanel. Nốt hương gỗ tuyết tùng nồng nàn và gỗ đàn hương New Caledonia sâu thẳm, tôn vinh vẻ nam tính tự do và bản lĩnh kiên cường.",
+      "price": 4450000,
+      "stock": 7,
+      "categoryId": "cat-perfume",
+      "subCategoryId": "sub-men-perfume",
+      "subCategoryName": "Nước Hoa Nam",
+      "subCategoryNameLao": "ນ້ຳຫອມຊາຍ",
+      "brand": "Chanel",
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "nameLao": "ນ້ຳຫອມຜູ້ຊາຍ Bleu de Chanel Parfum 100ml",
+      "descriptionLao": "ກິ່ນຫອມຜູ້ຊາຍລະດັບສູງສຸດຂອງລາຍ Bleu de Chanel. ກິ່ນຫອມລ້ຳເລິກ, ອົບອຸ່ນຂອງໄມ້ຈັນທັນ ແລະ ໄມ້ເຊດາ, ບົ່ງບອກຄວາມສຳເລັດ ແລະ ຄວາມເປັນຜູ້ນຳ."
+    },
+    {
+      "id": "prod-19",
+      "sku": "OLAPLEX-NO4-NO5",
+      "name": "Bộ Gội Xả Phục Hồi Liên Kết Tóc Olaplex No.4 & No.5 Bond Maintenance 250ml",
+      "slug": "bo-goi-xa-olaplex-no4-no5",
+      "description": "Công nghệ nối lại các liên kết lưu huỳnh bị đứt gãy do uốn nhuộm và tẩy tóc. Giúp mái tóc phục hồi sức sống từ sâu bên trong lõi tóc, bóng khỏe mềm mượt diệu kỳ ngay sau lần gội đầu tiên.",
+      "price": 1350000,
+      "stock": 16,
+      "categoryId": "cat-body-hair",
+      "subCategoryId": "sub-shampoo",
+      "subCategoryName": "Dầu Gội, Xả & Ủ Tóc",
+      "subCategoryNameLao": "ຢາສະຜົມ & ຄຣີມນວດ",
+      "brand": "Olaplex",
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1608248597359-543598739d48?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "nameLao": "ຊຸດຢາສະຜົມ & ຄຣີມນວດຟື້ນຟູຜົມ Olaplex No.4 & No.5 250ml",
+      "descriptionLao": "ນະວັດຕະກຳເຊື່ອມຕໍ່ພັນທະແກນຜົມທີ່ຖືກທຳລາຍຈາກການດັດ-ຍ້ອມ. ຊ່ວຍໃຫ້ຜົມກັບມາແຂງແຮງ, ຫຼຸດຜົມຂາດຫຼົ່ນ ແລະ ນຸ່ມສະຫຼວຍ."
+    },
+    {
+      "id": "prod-20",
+      "sku": "VASELINE-GLUTA-HYA",
+      "name": "Sữa Dưỡng Thể Trắng Da Ban Đêm Vaseline Gluta-Hya Flawless Glow 330ml",
+      "slug": "sua-duong-the-vaseline-gluta-hya-330ml",
+      "description": "Sức mạnh dưỡng sáng gấp 10 lần Vitamin C với công nghệ GlutaGlow và Hyaluronic Acid khóa ẩm sâu. Dạng serum sữa chua thẩm thấu tức thì sau 3 giây, cho làn da cơ thể mịn màng trắng ngần.",
+      "price": 180000,
+      "stock": 75,
+      "categoryId": "cat-body-hair",
+      "subCategoryId": "sub-body-lotion",
+      "subCategoryName": "Dưỡng Thể Trắng Da",
+      "subCategoryNameLao": "ໂລຊັ່ນບຳລຸງຜິວກາຍ",
+      "brand": "Vaseline",
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "createdAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "nameLao": "ໂລຊັ່ນບຳລຸງຜິວກາຍຂາວໃສກາງຄືນ Vaseline Gluta-Hya Flawless Glow 330ml",
+      "descriptionLao": "ໂລຊັ່ນບຳລຸງຜິວກາຍທີ່ດີກວ່າວິຕາມິນ C 10 ເທົ່າ. ກລູຕ້າໂກລ ແລະ ໄຮຢາລູຣອນ ເຕີມຄວາມຊຸ່ມຊື່ນໃຫ້ຜິວເປັ່ງປະກາຍ, ກະຈ່າງໃສພາຍໃນ 5 ມື້."
+    }
+  ],
+  "orders": [
+    {
+      "id": "ord-seed-1",
+      "orderCode": "ORD-20261008-001",
+      "userId": "usr-customer-1",
+      "customerName": "Nguyễn Thu Trang",
+      "customerPhone": "0912345678",
+      "shippingAddress": "Số 123 Đường Kim Mã, Ba Đình, Hà Nội",
+      "note": "Giao hàng trước 17h chiều giúp mình",
+      "totalPrice": 3215000,
+      "status": "SHIPPING",
+      "items": [
+        {
+          "id": "item-1",
+          "orderId": "ord-seed-1",
+          "productId": "prod-1",
+          "productName": "Serum Phục Hồi & Trẻ Hóa Da Estée Lauder Advanced Night Repair 50ml",
+          "productImage": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=1000&auto=format&fit=crop",
+          "quantity": 1,
+          "price": 2750000
+        },
+        {
+          "id": "item-2",
+          "orderId": "ord-seed-1",
+          "productId": "prod-2",
+          "productName": "Kem Chống Nắng Kiểm Soát Dầu La Roche-Posay Anthelios Oil Control 50ml",
+          "productImage": "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=1000&auto=format&fit=crop",
+          "quantity": 1,
+          "price": 465000
+        }
+      ],
+      "createdAt": "2026-10-06T06:47:17.649Z",
+      "updatedAt": "2026-10-07T06:47:17.649Z"
+    },
+    {
+      "id": "ord-seed-2",
+      "orderCode": "ORD-20261008-002",
+      "userId": "usr-customer-1",
+      "customerName": "Nguyễn Thu Trang",
+      "customerPhone": "0912345678",
+      "shippingAddress": "Số 123 Đường Kim Mã, Ba Đình, Hà Nội",
+      "note": "Đóng gói cẩn thận có bọc chống sốc",
+      "totalPrice": 1150000,
+      "status": "CONFIRMED",
+      "items": [
+        {
+          "id": "item-3",
+          "orderId": "ord-seed-2",
+          "productId": "prod-3",
+          "productName": "Son Thỏi Dior Rouge Dior Forever Matte 999 Velvet Red",
+          "productImage": "https://images.unsplash.com/photo-1586495777744-4413f21062fa?q=80&w=1000&auto=format&fit=crop",
+          "quantity": 1,
+          "price": 1150000
+        }
+      ],
+      "createdAt": "2026-10-08T06:47:17.649Z",
+      "updatedAt": "2026-10-08T06:47:17.649Z"
+    }
+  ],
+  "siteSettings": {
+    "storeName": "NovaBeauty",
+    "slogan": "ຮ້ານຂາຍເຄື່ອງສຳອາງ & ຄວາມງາມແທ້ 100%",
+    "primaryColor": "rose",
+    "hotline": "020 55 777 975",
+    "email": "cskh@novabeauty.com",
+    "address": "ນະຄອນປາກເຊ, ສປປ ລາວ",
+    "topAnnouncement": "ຈັດສົ່ງຟຣີທົ່ວປະເທດສຳລັບບິນແຕ່ 300.000₭ | ສິນຄ້າແທ້ 100% ມີໃບບິນ",
+    "showTopAnnouncement": true,
+    "showHeroBanner": true,
+    "heroBadge": "✨ ຄໍເລັກຊັນເຄື່ອງສຳອາງພຣີມຽມ 2026 - ຫຼຸດສູງສຸດ 40%",
+    "heroTitle": "ສ່ອງແສງຄວາມງາມດ້ວຍເຄື່ອງສຳອາງແທ້ 100% ລະດັບສາກົນ",
+    "heroSubtitle": "ລະບົບຈຳໜ່າຍເຄື່ອງສຳອາງ, ບຳລຸງຜິວ, ລິບສະຕິກ ແລະ ນ້ຳຫອມແທ້ຊັ້ນນຳຈາກ ຝຣັ່ງ, ເກົາຫຼີ, ຍີ່ປຸ່ນ & ອາເມລິກາ. ຮັບປະກັນແທ້ 100%, ຄືນເງິນ 200% ຖ້າພົບຂອງປອມ.",
+    "heroButtonPrimaryText": "ຄົ້ນຫາສິນຄ້າຂາຍດີ",
+    "heroButtonSecondaryText": "ເປີດກະຕ່າສິນຄ້າ",
+    "heroImageUrl": "https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=800&auto=format&fit=crop",
+    "heroCardTitle": "ເຊຣັ່ມ Estée Lauder Advanced Night Repair",
+    "heroCardSubtitle": "ເຄັດລັບຜິວອ່ອນເຍົາ ແລະ ສົດໃສຢ່າງເປັນທຳມະຊາດ",
+    "heroCardBadge": "ຂາຍດີທີ່ສຸດ",
+    "badge1Title": "ຈັດສົ່ງຟຣີທົ່ວປະເທດ",
+    "badge1Desc": "ສຳລັບຍອດສັ່ງຊື້ແຕ່ 300.000₭",
+    "badge2Title": "ຂອງແທ້ 100%",
+    "badge2Desc": "ນຳເຂົ້າແທ້ 100% & ຄືນເງິນ 200%",
+    "badge3Title": "ປ່ຽນຄືນພາຍໃນ 14 ມື້",
+    "badge3Desc": "ຮັບປະກັນຖ້າມີອາການແພ້ ຫຼື ບັນຫາ",
+    "badge4Title": "ປຶກສາຜິວພັນ 24/7",
+    "badge4Desc": "ປຶກສາຜ່ານ Facebook & WhatsApp",
+    "catalogTitle": "ເຄື່ອງສຳອາງ & ຄວາມງາມລ່າສຸດ",
+    "catalogSubtitle": "ເຄື່ອງສຳອາງແທ້ພ້ອມຈັດສົ່ງດ່ວນພາຍໃນ 2 ຊົ່ວໂມງ",
+    "borderRadius": "rounded-3xl",
+    "productGridColumns": 4,
+    "topBarBgColor": "zinc",
+    "logoUrl": "",
+    "showFlashSale": true,
+    "flashSaleBadge": "⚡ FLASH SALE ຄວາມງາມ",
+    "flashSaleTitle": "Flash Sale ເຄື່ອງສຳອາງ - ຫຼຸດລາຄາສູງສຸດ 50%",
+    "flashSaleSubtitle": "ໂອກາດເປັນເຈົ້າຂອງເຄື່ອງສຳອາງ ແລະ ນ້ຳຫອມແທ້ໃນລາຄາທີ່ດີທີ່ສຸດມື້ນີ້",
+    "flashSaleEndTime": "23:59:59",
+    "flashSaleDiscountCode": "BEAUTY50",
+    "showPromoCards": false,
+    "promoCard1Badge": "ໂປຣໂມຊັ່ນພິເສດ",
+    "promoCard1Title": "Combo Skincare ຜິວຂາວໃສ",
+    "promoCard1Subtitle": "ແຖມຟຣີ set minisize ພຣີມຽມ ສຳລັບບິນແຕ່ 800.000₭",
+    "promoCard1ButtonText": "ເບິ່ງລາຍລະອຽດ",
+    "promoCard1ImageUrl": "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=800&auto=format&fit=crop",
+    "promoCard2Badge": "ຍອດນິຍົມ 2026",
+    "promoCard2Title": "ຄໍເລັກຊັນລິບສະຕິກແມັດ",
+    "promoCard2Subtitle": "ໂທນສີທັນສະໄໝຈາກ Dior, MAC, Black Rouge ຫຼຸດຕື່ມ 25%",
+    "promoCard2ButtonText": "ຄົ້ນຫາດຽວນີ້",
+    "promoCard2ImageUrl": "https://images.unsplash.com/photo-1586495777744-4413f21062fa?q=80&w=800&auto=format&fit=crop",
+    "showPromoPopup": false,
+    "promoPopupTitle": "ຂອງຂວັນຕ້ອນຮັບລູກຄ້າໃໝ່",
+    "promoPopupSubtitle": "ຮັບທັນທີ Voucher 100.000₭ ສຳລັບບິນທຳອິດແຕ່ 500.000₭!",
+    "promoPopupCode": "BEAUTY100",
+    "promoPopupDiscountText": "ຫຼຸດທັນທີ 100.000₭",
+    "showFloatingContact": true,
+    "facebookUrl": "https://www.facebook.com/minhnam.ho.125",
+    "whatsappNumber": "02055777975",
+    "zaloNumber": "0988888888",
+    "showNewsletter": true,
+    "newsletterTitle": "ລົງທະບຽນຮັບຂ່າວສານຄວາມງາມ",
+    "newsletterSubtitle": "ຮັບການແຈ້ງເຕືອນໂປຣໂມຊັ່ນ ແລະ ໂຄດຫຼຸດລາຄາພິເສດກ່ອນໃຜ",
+    "footerAbout": "ລະບົບຈຳໜ່າຍເຄື່ອງສຳອາງ, ບຳລຸງຜິວໜ້າ, ແຕ່ງໜ້າ ແລະ ນ້ຳຫອມລະດັບສູງຈາກແບຣນດັງທົ່ວໂລກ.",
+    "footerCopyright": "© 2026 NovaBeauty Cosmetics. ສະຫງວນລິຂະສິດ.",
+    "adminName": "Boss Hải"
+  }
+}
