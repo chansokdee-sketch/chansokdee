@@ -55,7 +55,9 @@ export interface Product {
   slug: string;
   description: string;
   descriptionLao?: string;
-  price: number;
+  price: number;              // Giá bán lẻ (Retail Price)
+  wholesalePrice?: number;    // Giá bán sỉ (Wholesale Price)
+  minWholesaleQty?: number;   // Số lượng tối thiểu để tính giá sỉ (mặc định 3 hoặc 5)
   stock: number;
   categoryId: string;
   subCategoryId?: string;
@@ -77,6 +79,7 @@ export interface OrderItem {
   productImage: string;
   quantity: number;
   price: number;
+  isWholesale?: boolean;
 }
 
 export interface Order {
@@ -85,6 +88,7 @@ export interface Order {
   userId: string;
   customerName: string;
   customerPhone: string;
+  customerType?: 'RETAIL' | 'WHOLESALE';
   shippingAddress: string;
   note?: string;
   totalPrice: number;

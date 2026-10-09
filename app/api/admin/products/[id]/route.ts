@@ -45,6 +45,8 @@ export async function PUT(
       ...(body.description !== undefined && { description: body.description }),
       ...(body.descriptionLao !== undefined && { descriptionLao: body.descriptionLao?.trim() || undefined }),
       ...(body.price !== undefined && { price: Math.max(0, Number(body.price)) }),
+      ...(body.wholesalePrice !== undefined && { wholesalePrice: Math.max(0, Number(body.wholesalePrice)) }),
+      ...(body.minWholesaleQty !== undefined && { minWholesaleQty: Math.max(1, Number(body.minWholesaleQty) || 3) }),
       ...(body.stock !== undefined && { stock: Math.max(0, Number(body.stock)) }),
       ...(body.categoryId !== undefined && { categoryId: body.categoryId }),
       ...(body.subCategoryId !== undefined && { subCategoryId: body.subCategoryId }),

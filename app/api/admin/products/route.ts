@@ -37,6 +37,8 @@ export async function POST(req: NextRequest) {
       description, 
       descriptionLao, 
       price, 
+      wholesalePrice,
+      minWholesaleQty,
       stock, 
       categoryId, 
       subCategoryId, 
@@ -60,6 +62,12 @@ export async function POST(req: NextRequest) {
       slug = `item-${Date.now().toString(36)}`;
     }
 
+    const numPrice = Math.max(0, Number(price));
+    const numWholesale = wholesalePrice !== undefined && !isNaN(Number(wholesalePrice))
+      ? Math.max(0, Number(wholesalePrice))
+      : Math.round(numPrice * 0.8);
+    const numMinQty = Math.max(1, Number(minWholesaleQty) || 3);
+
     const newProduct = db.products.create({
       name: name.trim(),
       nameLao: nameLao?.trim() || undefined,
@@ -67,7 +75,9 @@ export async function POST(req: NextRequest) {
       slug,
       description: description?.trim() || '',
       descriptionLao: descriptionLao?.trim() || undefined,
-      price: Math.max(0, Number(price)),
+      price: numPrice,
+      wholesalePrice: numWholesale,
+      minWholesaleQty: numMinQty,
       stock: Math.max(0, Number(stock) || 0),
       categoryId: categoryId || 'cat-1',
       subCategoryId: subCategoryId || undefined,

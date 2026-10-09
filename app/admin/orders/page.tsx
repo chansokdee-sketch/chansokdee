@@ -149,7 +149,18 @@ export default function AdminOrdersPage() {
                     </span>
                   </td>
 
-                  <td className="py-4 px-4 font-medium text-white">{o.customerName}</td>
+                  <td className="py-4 px-4 font-medium text-white">
+                    <div>{o.customerName}</div>
+                    {o.customerType === 'WHOLESALE' ? (
+                      <span className="inline-block mt-0.5 px-2 py-0.5 rounded text-[9px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        🏢 Khách sỉ ⚡
+                      </span>
+                    ) : (
+                      <span className="inline-block mt-0.5 px-2 py-0.5 rounded text-[9px] font-semibold bg-zinc-800 text-zinc-400">
+                        👤 Khách lẻ
+                      </span>
+                    )}
+                  </td>
 
                   <td className="py-4 px-4 font-mono text-zinc-400">{o.customerPhone}</td>
 
@@ -266,7 +277,14 @@ export default function AdminOrdersPage() {
                       />
                       <div>
                         <p className="font-medium text-white">{item.productName}</p>
-                        <p className="text-[11px] text-zinc-500">x{item.quantity} | {formatPrice(item.price)}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-[11px] text-zinc-400 font-mono">x{item.quantity} | {formatPrice(item.price)}</span>
+                          {item.isWholesale && (
+                            <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1 py-0.2 rounded font-black border border-amber-500/30">
+                              Giá sỉ ⚡
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <span className="font-bold text-emerald-400">

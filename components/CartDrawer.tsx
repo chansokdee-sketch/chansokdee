@@ -4,13 +4,29 @@ import React from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
+import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, Tag, Boxes, Sparkles } from 'lucide-react';
 
 export default function CartDrawer() {
-  const { cart, isCartOpen, setIsCartOpen, updateQuantity, removeFromCart, totalPrice, totalItems } = useCart();
+  const { 
+    cart, 
+    isCartOpen, 
+    setIsCartOpen, 
+    updateQuantity, 
+    removeFromCart, 
+    totalPrice, 
+    totalItems,
+    customerMode,
+    setCustomerMode,
+    getItemPrice,
+    isItemWholesalePrice
+  } = useCart();
   const { t, formatPrice, isLao } = useLanguage();
 
   if (!isCartOpen) return null;
+
+  // Tính tổng giá nếu mua theo giá lẻ để hiển thị số tiền tiết kiệm được
+  const regularTotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const wholesaleSavings = regularTotal - totalPrice;
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
@@ -24,7 +40,7 @@ export default function CartDrawer() {
         <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
           
           {/* Header */}
-          <div className="p-4 sm:p-6 border-b border-zinc-100 flex items-center justify-between">
+          <div className="p-4 sm:p-5 border-b border-zinc-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ShoppingBag className="w-5 h-5 text-blue-600" />
               <h2 className="text-base sm:text-lg font-bold text-zinc-900">{t('drawer_title')} ({totalItems})</h2>
@@ -37,8 +53,39 @@ export default function CartDrawer() {
             </button>
           </div>
 
+          {/* Quick Toggle Chế độ Khách Sỉ / Khách Lẻ */}
+          <div className="px-4 py-2.5 bg-zinc-50 border-b border-zinc-200/60 flex items-center justify-between text-xs">
+            <span className="text-zinc-500 font-medium">Bảng giá áp dụng:</span>
+            <div className="flex items-center bg-white p-0.5 rounded-full border border-zinc-200 font-bold">
+              <button
+                type="button"
+                onClick={() => setCustomerMode('RETAIL')}
+                className={`px-2.5 py-1 rounded-full transition flex items-center gap-1 ${
+                  customerMode === 'RETAIL'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-zinc-500 hover:text-zinc-800'
+                }`}
+              >
+                <Tag className="w-3 h-3" />
+                <span>Giá lẻ</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCustomerMode('WHOLESALE')}
+                className={`px-2.5 py-1 rounded-full transition flex items-center gap-1 ${
+                  customerMode === 'WHOLESALE'
+                    ? 'bg-amber-400 text-amber-950 font-black shadow-xs'
+                    : 'text-zinc-500 hover:text-zinc-800'
+                }`}
+              >
+                <Boxes className="w-3 h-3" />
+                <span>Giá sỉ ⚡</span>
+              </button>
+            </div>
+          </div>
+
           {/* Cart Items List */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5">
             {cart.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center text-zinc-400 space-y-3 py-16">
                 <div className="w-16 h-16 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-400">
@@ -54,90 +101,102 @@ export default function CartDrawer() {
                 </button>
               </div>
             ) : (
-              cart.map((item) => (
-                <div 
-                  key={item.product.id}
-                  className="flex gap-3 sm:gap-4 p-3 bg-zinc-50/70 hover:bg-zinc-50 rounded-2xl border border-zinc-100 transition"
-                >
-                  <img
-                    src={item.product.images[0] || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=300&auto=format&fit=crop'}
-                    alt={item.product.name}
-                    className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-xl bg-white border border-zinc-200/60 flex-shrink-0"
-                  />
-                  <div className="flex-1 min-w-0 flex flex-col justify-between">
-                    <div>
-                      <h4 className="text-xs font-semibold text-zinc-900 line-clamp-2 leading-snug">
-                        {isLao && item.product.nameLao ? item.product.nameLao : item.product.name}
-                      </h4>
-                      <p className="text-xs font-bold text-blue-600 mt-1">
-                        {formatPrice(item.product.price)}
-                      </p>
-                    </div>
+              cart.map((item) => {
+                const isWholesale = isItemWholesalePrice(item.product, item.quantity);
+                const unitPrice = getItemPrice(item.product, item.quantity);
 
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-zinc-200/60">
-                      {/* Stepper */}
-                      <div className="flex items-center border border-zinc-200 bg-white rounded-lg overflow-hidden">
-                        <button
-                          onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                          className="p-1 hover:bg-zinc-100 text-zinc-600 transition"
-                          title="Giảm"
-                        >
-                          <Minus className="w-3.5 h-3.5" />
-                        </button>
-                        <span className="w-8 text-center text-xs font-bold text-zinc-800">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                          disabled={item.quantity >= item.product.stock}
-                          className="p-1 hover:bg-zinc-100 text-zinc-600 disabled:opacity-40 transition"
-                          title="Tăng"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
+                return (
+                  <div 
+                    key={item.product.id}
+                    className="flex gap-3 sm:gap-4 p-3 bg-zinc-50/70 hover:bg-zinc-50 rounded-2xl border border-zinc-100 transition"
+                  >
+                    <img
+                      src={item.product.images[0] || 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=150&auto=format&fit=crop'}
+                      alt={item.product.name}
+                      className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-xl bg-white border border-zinc-200/60 flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0 flex flex-col justify-between">
+                      <div>
+                        <h4 className="text-xs font-semibold text-zinc-900 line-clamp-2 leading-snug">
+                          {isLao && item.product.nameLao ? item.product.nameLao : item.product.name}
+                        </h4>
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                          <span className={`text-xs font-bold font-mono ${isWholesale ? 'text-amber-600' : 'text-blue-600'}`}>
+                            {formatPrice(unitPrice)}
+                          </span>
+                          {isWholesale && (
+                            <span className="text-[9px] bg-amber-500/15 text-amber-700 px-1.5 py-0.2 rounded font-black border border-amber-500/20">
+                              Giá sỉ ⚡
+                            </span>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Remove Button */}
-                      <button
-                        onClick={() => removeFromCart(item.product.id)}
-                        className="text-zinc-400 hover:text-red-500 p-1 transition"
-                        title="Xóa khỏi giỏ"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-zinc-200/60">
+                        {/* Stepper */}
+                        <div className="flex items-center border border-zinc-200 bg-white rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                            className="p-1 hover:bg-zinc-100 text-zinc-600 transition"
+                            title="Giảm"
+                          >
+                            <Minus className="w-3.5 h-3.5" />
+                          </button>
+                          <span className="w-8 text-center text-xs font-bold text-zinc-800">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                            disabled={item.quantity >= item.product.stock}
+                            className="p-1 hover:bg-zinc-100 text-zinc-600 disabled:opacity-40 transition"
+                            title="Tăng"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        {/* Remove Button */}
+                        <button
+                          onClick={() => removeFromCart(item.product.id)}
+                          className="text-zinc-400 hover:text-red-500 p-1 transition"
+                          title="Xóa khỏi giỏ"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 
           {/* Footer with Checkout CTA */}
           {cart.length > 0 && (
-            <div className="p-4 sm:p-6 border-t border-zinc-100 bg-zinc-50/50 space-y-4">
+            <div className="p-4 sm:p-5 border-t border-zinc-100 bg-zinc-50/50 space-y-3">
+              {wholesaleSavings > 0 && (
+                <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Tiết kiệm giá sỉ:</span>
+                  </span>
+                  <span className="text-amber-700 font-mono">-{formatPrice(wholesaleSavings)}</span>
+                </div>
+              )}
+
               <div className="flex justify-between items-center text-sm">
                 <span className="text-zinc-500">{t('cart_subtotal')}</span>
-                <span className="font-bold text-lg text-zinc-900">{formatPrice(totalPrice)}</span>
+                <span className="font-extrabold text-lg text-zinc-900 font-mono">{formatPrice(totalPrice)}</span>
               </div>
-              <p className="text-[11px] text-zinc-400 text-center">
-                {t('cart_free_ship_guarantee')}
-              </p>
-              <div className="space-y-2">
-                <Link
-                  href="/cart"
-                  onClick={() => setIsCartOpen(false)}
-                  className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md shadow-blue-500/20 transition"
-                >
-                  {t('drawer_proceed_checkout')}
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-                <button
-                  onClick={() => setIsCartOpen(false)}
-                  className="w-full py-2.5 text-xs font-semibold text-zinc-600 hover:text-zinc-900 transition"
-                >
-                  {t('drawer_continue_shopping')}
-                </button>
-              </div>
+
+              <Link
+                href="/cart"
+                onClick={() => setIsCartOpen(false)}
+                className="w-full py-3.5 px-4 bg-zinc-900 hover:bg-blue-600 text-white font-bold text-sm rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-zinc-900/10 transition active:scale-98"
+              >
+                <span>{t('drawer_proceed_checkout')}</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
           )}
 

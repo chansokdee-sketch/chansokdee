@@ -17,13 +17,16 @@ import {
   Check, 
   Minus, 
   Plus, 
-  AlertTriangle 
+  AlertTriangle,
+  Tag,
+  Boxes,
+  Sparkles
 } from 'lucide-react';
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id } = use(params);
-  const { addToCart, setIsCartOpen } = useCart();
+  const { addToCart, setIsCartOpen, customerMode } = useCart();
   const { t, formatPrice, isLao } = useLanguage();
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -210,13 +213,78 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                   {isLao && product.nameLao ? product.nameLao : product.name}
                 </h1>
 
-                {/* Price */}
-                <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100 flex items-baseline gap-3">
-                  <span className="text-2xl sm:text-3xl font-black text-blue-600">
-                    {formatPrice(product.price)}
-                  </span>
-                  <span className="text-xs text-zinc-400 font-medium">VAT & Warranty</span>
-                </div>
+                {/* 2 Bảng Giá: Giá Lẻ & Giá Sỉ */}
+                {(() => {
+                  const wholesalePrice = product.wholesalePrice !== undefined && product.wholesalePrice > 0
+                    ? product.wholesalePrice
+                    : Math.round(product.price * 0.8);
+                  const minQty = product.minWholesaleQty || 3;
+                  const isWholesaleActive = customerMode === 'WHOLESALE' || quantity >= minQty;
+
+                  return (
+                    <div className="space-y-2.5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* Bảng giá lẻ */}
+                        <div className={`p-3.5 rounded-2xl border transition ${
+                          !isWholesaleActive 
+                            ? 'bg-blue-50/60 border-blue-200 ring-2 ring-blue-500/20' 
+                            : 'bg-zinc-50 border-zinc-200/80 opacity-80'
+                        }`}>
+                          <div className="flex items-center justify-between text-xs font-semibold text-zinc-500 mb-1">
+                            <span className="flex items-center gap-1 text-zinc-700">
+                              <Tag className="w-3.5 h-3.5 text-blue-600" />
+                              <span>Giá bán lẻ (ຍ່ອຍ)</span>
+                            </span>
+                            {!isWholesaleActive && (
+                              <span className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">
+                                Đang chọn
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xl sm:text-2xl font-black text-blue-700 font-mono">
+                            {formatPrice(product.price)}
+                          </div>
+                          <span className="text-[10px] text-zinc-400">Đơn giá khi mua 1-{minQty - 1} cái</span>
+                        </div>
+
+                        {/* Bảng giá sỉ */}
+                        <div className={`p-3.5 rounded-2xl border transition ${
+                          isWholesaleActive 
+                            ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-500/30' 
+                            : 'bg-zinc-50 border-zinc-200/80'
+                        }`}>
+                          <div className="flex items-center justify-between text-xs font-semibold text-zinc-500 mb-1">
+                            <span className="flex items-center gap-1 text-amber-900 font-bold">
+                              <Boxes className="w-3.5 h-3.5 text-amber-600" />
+                              <span>Giá bán sỉ (ສົ່ງ) ⚡</span>
+                            </span>
+                            {isWholesaleActive && (
+                              <span className="text-[10px] bg-amber-500 text-amber-950 px-2 py-0.5 rounded-full font-black">
+                                Áp dụng giá sỉ!
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xl sm:text-2xl font-black text-amber-600 font-mono">
+                            {formatPrice(wholesalePrice)}
+                          </div>
+                          <span className="text-[10px] text-amber-700/80 font-medium">
+                            Áp dụng khi mua từ ≥ {minQty} cái hoặc khách sỉ
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Thông báo ưu đãi sỉ khi tăng số lượng */}
+                      {quantity >= minQty && (
+                        <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center gap-2 font-semibold">
+                          <Sparkles className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                          <span>
+                            🎉 Đang mua {quantity} cái: Tự động tính theo <strong>Giá bán sỉ ({formatPrice(wholesalePrice)}/cái)</strong>!
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Quantity selector */}
                 {!isOutOfStock && (

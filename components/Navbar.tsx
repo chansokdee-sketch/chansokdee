@@ -16,13 +16,15 @@ import {
   LogOut, 
   Menu, 
   X,
-  PhoneCall
+  PhoneCall,
+  Boxes,
+  Tag
 } from 'lucide-react';
 
 export default function Navbar() {
   const router = useRouter();
   const { user, logout, setIsAuthModalOpen, setAuthModalMode } = useAuth();
-  const { totalItems, setIsCartOpen } = useCart();
+  const { totalItems, setIsCartOpen, customerMode, setCustomerMode } = useCart();
   const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -149,6 +151,36 @@ export default function Navbar() {
           {/* Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
             
+            {/* Chế độ Giá: Khách Lẻ vs Khách Sỉ */}
+            <div className="flex items-center bg-zinc-100 p-0.5 rounded-full border border-zinc-200 text-xs font-bold shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setCustomerMode('RETAIL')}
+                className={`px-2.5 sm:px-3 py-1.5 rounded-full transition flex items-center gap-1.5 ${
+                  customerMode === 'RETAIL'
+                    ? 'bg-white text-zinc-900 shadow-xs'
+                    : 'text-zinc-500 hover:text-zinc-800'
+                }`}
+                title="Chế độ giá bán lẻ (ລາຄາຂາຍຍ່ອຍ)"
+              >
+                <Tag className="w-3.5 h-3.5 text-blue-600" />
+                <span className="text-[11px] font-bold">Khách lẻ</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCustomerMode('WHOLESALE')}
+                className={`px-2.5 sm:px-3 py-1.5 rounded-full transition flex items-center gap-1.5 ${
+                  customerMode === 'WHOLESALE'
+                    ? 'bg-amber-400 text-amber-950 font-black shadow-xs'
+                    : 'text-zinc-500 hover:text-zinc-800'
+                }`}
+                title="Chế độ giá bán sỉ / buôn (ລາຄາຂາຍສົ່ງ)"
+              >
+                <Boxes className="w-3.5 h-3.5 text-amber-900" />
+                <span className="text-[11px] font-black">Khách sỉ ⚡</span>
+              </button>
+            </div>
+
             {/* Cart Button */}
             <button
               onClick={() => setIsCartOpen(true)}

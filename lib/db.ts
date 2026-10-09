@@ -426,6 +426,11 @@ function readData(): DatabaseSchema {
       ...defaultSettings,
       ...(parsed.siteSettings || {}),
     };
+    parsed.products = (parsed.products || []).map(p => ({
+      ...p,
+      wholesalePrice: p.wholesalePrice !== undefined ? p.wholesalePrice : Math.round(p.price * 0.8),
+      minWholesaleQty: p.minWholesaleQty || 3,
+    }));
     return parsed;
   } catch (error) {
     console.error('Error reading db file, regenerating:', error);
@@ -637,6 +642,7 @@ export const db = {
       userId: string;
       customerName: string;
       customerPhone: string;
+      customerType?: 'RETAIL' | 'WHOLESALE';
       shippingAddress: string;
       note?: string;
       items: { productId: string; quantity: number }[];
@@ -670,7 +676,12 @@ export const db = {
           };
         }
 
-        const itemSubtotal = product.price * item.quantity;
+        const isWholesale = orderInput.customerType === 'WHOLESALE' || item.quantity >= (product.minWholesaleQty || 3);
+        const itemPrice = isWholesale
+          ? (product.wholesalePrice !== undefined && product.wholesalePrice > 0 ? product.wholesalePrice : Math.round(product.price * 0.8))
+          : product.price;
+
+        const itemSubtotal = itemPrice * item.quantity;
         calculatedTotalPrice += itemSubtotal;
 
         orderItems.push({
@@ -681,7 +692,8 @@ export const db = {
           productNameLao: product.nameLao,
           productImage: product.images[0] || '',
           quantity: item.quantity,
-          price: product.price,
+          price: itemPrice,
+          isWholesale,
         });
       }
 
@@ -711,6 +723,7 @@ export const db = {
         userId: orderInput.userId,
         customerName: orderInput.customerName,
         customerPhone: orderInput.customerPhone,
+        customerType: orderInput.customerType || 'RETAIL',
         shippingAddress: orderInput.shippingAddress,
         note: orderInput.note || '',
         totalPrice: calculatedTotalPrice,

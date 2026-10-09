@@ -17,12 +17,25 @@ import {
   ArrowRight, 
   ShieldCheck, 
   Truck, 
-  AlertCircle 
+  AlertCircle,
+  Tag,
+  Boxes,
+  Sparkles
 } from 'lucide-react';
 
 export default function CartPage() {
   const router = useRouter();
-  const { cart, updateQuantity, removeFromCart, clearCart, totalPrice } = useCart();
+  const { 
+    cart, 
+    updateQuantity, 
+    removeFromCart, 
+    clearCart, 
+    totalPrice,
+    customerMode,
+    setCustomerMode,
+    getItemPrice,
+    isItemWholesalePrice
+  } = useCart();
   const { user, setIsAuthModalOpen, setAuthModalMode } = useAuth();
   const { t, formatPrice, isLao } = useLanguage();
 
@@ -70,6 +83,7 @@ export default function CartPage() {
           })),
           customerName,
           customerPhone,
+          customerType: customerMode,
           shippingAddress,
           note,
         }),
@@ -176,29 +190,71 @@ export default function CartPage() {
             {/* Products List Column */}
             <div className="lg:col-span-7 space-y-4">
               <div className="bg-white rounded-3xl border border-zinc-200/80 p-4 sm:p-6 shadow-xs space-y-4">
-                <h2 className="text-sm sm:text-base font-bold text-zinc-900 pb-2 border-b border-zinc-100">
-                  {t('cart_items_count')} ({cart.length})
-                </h2>
+                <div className="flex items-center justify-between pb-3 border-b border-zinc-100 flex-wrap gap-2">
+                  <h2 className="text-sm sm:text-base font-bold text-zinc-900">
+                    {t('cart_items_count')} ({cart.length})
+                  </h2>
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <span className="text-zinc-500 font-medium">Bảng giá:</span>
+                    <div className="flex items-center bg-zinc-100 p-0.5 rounded-full border border-zinc-200 font-bold">
+                      <button
+                        type="button"
+                        onClick={() => setCustomerMode('RETAIL')}
+                        className={`px-2.5 sm:px-3 py-1 rounded-full transition flex items-center gap-1 ${
+                          customerMode === 'RETAIL'
+                            ? 'bg-white text-zinc-900 shadow-2xs'
+                            : 'text-zinc-500 hover:text-zinc-800'
+                        }`}
+                      >
+                        <Tag className="w-3 h-3 text-blue-600" />
+                        <span>Khách lẻ</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCustomerMode('WHOLESALE')}
+                        className={`px-2.5 sm:px-3 py-1 rounded-full transition flex items-center gap-1 ${
+                          customerMode === 'WHOLESALE'
+                            ? 'bg-amber-400 text-amber-950 font-black shadow-2xs'
+                            : 'text-zinc-500 hover:text-zinc-800'
+                        }`}
+                      >
+                        <Boxes className="w-3 h-3 text-amber-900" />
+                        <span>Khách sỉ ⚡</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
                 <div className="divide-y divide-zinc-100 space-y-4">
-                  {cart.map((item) => (
-                    <div key={item.product.id} className="pt-4 first:pt-0 flex gap-3 sm:gap-4 items-center">
-                      <img
-                        src={item.product.images[0] || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=300&auto=format&fit=crop'}
-                        alt={item.product.name}
-                        className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-2xl bg-zinc-100 border border-zinc-200/70 flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <Link href={`/products/${item.product.id}`}>
-                          <h3 className="text-xs sm:text-sm font-bold text-zinc-900 hover:text-blue-600 transition truncate">
-                            {isLao && item.product.nameLao ? item.product.nameLao : item.product.name}
-                          </h3>
-                        </Link>
-                        <p className="text-[11px] sm:text-xs text-zinc-400 mt-0.5">{t('cart_item_code')} {item.product.sku}</p>
-                        <p className="text-xs sm:text-sm font-black text-blue-600 mt-1">
-                          {formatPrice(item.product.price)}
-                        </p>
-                      </div>
+                  {cart.map((item) => {
+                    const isWholesale = isItemWholesalePrice(item.product, item.quantity);
+                    const unitPrice = getItemPrice(item.product, item.quantity);
+
+                    return (
+                      <div key={item.product.id} className="pt-4 first:pt-0 flex gap-3 sm:gap-4 items-center">
+                        <img
+                          src={item.product.images[0] || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=300&auto=format&fit=crop'}
+                          alt={item.product.name}
+                          className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-2xl bg-zinc-100 border border-zinc-200/70 flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <Link href={`/products/${item.product.id}`}>
+                            <h3 className="text-xs sm:text-sm font-bold text-zinc-900 hover:text-blue-600 transition truncate">
+                              {isLao && item.product.nameLao ? item.product.nameLao : item.product.name}
+                            </h3>
+                          </Link>
+                          <p className="text-[11px] sm:text-xs text-zinc-400 mt-0.5">{t('cart_item_code')} {item.product.sku}</p>
+                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                            <span className={`text-xs sm:text-sm font-black font-mono ${isWholesale ? 'text-amber-600' : 'text-blue-600'}`}>
+                              {formatPrice(unitPrice)}
+                            </span>
+                            {isWholesale && (
+                              <span className="text-[10px] bg-amber-500/15 text-amber-700 px-1.5 py-0.2 rounded font-black border border-amber-500/20">
+                                Giá sỉ ⚡
+                              </span>
+                            )}
+                          </div>
+                        </div>
 
                       {/* Stepper & Delete */}
                       <div className="flex flex-col items-end gap-1.5 sm:gap-2">
@@ -233,7 +289,8 @@ export default function CartPage() {
                         </button>
                       </div>
                     </div>
-                  ))}
+                  );
+                })}
                 </div>
               </div>
 
@@ -335,6 +392,20 @@ export default function CartPage() {
 
                   {/* Price Summary */}
                   <div className="pt-4 border-t border-zinc-100 space-y-2 text-xs">
+                    {(() => {
+                      const regularTotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+                      const savings = regularTotal - totalPrice;
+                      return savings > 0 ? (
+                        <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 font-bold flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                            <span>Tiết kiệm giá sỉ:</span>
+                          </span>
+                          <span className="text-amber-700 font-mono font-bold">-{formatPrice(savings)}</span>
+                        </div>
+                      ) : null;
+                    })()}
+
                     <div className="flex justify-between text-zinc-500">
                       <span>{t('cart_subtotal')} ({cart.reduce((a, b) => a + b.quantity, 0)}):</span>
                       <span className="font-semibold text-zinc-800">{formatPrice(totalPrice)}</span>

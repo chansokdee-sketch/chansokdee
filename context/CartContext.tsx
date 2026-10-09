@@ -3,6 +3,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Product, CartItem } from '@/lib/types';
 
+export type CustomerPriceMode = 'RETAIL' | 'WHOLESALE';
+
 interface CartContextType {
   cart: CartItem[];
   addToCart: (product: Product, quantity?: number) => { success: boolean; message: string };
@@ -13,6 +15,10 @@ interface CartContextType {
   totalItems: number;
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
+  customerMode: CustomerPriceMode;
+  setCustomerMode: (mode: CustomerPriceMode) => void;
+  getItemPrice: (product: Product, quantity?: number) => number;
+  isItemWholesalePrice: (product: Product, quantity?: number) => boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -21,12 +27,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [customerMode, setCustomerModeState] = useState<CustomerPriceMode>('RETAIL');
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('novastore_cart');
-      if (saved) {
-        setCart(JSON.parse(saved));
+      const savedCart = localStorage.getItem('novastore_cart');
+      if (savedCart) {
+        setCart(JSON.parse(savedCart));
+      }
+      const savedMode = localStorage.getItem('novastore_customer_mode') as CustomerPriceMode;
+      if (savedMode === 'RETAIL' || savedMode === 'WHOLESALE') {
+        setCustomerModeState(savedMode);
       }
     } catch {
       // ignore
@@ -40,6 +51,33 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('novastore_cart', JSON.stringify(cart));
     }
   }, [cart, isInitialized]);
+
+  const setCustomerMode = (mode: CustomerPriceMode) => {
+    setCustomerModeState(mode);
+    try {
+      localStorage.setItem('novastore_customer_mode', mode);
+    } catch {
+      // ignore
+    }
+  };
+
+  const getItemPrice = (product: Product, quantity = 1): number => {
+    const wholesale = product.wholesalePrice !== undefined && product.wholesalePrice > 0
+      ? product.wholesalePrice
+      : Math.round(product.price * 0.8);
+    const minQty = product.minWholesaleQty || 3;
+
+    // Nếu đang ở chế độ Khách sỉ hoặc số lượng đạt mốc mua sỉ tối thiểu
+    if (customerMode === 'WHOLESALE' || quantity >= minQty) {
+      return wholesale;
+    }
+    return product.price;
+  };
+
+  const isItemWholesalePrice = (product: Product, quantity = 1): boolean => {
+    const minQty = product.minWholesaleQty || 3;
+    return customerMode === 'WHOLESALE' || quantity >= minQty;
+  };
 
   const addToCart = (product: Product, quantity = 1): { success: boolean; message: string } => {
     if (product.stock <= 0) {
@@ -108,7 +146,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  
+  // Tính tổng tiền dựa trên giá sỉ hoặc giá lẻ theo từng món và chế độ khách hàng
+  const totalPrice = cart.reduce((sum, item) => {
+    const unitPrice = getItemPrice(item.product, item.quantity);
+    return sum + unitPrice * item.quantity;
+  }, 0);
 
   return (
     <CartContext.Provider
@@ -122,6 +165,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         totalItems,
         isCartOpen,
         setIsCartOpen,
+        customerMode,
+        setCustomerMode,
+        getItemPrice,
+        isItemWholesalePrice,
       }}
     >
       {children}

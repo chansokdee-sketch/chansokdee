@@ -77,7 +77,7 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const initialSearch = searchParams.get('search') || '';
 
-  const { addToCart, setIsCartOpen } = useCart();
+  const { addToCart, setIsCartOpen, customerMode } = useCart();
   const { user } = useAuth();
   const { t, formatPrice, isLao } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
@@ -982,9 +982,41 @@ function HomeContent() {
                   {/* Price & Action Row */}
                   <div className="mt-3 pt-2.5 border-t border-zinc-100 flex items-center justify-between gap-2">
                     <div>
-                      <span className={`text-sm sm:text-base font-extrabold ${theme.accentText}`}>
-                        {formatPrice(product.price)}
-                      </span>
+                      {(() => {
+                        const wholesalePrice = product.wholesalePrice !== undefined && product.wholesalePrice > 0
+                          ? product.wholesalePrice
+                          : Math.round(product.price * 0.8);
+                        const minQty = product.minWholesaleQty || 3;
+
+                        if (customerMode === 'WHOLESALE') {
+                          return (
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-sm sm:text-base font-extrabold text-amber-600 font-mono">
+                                  {formatPrice(wholesalePrice)}
+                                </span>
+                                <span className="text-[9px] bg-amber-500/15 text-amber-700 px-1.5 py-0.5 rounded font-black border border-amber-500/20">
+                                  Sỉ ⚡
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-zinc-400 line-through block font-mono">
+                                Lẻ: {formatPrice(product.price)}
+                              </span>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div>
+                            <span className={`text-sm sm:text-base font-extrabold ${theme.accentText} font-mono`}>
+                              {formatPrice(product.price)}
+                            </span>
+                            <span className="text-[10px] text-zinc-500 block font-medium">
+                              Sỉ: <strong className="text-amber-600 font-bold">{formatPrice(wholesalePrice)}</strong> (≥{minQty} cái)
+                            </span>
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     <button
