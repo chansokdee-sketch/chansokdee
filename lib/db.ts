@@ -11,12 +11,16 @@ interface DatabaseSchema {
   siteSettings?: SiteSettings;
 }
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+const DATA_DIR = process.env.VERCEL ? path.join('/tmp', 'data') : path.join(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'store.json');
 
 function ensureDataDirectory() {
   if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+    try {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    } catch {
+      // Fallback if permission issue
+    }
   }
 }
 

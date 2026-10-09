@@ -25,29 +25,49 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
+    // On Vercel or serverless, return data URL directly so image is embedded seamlessly
+    if (process.env.VERCEL) {
+      const mime = file.type || 'image/jpeg';
+      const base64 = buffer.toString('base64');
+      return NextResponse.json({
+        url: `data:${mime};base64,${base64}`,
+        filename: file.name || 'uploaded-image.jpg',
+      });
     }
 
-    // Determine extension safely for phone uploads
-    let ext = 'jpg';
-    if (file.name && file.name.includes('.')) {
-      ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    } else if (file.type) {
-      ext = file.type.split('/')[1]?.toLowerCase() || 'jpg';
+    try {
+      const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+
+      // Determine extension safely for phone uploads
+      let ext = 'jpg';
+      if (file.name && file.name.includes('.')) {
+        ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      } else if (file.type) {
+        ext = file.type.split('/')[1]?.toLowerCase() || 'jpg';
+      }
+      if (ext === 'jpeg') ext = 'jpg';
+
+      const filename = `phone-upload-${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
+      const filePath = path.join(uploadsDir, filename);
+
+      fs.writeFileSync(filePath, buffer);
+
+      return NextResponse.json({
+        url: `/uploads/${filename}`,
+        filename,
+      });
+    } catch {
+      // Fallback to data URL if file system is read-only
+      const mime = file.type || 'image/jpeg';
+      const base64 = buffer.toString('base64');
+      return NextResponse.json({
+        url: `data:${mime};base64,${base64}`,
+        filename: file.name || 'uploaded-image.jpg',
+      });
     }
-    if (ext === 'jpeg') ext = 'jpg';
-
-    const filename = `phone-upload-${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
-    const filePath = path.join(uploadsDir, filename);
-
-    fs.writeFileSync(filePath, buffer);
-
-    return NextResponse.json({
-      url: `/uploads/${filename}`,
-      filename,
-    });
   } catch (error) {
     console.error('Upload error:', error);
     return NextResponse.json({ error: 'Tải ảnh lên thất bại.' }, { status: 500 });
