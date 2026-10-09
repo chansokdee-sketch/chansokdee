@@ -83,14 +83,28 @@ export default function MobileBottomNav() {
           <span className="text-[10px] mt-0.5">{t('mb_orders')}</span>
         </Link>
 
-        {/* 5. Tài khoản / Admin */}
-        {user?.role === 'ADMIN' ? (
+        {/* 5. Tài khoản / Admin / Quản Lý / Nhân Viên */}
+        {user?.role === 'ADMIN' || user?.role === 'MANAGER' || user?.role === 'STAFF' ? (
           <Link
             href="/admin"
-            className="flex flex-col items-center justify-center py-1 text-emerald-600 font-bold transition active:scale-95"
+            className={`flex flex-col items-center justify-center py-1 font-bold transition active:scale-95 ${
+              user.role === 'ADMIN'
+                ? 'text-emerald-600'
+                : user.role === 'MANAGER'
+                ? 'text-purple-600'
+                : 'text-blue-600'
+            }`}
           >
-            <ShieldCheck className="w-5 h-5 stroke-[2.5] text-emerald-600" />
-            <span className="text-[10px] mt-0.5">{t('mb_admin')}</span>
+            <ShieldCheck className={`w-5 h-5 stroke-[2.5] ${
+              user.role === 'ADMIN'
+                ? 'text-emerald-600'
+                : user.role === 'MANAGER'
+                ? 'text-purple-600'
+                : 'text-blue-600'
+            }`} />
+            <span className="text-[10px] mt-0.5">
+              {user.role === 'ADMIN' ? t('mb_admin') : user.role === 'MANAGER' ? 'Quản Lý' : 'Nhân Viên'}
+            </span>
           </Link>
         ) : user ? (
           <Link

@@ -50,6 +50,19 @@ export default function AuthModal() {
     setSubmitting(false);
   };
 
+  const handleQuickManager = async () => {
+    setAuthModalMode('login');
+    setPhone('0966666666');
+    setPassword('ManagerPassword@123');
+    setError('');
+    setSubmitting(true);
+    const res = await login('0966666666', 'ManagerPassword@123');
+    if (!res.success) {
+      setError(res.error || 'Đăng nhập không thành công');
+    }
+    setSubmitting(false);
+  };
+
   const handleQuickStaff = async () => {
     setAuthModalMode('login');
     setPhone('0977777777');
@@ -70,6 +83,19 @@ export default function AuthModal() {
     setError('');
     setSubmitting(true);
     const res = await login('0912345678', 'UserPassword@123');
+    if (!res.success) {
+      setError(res.error || 'Đăng nhập không thành công');
+    }
+    setSubmitting(false);
+  };
+
+  const handleQuickWholesale = async () => {
+    setAuthModalMode('login');
+    setPhone('0911223344');
+    setPassword('WholesalePassword@123');
+    setError('');
+    setSubmitting(true);
+    const res = await login('0911223344', 'WholesalePassword@123');
     if (!res.success) {
       setError(res.error || 'Đăng nhập không thành công');
     }
@@ -125,30 +151,54 @@ export default function AuthModal() {
             <Sparkles className="w-4 h-4 text-blue-600" />
             {t('auth_demo_title')}
           </div>
-          <div className="grid grid-cols-3 gap-1.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
             <button
               type="button"
               onClick={handleQuickAdmin}
-              className="py-1.5 px-2 bg-white text-blue-700 font-semibold rounded-lg border border-blue-200 hover:bg-blue-600 hover:text-white transition shadow-2xs text-center text-[10px] sm:text-[11px]"
-              title="Boss Hải (Quản trị viên)"
+              className="py-2 px-2 bg-white text-blue-700 font-bold rounded-xl border border-blue-200 hover:bg-blue-600 hover:text-white transition shadow-2xs text-center text-[11px] flex items-center justify-center gap-1"
+              title="Boss Hải (Quản trị viên - 0988888888)"
             >
-              👑 Boss Hải
+              <span>👑</span>
+              <span className="truncate">Boss Hải</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleQuickManager}
+              className="py-2 px-2 bg-white text-purple-700 font-bold rounded-xl border border-purple-200 hover:bg-purple-600 hover:text-white transition shadow-2xs text-center text-[11px] flex items-center justify-center gap-1 ring-1 ring-purple-300"
+              title="Quản Lý (Giao việc NV, tự hoàn thành - 0966666666)"
+            >
+              <span>💼</span>
+              <span className="truncate">Quản Lý</span>
             </button>
             <button
               type="button"
               onClick={handleQuickStaff}
-              className="py-1.5 px-2 bg-white text-emerald-700 font-semibold rounded-lg border border-emerald-200 hover:bg-emerald-600 hover:text-white transition shadow-2xs text-center text-[10px] sm:text-[11px]"
-              title="Nhân Viên (Thêm món, nhận order)"
+              className="py-2 px-2 bg-white text-emerald-700 font-bold rounded-xl border border-emerald-200 hover:bg-emerald-600 hover:text-white transition shadow-2xs text-center text-[11px] flex items-center justify-center gap-1"
+              title="Nhân Viên (Nhận đơn, làm món - 0977777777)"
             >
-              👔 Nhân Viên
+              <span>👔</span>
+              <span className="truncate">Nhân Viên</span>
             </button>
             <button
               type="button"
               onClick={handleQuickUser}
-              className="py-1.5 px-2 bg-white text-zinc-700 font-semibold rounded-lg border border-zinc-200 hover:bg-zinc-800 hover:text-white transition shadow-2xs text-center text-[10px] sm:text-[11px]"
-              title="Khách Hàng"
+              className="py-2 px-2 bg-white text-zinc-700 font-bold rounded-xl border border-zinc-200 hover:bg-zinc-800 hover:text-white transition shadow-2xs text-center text-[11px] flex items-center justify-center gap-1"
+              title="Khách Hàng (Giá lẻ - 0912345678)"
             >
-              👤 Khách Hàng
+              <span>👤</span>
+              <span className="truncate">Khách Hàng</span>
+            </button>
+          </div>
+          <div className="mt-2 pt-2 border-t border-blue-100 flex items-center justify-between text-[11px]">
+            <span className="text-zinc-500 font-medium">{t('auth_demo_wholesale_btn')}</span>
+            <button
+              type="button"
+              onClick={handleQuickWholesale}
+              className="py-1 px-2.5 bg-amber-50 text-amber-800 font-bold rounded-lg border border-amber-300 hover:bg-amber-500 hover:text-white transition shadow-2xs text-[10px] flex items-center gap-1"
+              title="Khách Sỉ (Mua hàng theo Bảng Giá Sỉ - 0911223344)"
+            >
+              <span>⚡</span>
+              <span>{t('auth_demo_wholesale')}</span>
             </button>
           </div>
         </div>

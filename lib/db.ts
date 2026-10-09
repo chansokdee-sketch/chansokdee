@@ -73,6 +73,17 @@ function getInitialData(): DatabaseSchema {
       role: 'USER',
       address: 'Số 123 Đường Kim Mã, Ba Đình, Hà Nội',
       createdAt: now,
+      customerType: 'RETAIL',
+    },
+    {
+      id: 'usr-wholesale-1',
+      phone: '0911223344',
+      passwordHash: '$2b$10$sFMj1fS2gJGNLCGokFRTYuSS2WzMg7Y7aH8ugNwxvdH2Yb8EhPF/e',
+      name: 'Đại Lý Sỉ Vientiane',
+      role: 'USER',
+      address: 'Chợ Sáng Talat Sao, Vientiane',
+      createdAt: now,
+      customerType: 'WHOLESALE',
     },
   ];
 

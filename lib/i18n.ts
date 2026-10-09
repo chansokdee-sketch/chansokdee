@@ -148,7 +148,11 @@ export interface TranslationDictionary {
   auth_register_tab: string;
   auth_demo_title: string;
   auth_demo_admin: string;
+  auth_demo_manager: string;
+  auth_demo_staff: string;
   auth_demo_user: string;
+  auth_demo_wholesale: string;
+  auth_demo_wholesale_btn: string;
   auth_name: string;
   auth_phone: string;
   auth_password: string;
@@ -313,8 +317,12 @@ export const translations: Record<Language, TranslationDictionary> = {
     auth_login_tab: 'Đăng nhập',
     auth_register_tab: 'Đăng ký tài khoản',
     auth_demo_title: 'Tài khoản mẫu để test nhanh:',
-    auth_demo_admin: '👑 Boss Hải (0988888888)',
-    auth_demo_user: '👤 Khách (0912345678)',
+    auth_demo_admin: '👑 Boss Hải',
+    auth_demo_manager: '💼 Quản Lý',
+    auth_demo_staff: '👔 Nhân Viên',
+    auth_demo_user: '👤 Khách Lẻ',
+    auth_demo_wholesale: '⚡ Khách Sỉ (Giá sỉ)',
+    auth_demo_wholesale_btn: 'Thử nghiệm giá sỉ:',
     auth_name: 'Họ và tên của bạn',
     auth_phone: 'Số điện thoại',
     auth_password: 'Mật khẩu',
@@ -478,8 +486,12 @@ export const translations: Record<Language, TranslationDictionary> = {
     auth_login_tab: 'ເຂົ້າສູ່ລະບົບ',
     auth_register_tab: 'ລົງທະບຽນບັນຊີ',
     auth_demo_title: 'ບັນຊີຕົວຢ່າງສຳລັບທົດສອບ:',
-    auth_demo_admin: '👑 Boss Hải (0988888888)',
-    auth_demo_user: '👤 ລູກຄ້າ (0912345678)',
+    auth_demo_admin: '👑 Boss Hải',
+    auth_demo_manager: '💼 Quản Lý',
+    auth_demo_staff: '👔 Nhân Viên',
+    auth_demo_user: '👤 Khách Hàng',
+    auth_demo_wholesale: '⚡ Khách Sỉ (ລາຄາສົ່ງ)',
+    auth_demo_wholesale_btn: 'ທົດສອບລາຄາສົ່ງ:',
     auth_name: 'ຊື່ ແລະ ນາມສະກຸນ',
     auth_phone: 'ເບີໂທລະສັບ',
     auth_password: 'ລະຫັດຜ່ານ',
