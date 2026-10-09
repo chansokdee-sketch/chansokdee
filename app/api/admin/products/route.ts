@@ -30,9 +30,24 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, sku, description, price, stock, categoryId, subCategoryId, subCategoryName, subCategoryNameLao, brand, status, images } = body;
+    const { 
+      name, 
+      nameLao, 
+      sku, 
+      description, 
+      descriptionLao, 
+      price, 
+      stock, 
+      categoryId, 
+      subCategoryId, 
+      subCategoryName, 
+      subCategoryNameLao, 
+      brand, 
+      status, 
+      images 
+    } = body;
 
-    if (!name?.trim() || !price || isNaN(price)) {
+    if (!name?.trim() || price === undefined || isNaN(price)) {
       return NextResponse.json({ error: 'Vui lòng điền tên sản phẩm và giá hợp lệ.' }, { status: 400 });
     }
 
@@ -44,9 +59,11 @@ export async function POST(req: NextRequest) {
 
     const newProduct = db.products.create({
       name: name.trim(),
+      nameLao: nameLao?.trim() || undefined,
       sku: generatedSku,
       slug,
       description: description?.trim() || '',
+      descriptionLao: descriptionLao?.trim() || undefined,
       price: Math.max(0, Number(price)),
       stock: Math.max(0, Number(stock) || 0),
       categoryId: categoryId || 'cat-1',

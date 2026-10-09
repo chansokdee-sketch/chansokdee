@@ -40,8 +40,10 @@ export async function PUT(
 
     const updated = db.products.update(id, {
       ...(body.name !== undefined && { name: body.name.trim() }),
+      ...(body.nameLao !== undefined && { nameLao: body.nameLao?.trim() || undefined }),
       ...(body.sku !== undefined && { sku: body.sku.trim() }),
       ...(body.description !== undefined && { description: body.description }),
+      ...(body.descriptionLao !== undefined && { descriptionLao: body.descriptionLao?.trim() || undefined }),
       ...(body.price !== undefined && { price: Math.max(0, Number(body.price)) }),
       ...(body.stock !== undefined && { stock: Math.max(0, Number(body.stock)) }),
       ...(body.categoryId !== undefined && { categoryId: body.categoryId }),
