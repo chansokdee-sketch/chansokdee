@@ -772,9 +772,9 @@
       "customerName": "Nguyễn Thu Trang",
       "customerPhone": "0912345678",
       "shippingAddress": "Số 123 Đường Kim Mã, Ba Đình, Hà Nội",
-      "note": "Giao hàng trước 17h chiều giúp mình",
+      "note": "Qu?n l� ho�n th�nh tr?c ti?p cho kh�ch",
       "totalPrice": 3215000,
-      "status": "SHIPPING",
+      "status": "COMPLETED",
       "items": [
         {
           "id": "item-1",
@@ -796,7 +796,7 @@
         }
       ],
       "createdAt": "2026-10-06T06:47:17.649Z",
-      "updatedAt": "2026-10-07T06:47:17.649Z"
+      "updatedAt": "2026-10-09T09:25:26.345Z"
     },
     {
       "id": "ord-seed-2",
@@ -807,7 +807,7 @@
       "shippingAddress": "Số 123 Đường Kim Mã, Ba Đình, Hà Nội",
       "note": "Đóng gói cẩn thận có bọc chống sốc",
       "totalPrice": 1150000,
-      "status": "CONFIRMED",
+      "status": "PROCESSING",
       "items": [
         {
           "id": "item-3",
@@ -820,7 +820,12 @@
         }
       ],
       "createdAt": "2026-10-08T06:47:17.649Z",
-      "updatedAt": "2026-10-08T06:47:17.649Z"
+      "updatedAt": "2026-10-09T09:25:25.979Z",
+      "assignedStaffId": "usr-staff-1",
+      "assignedStaffName": "Nh�n vi�n B�n h�ng & So?n don",
+      "assignedStaffPhone": "0977777777",
+      "assignedAt": "2026-10-09T09:25:25.869Z",
+      "assignedBy": "Quản Lý Cửa Hàng (Quản lý)"
     },
     {
       "id": "ord-1791536170733",
