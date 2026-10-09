@@ -11,7 +11,9 @@ import {
   Truck, 
   XCircle, 
   Eye, 
-  X 
+  X,
+  Phone,
+  UserCheck 
 } from 'lucide-react';
 
 const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string }> = {
@@ -124,8 +126,120 @@ export default function AdminOrdersPage() {
         </div>
       </div>
 
-      {/* Orders Table */}
-      <div className="bg-zinc-900 border border-zinc-800/80 rounded-3xl overflow-hidden shadow-xs">
+      {/* Orders Container: Mobile Cards (md:hidden) and Desktop Table (hidden md:block) */}
+      
+      {/* 1. Mobile Cards View */}
+      <div className="md:hidden space-y-3.5">
+        {orders.length === 0 ? (
+          <div className="p-8 text-center bg-zinc-900 border border-zinc-800 rounded-3xl text-zinc-400 text-xs">
+            Không tìm thấy đơn hàng nào
+          </div>
+        ) : (
+          orders.map((o) => (
+            <div 
+              key={o.id}
+              className="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-3 shadow-md"
+            >
+              {/* Header: Mã đơn + Thời gian + Trạng thái */}
+              <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-zinc-800">
+                <div>
+                  <span className="font-mono font-bold text-blue-400 text-sm">
+                    {o.orderCode}
+                  </span>
+                  <span className="block text-[10px] text-zinc-500">
+                    {formatDate(o.createdAt)}
+                  </span>
+                </div>
+                
+                <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border ${
+                  STATUS_CONFIG[o.status]?.color || 'bg-zinc-800 text-zinc-300'
+                }`}>
+                  {STATUS_CONFIG[o.status]?.label || o.status}
+                </span>
+              </div>
+
+              {/* Thông tin khách hàng & Nút gọi điện 1 chạm */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-white text-xs truncate">{o.customerName}</h4>
+                    {o.customerType === 'WHOLESALE' ? (
+                      <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30 whitespace-nowrap">
+                        🏢 Sỉ ⚡
+                      </span>
+                    ) : (
+                      <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-zinc-800 text-zinc-400 whitespace-nowrap">
+                        👤 Lẻ
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-zinc-400 truncate mt-0.5">{o.shippingAddress}</p>
+                </div>
+
+                {/* Nút gọi trực tiếp từ điện thoại */}
+                <a
+                  href={`tel:${o.customerPhone}`}
+                  className="px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/40 rounded-xl text-xs font-bold transition flex items-center gap-1.5 active:scale-95 flex-shrink-0"
+                  title="Bấm để gọi điện cho khách"
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>Gọi {o.customerPhone}</span>
+                </a>
+              </div>
+
+              {/* Tóm tắt món hàng */}
+              <div className="p-2.5 bg-zinc-950/60 rounded-xl text-xs space-y-1">
+                <div className="flex justify-between items-center text-[11px] text-zinc-400">
+                  <span>{o.items.length} món trong giỏ:</span>
+                  <span className="font-bold text-white">Tổng: {formatPrice(o.totalPrice)}</span>
+                </div>
+                <p className="text-[11px] text-zinc-300 line-clamp-2">
+                  {o.items.map(i => `${i.productName} (x${i.quantity})`).join(', ')}
+                </p>
+              </div>
+
+              {/* Thanh thao tác nhanh */}
+              <div className="flex items-center gap-2 pt-1">
+                <select
+                  value={o.status}
+                  onChange={(e) => handleUpdateStatus(o.id, e.target.value as OrderStatus)}
+                  className={`flex-1 text-xs font-bold rounded-xl px-3 py-2 border outline-none bg-zinc-950 transition ${
+                    STATUS_CONFIG[o.status]?.color || ''
+                  }`}
+                >
+                  <option value="PENDING">Chờ xác nhận</option>
+                  <option value="CONFIRMED">Đã xác nhận</option>
+                  <option value="PROCESSING">Đang xử lý</option>
+                  <option value="SHIPPING">Đang giao</option>
+                  <option value="COMPLETED">Hoàn thành</option>
+                  <option value="CANCELLED">Đã hủy</option>
+                </select>
+
+                {o.status === 'PENDING' && (
+                  <button
+                    onClick={() => handleUpdateStatus(o.id, 'CONFIRMED')}
+                    className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition active:scale-95 flex items-center gap-1 whitespace-nowrap shadow-md shadow-emerald-600/30"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Duyệt</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setSelectedOrder(o)}
+                  className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-xl text-xs font-semibold transition flex items-center gap-1 active:scale-95"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>Xem</span>
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* 2. Desktop Table View */}
+      <div className="hidden md:block bg-zinc-900 border border-zinc-800/80 rounded-3xl overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
@@ -162,7 +276,11 @@ export default function AdminOrdersPage() {
                     )}
                   </td>
 
-                  <td className="py-4 px-4 font-mono text-zinc-400">{o.customerPhone}</td>
+                  <td className="py-4 px-4 font-mono text-zinc-400">
+                    <a href={`tel:${o.customerPhone}`} className="hover:text-emerald-400 transition underline">
+                      {o.customerPhone}
+                    </a>
+                  </td>
 
                   <td className="py-4 px-4 text-zinc-300">
                     <span className="font-semibold text-white">{o.items.length} món</span>

@@ -4,6 +4,7 @@ import { Providers } from './providers';
 import CartDrawer from '@/components/CartDrawer';
 import AuthModal from '@/components/AuthModal';
 import MobileBottomNav from '@/components/MobileBottomNav';
+import FloatingContactWidget from '@/components/FloatingContactWidget';
 
 export const metadata: Metadata = {
   title: 'NovaBeauty - ຮ້ານຂາຍເຄື່ອງສຳອາງ & ຄວາມງາມແທ້ 100% | Mỹ Phẩm Chính Hãng',
@@ -31,6 +32,7 @@ export default function RootLayout({
           <CartDrawer />
           <AuthModal />
           <MobileBottomNav />
+          <FloatingContactWidget />
         </Providers>
       </body>
     </html>

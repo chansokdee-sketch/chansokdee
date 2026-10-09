@@ -452,8 +452,130 @@ export default function AdminProductsPage() {
         </div>
       </div>
 
-      {/* Table Danh Sách Sản Phẩm Với 2 Bảng Giá */}
-      <div className="bg-zinc-900 border border-zinc-800/80 rounded-3xl overflow-hidden shadow-xs">
+      {/* Floating Action Button for Mobile: Quick Add Product */}
+      <button
+        onClick={openCreateModal}
+        className="md:hidden fixed bottom-18 right-4 z-40 p-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full shadow-2xl shadow-blue-600/50 flex items-center gap-2 font-bold text-xs active:scale-95 transition"
+        title="Thêm sản phẩm mới"
+      >
+        <Plus className="w-5 h-5 stroke-[2.5]" />
+        <span className="pr-1">Thêm món</span>
+      </button>
+
+      {/* 1. Mobile Cards View for Products (md:hidden) */}
+      <div className="md:hidden space-y-3">
+        {filteredProducts.length === 0 ? (
+          <div className="p-8 text-center bg-zinc-900 border border-zinc-800 rounded-3xl text-zinc-400 text-xs">
+            Không tìm thấy sản phẩm nào
+          </div>
+        ) : (
+          filteredProducts.map((p) => {
+            const isHidden = p.status === 'HIDDEN';
+            const isLow = p.stock <= 5;
+            const wholesalePrice = p.wholesalePrice !== undefined && p.wholesalePrice > 0 
+              ? p.wholesalePrice 
+              : Math.round(p.price * 0.8);
+
+            return (
+              <div 
+                key={p.id}
+                className="p-3.5 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-3 shadow-md"
+              >
+                {/* Header: Ảnh + Tên + Danh mục */}
+                <div className="flex gap-3">
+                  <img
+                    src={p.images[0] || 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=150&auto=format&fit=crop'}
+                    alt={p.name}
+                    className="w-16 h-16 object-cover rounded-xl bg-zinc-800 border border-zinc-700/60 flex-shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-bold text-white text-xs line-clamp-2 leading-snug">{p.name}</h4>
+                    {p.nameLao && p.nameLao !== p.name && (
+                      <p className="text-[11px] text-zinc-400 truncate mt-0.5">{p.nameLao}</p>
+                    )}
+                    <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                      <span className="text-[9px] font-mono bg-zinc-800 text-blue-400 px-1.5 py-0.5 rounded border border-zinc-700">
+                        {p.sku}
+                      </span>
+                      {p.brand && (
+                        <span className="text-[9px] bg-zinc-800 text-amber-300 px-1.5 py-0.5 rounded font-semibold border border-zinc-700">
+                          {p.brand}
+                        </span>
+                      )}
+                      <span className="text-[9px] bg-zinc-800 text-zinc-300 px-1.5 py-0.5 rounded">
+                        {categories.find(c => c.id === p.categoryId)?.name || 'Mỹ phẩm'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2 Bảng Giá: Giá Lẻ & Giá Sỉ */}
+                <div className="grid grid-cols-2 gap-2 p-2.5 bg-zinc-950/70 rounded-xl border border-zinc-800/80">
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] text-zinc-400 flex items-center gap-1">
+                      <Tag className="w-3 h-3 text-emerald-400" />
+                      <span>Giá lẻ (ຍ່ອຍ)</span>
+                    </span>
+                    <div className="font-bold text-emerald-400 text-xs font-mono">
+                      {formatPriceLAK(p.price)}
+                    </div>
+                  </div>
+
+                  <div className="space-y-0.5 border-l border-zinc-800 pl-2">
+                    <span className="text-[10px] text-amber-400 font-bold flex items-center gap-1">
+                      <Boxes className="w-3 h-3 text-amber-400" />
+                      <span>Giá sỉ ⚡ (ສົ່ງ)</span>
+                    </span>
+                    <div className="font-bold text-amber-400 text-xs font-mono">
+                      {formatPriceLAK(wholesalePrice)}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer: Tồn kho + Trạng thái ẩn/hiện + Thao tác */}
+                <div className="flex items-center justify-between gap-2 pt-1 border-t border-zinc-800/70">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-bold ${isLow ? 'text-amber-400' : 'text-zinc-300'}`}>
+                      Kho: {p.stock}
+                    </span>
+                    <button
+                      onClick={() => handleToggleStatus(p)}
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border transition ${
+                        isHidden
+                          ? 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                          : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                      }`}
+                    >
+                      {isHidden ? <EyeOff className="w-2.5 h-2.5" /> : <Eye className="w-2.5 h-2.5" />}
+                      <span>{isHidden ? 'Ẩn' : 'Hiện'}</span>
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => openEditModal(p)}
+                      className="px-2.5 py-1.5 bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white rounded-xl text-xs font-semibold transition flex items-center gap-1 active:scale-95"
+                    >
+                      <Edit3 className="w-3 h-3" />
+                      <span>Sửa</span>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(p.id, p.name)}
+                      className="p-1.5 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition active:scale-95"
+                      title="Xóa món"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* 2. Desktop Table Danh Sách Sản Phẩm Với 2 Bảng Giá (hidden md:block) */}
+      <div className="hidden md:block bg-zinc-900 border border-zinc-800/80 rounded-3xl overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>

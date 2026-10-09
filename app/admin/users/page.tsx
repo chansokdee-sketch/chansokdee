@@ -20,7 +20,8 @@ import {
   Edit3,
   KeyRound,
   MapPin,
-  RefreshCw
+  RefreshCw,
+  Phone
 } from 'lucide-react';
 
 interface UserItem {
@@ -377,8 +378,136 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* Users Table */}
-      <div className="bg-zinc-900 border border-zinc-800/80 rounded-3xl overflow-hidden shadow-xs">
+      {/* Users Container: Mobile Cards (md:hidden) and Desktop Table (hidden md:block) */}
+      
+      {/* 1. Mobile Cards View */}
+      <div className="md:hidden space-y-3">
+        {filteredUsers.length === 0 ? (
+          <div className="p-8 text-center bg-zinc-900 border border-zinc-800 rounded-3xl text-zinc-400 text-xs">
+            Không tìm thấy tài khoản nào
+          </div>
+        ) : (
+          filteredUsers.map((u) => {
+            const isAdmin = u.role === 'ADMIN';
+            const isStaff = u.role === 'STAFF';
+            const isWholesale = u.role === 'USER' && u.customerType === 'WHOLESALE';
+            const isRetail = u.role === 'USER' && u.customerType !== 'WHOLESALE';
+
+            return (
+              <div 
+                key={u.id}
+                className="p-3.5 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-3 shadow-md"
+              >
+                {/* Header: Avatar + Tên + Phân loại */}
+                <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-zinc-800">
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs flex-shrink-0 ${
+                      isAdmin 
+                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' 
+                        : isStaff 
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                        : isWholesale
+                        ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
+                        : 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
+                    }`}>
+                      {isAdmin ? '👑' : isStaff ? '👔' : isWholesale ? '🏢' : '👤'}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white text-xs">{u.name || 'Chưa đặt tên'}</h4>
+                      <span className="text-[10px] text-zinc-500">Tạo: {formatDate(u.createdAt)}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    {isAdmin ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                        👑 Admin
+                      </span>
+                    ) : isStaff ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                        👔 Staff
+                      </span>
+                    ) : isWholesale ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                        🏢 Sỉ ⚡
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/40">
+                        👤 Lẻ
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Số điện thoại + Nút gọi 1 chạm */}
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono font-bold text-blue-400 text-xs">{u.phone}</span>
+                  <a
+                    href={`tel:${u.phone}`}
+                    className="px-2.5 py-1 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 rounded-xl text-xs font-semibold transition flex items-center gap-1 active:scale-95"
+                  >
+                    <Phone className="w-3 h-3" />
+                    <span>Gọi điện</span>
+                  </a>
+                </div>
+
+                {/* Địa chỉ & Thống kê chi tiêu */}
+                <div className="p-2.5 bg-zinc-950/60 rounded-xl text-xs space-y-1">
+                  <div className="flex justify-between items-center text-[11px]">
+                    <span className="text-zinc-400">Đơn hàng: <strong className="text-white">{u.orderCount}</strong></span>
+                    <span className="text-zinc-400">Đã chi: <strong className="text-emerald-400 font-mono">{formatPriceLAK(u.totalSpent)}</strong></span>
+                  </div>
+                  {u.address && (
+                    <p className="text-[11px] text-zinc-400 truncate pt-0.5 border-t border-zinc-900">
+                      📍 {u.address}
+                    </p>
+                  )}
+                </div>
+
+                {/* Chuyển đổi 1 chạm (Khách sỉ / lẻ) & Thao tác */}
+                <div className="flex items-center justify-between gap-2 pt-1">
+                  {!isAdmin && !isStaff ? (
+                    <button
+                      type="button"
+                      onClick={() => handleQuickToggleCustomerType(u)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 active:scale-95 ${
+                        isWholesale
+                          ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                          : 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500 hover:text-zinc-950'
+                      }`}
+                    >
+                      <Boxes className="w-3 h-3" />
+                      <span>{isWholesale ? 'Chuyển Khách Lẻ' : '⚡ Lên Khách Sỉ'}</span>
+                    </button>
+                  ) : <div />}
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => openEditModal(u)}
+                      className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-xl text-xs font-semibold transition flex items-center gap-1 active:scale-95"
+                    >
+                      <Edit3 className="w-3 h-3" />
+                      <span>Sửa/Đổi pass</span>
+                    </button>
+                    {!isAdmin && (
+                      <button
+                        onClick={() => handleDeleteUser(u)}
+                        className="p-1.5 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition active:scale-95"
+                        title="Xóa tài khoản"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* 2. Desktop Table (hidden md:block) */}
+      <div className="hidden md:block bg-zinc-900 border border-zinc-800/80 rounded-3xl overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
@@ -420,7 +549,11 @@ export default function AdminUsersPage() {
                       </div>
                     </td>
 
-                    <td className="py-4 px-4 font-mono font-bold text-blue-400">{u.phone}</td>
+                    <td className="py-4 px-4 font-mono font-bold text-blue-400">
+                      <a href={`tel:${u.phone}`} className="hover:underline">
+                        {u.phone}
+                      </a>
+                    </td>
 
                     {/* Cột Phân loại & Giá áp dụng */}
                     <td className="py-4 px-4">

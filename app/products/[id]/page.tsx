@@ -20,7 +20,8 @@ import {
   AlertTriangle,
   Tag,
   Boxes,
-  Sparkles
+  Sparkles,
+  Phone
 } from 'lucide-react';
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -114,7 +115,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-32 sm:pb-8 flex-1 w-full">
         {/* Breadcrumb */}
         <div className="mb-6 flex items-center gap-2 text-xs text-zinc-500 flex-wrap">
           <Link href="/" className="hover:text-rose-600 flex items-center gap-1">
@@ -357,29 +358,63 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       </main>
 
       {/* Mobile Sticky Bottom Action Bar (Fixed above bottom nav) */}
-      <div className="sm:hidden fixed bottom-12 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-zinc-200/90 px-4 py-2 flex items-center justify-between gap-3 shadow-xl">
-        <div className="flex flex-col min-w-0">
-          <span className="text-[10px] text-zinc-500 font-medium">NovaStore</span>
-          <span className="text-sm font-black text-blue-600 truncate">{formatPrice(product.price)}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleAddToCart}
-            disabled={isOutOfStock}
-            className="p-2.5 rounded-xl bg-zinc-100 active:bg-zinc-200 text-zinc-800 font-bold text-xs flex items-center justify-center active:scale-95 disabled:opacity-50 transition"
-            title={t('add_to_cart')}
-          >
-            <ShoppingBag className="w-5 h-5 text-zinc-700" />
-          </button>
-          <button
-            onClick={handleBuyNow}
-            disabled={isOutOfStock}
-            className="py-2.5 px-5 rounded-xl bg-blue-600 active:bg-blue-700 text-white font-bold text-xs shadow-md transition active:scale-95 disabled:opacity-50"
-          >
-            {t('buy_now')}
-          </button>
-        </div>
-      </div>
+      {(() => {
+        const wholesalePrice = product.wholesalePrice !== undefined && product.wholesalePrice > 0
+          ? product.wholesalePrice
+          : Math.round(product.price * 0.8);
+        const activePrice = customerMode === 'WHOLESALE' ? wholesalePrice : product.price;
+
+        return (
+          <div className="md:hidden fixed bottom-14 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-zinc-200/90 px-3.5 py-2.5 flex items-center justify-between gap-2.5 shadow-xl">
+            {/* Quick Hotline Call */}
+            <a
+              href="tel:02055777975"
+              className="p-2.5 rounded-xl bg-emerald-50 active:bg-emerald-100 text-emerald-700 border border-emerald-200 flex items-center justify-center active:scale-95 transition flex-shrink-0"
+              title="Gọi tư vấn trực tiếp"
+            >
+              <Phone className="w-4 h-4 text-emerald-600" />
+            </a>
+
+            {/* Active Price */}
+            <div className="flex flex-col min-w-0 flex-1">
+              <div className="flex items-center gap-1">
+                <span className={`text-base font-black font-mono leading-tight truncate ${
+                  customerMode === 'WHOLESALE' ? 'text-amber-600' : 'text-blue-600'
+                }`}>
+                  {formatPrice(activePrice)}
+                </span>
+                {customerMode === 'WHOLESALE' && (
+                  <span className="text-[9px] bg-amber-500/20 text-amber-800 font-bold px-1.5 py-0.2 rounded">
+                    Sỉ ⚡
+                  </span>
+                )}
+              </div>
+              <span className="text-[10px] text-zinc-400">
+                {customerMode === 'WHOLESALE' ? 'Giá khách sỉ' : 'Giá khách lẻ'}
+              </span>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={handleAddToCart}
+                disabled={isOutOfStock}
+                className="p-2.5 rounded-xl bg-zinc-100 active:bg-zinc-200 text-zinc-800 font-bold text-xs flex items-center justify-center active:scale-95 disabled:opacity-50 transition"
+                title={t('add_to_cart')}
+              >
+                <ShoppingBag className="w-5 h-5 text-zinc-700" />
+              </button>
+              <button
+                onClick={handleBuyNow}
+                disabled={isOutOfStock}
+                className="py-2.5 px-4.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 active:from-blue-700 active:to-indigo-700 text-white font-bold text-xs shadow-md shadow-blue-600/20 transition active:scale-95 disabled:opacity-50 whitespace-nowrap"
+              >
+                {t('buy_now')}
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       <Footer />
     </div>

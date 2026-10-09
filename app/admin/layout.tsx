@@ -18,6 +18,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import AdminMobileBottomNav from '@/components/AdminMobileBottomNav';
 
 const ADMIN_NAV_ITEMS = [
   { href: '/admin', label: 'Tổng quan (Dashboard)', icon: LayoutDashboard },
@@ -226,11 +227,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 md:pl-64 flex flex-col min-h-screen pt-14 md:pt-0">
-        <main className="p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto flex-1">
+      <div className="flex-1 md:pl-64 flex flex-col min-h-screen pt-14 md:pt-0 pb-20 md:pb-0">
+        <main className="p-3.5 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto flex-1">
           {children}
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation for Admin / Staff */}
+      <AdminMobileBottomNav />
 
     </div>
   );
