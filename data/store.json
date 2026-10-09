@@ -28,7 +28,7 @@
       "role": "USER",
       "address": "Số 123 Đường Kim Mã, Ba Đình, Hà Nội",
       "createdAt": "2026-10-08T06:47:17.648Z",
-      "customerType": "WHOLESALE"
+      "customerType": "RETAIL"
     }
   ],
   "categories": [
@@ -267,7 +267,7 @@
       "slug": "son-dior-rouge-dior-999-velvet",
       "description": "Huyền thoại đỏ thuần kiêu kỳ của thương hiệu Dior Pháp. Công thức chuyển giao không lem bền màu suốt 16 giờ, chiết xuất hoa mẫu đơn đỏ dưỡng ẩm môi căng mịn tự nhiên suốt cả ngày dài.",
       "price": 1150000,
-      "stock": 18,
+      "stock": 17,
       "categoryId": "cat-lipstick",
       "subCategoryId": "sub-matte-lip",
       "subCategoryName": "Son Thỏi Lì",
@@ -279,7 +279,7 @@
         "https://images.unsplash.com/photo-1625093742435-6fa192b6fb10?q=80&w=1000&auto=format&fit=crop"
       ],
       "createdAt": "2026-10-08T06:47:17.648Z",
-      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-09T08:56:10.732Z",
       "nameLao": "ລິບສະຕິກ Dior Rouge Dior Forever Matte 999 Velvet ແດງຄລາສສິກ",
       "descriptionLao": "ຕຳນານສີແດງສຸດຫຼູຫຼາຈາກແບຣນ Dior ຝຣັ່ງ. ສູດຕິດທົນບໍ່ເລິະຕະຫຼອດ 16 ຊົ່ວໂມງ, ສານສະກັດຈາກດອກໂບຕັນແດງບຳລຸງຮິມສົບນຸ່ມນຽນຕະຫຼອດມື້.",
       "wholesalePrice": 920000,
@@ -292,7 +292,7 @@
       "slug": "nuoc-hoa-chanel-coco-mademoiselle-100ml",
       "description": "Hương thơm biểu tượng thanh lịch, quý phái và đầy mê hoặc từ Paris. Nốt hương cam tươi mát bùng nổ, hòa quyện cùng cánh hoa hồng Thổ Nhĩ Kỳ và hoắc hương phương Đông vương vấn khó quên.",
       "price": 4250000,
-      "stock": 12,
+      "stock": 11,
       "categoryId": "cat-perfume",
       "subCategoryId": "sub-women-perfume",
       "subCategoryName": "Nước Hoa Nữ",
@@ -304,7 +304,7 @@
         "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=1000&auto=format&fit=crop"
       ],
       "createdAt": "2026-10-08T06:47:17.648Z",
-      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-09T08:56:10.732Z",
       "nameLao": "ນ້ຳຫອມຜູ້ຍິງ Chanel Coco Mademoiselle Eau De Parfum 100ml",
       "descriptionLao": "ກິ່ນຫອມສັນຍະລັກແຫ່ງຄວາມຫຼູຫຼາ, ມີສະເໜ່ ແລະ ໂດດເດັ່ນຈາກ ປາຣີ. ກິ່ນສົ້ມສົດຊື່ນຜະສົມຜະສານກັບດອກກຸຫຼາບຕວັກກີ ແລະ ດອກມະລິສຸດໂຣແມນຕິກ.",
       "wholesalePrice": 3400000,
@@ -317,7 +317,7 @@
       "slug": "phan-nuoc-ysl-le-cushion-encre-de-peau-14g",
       "description": "Thiết kế vỏ da chevron sang chảnh bậc nhất thế giới. Kết cấu hạt phấn nano siêu nhẹ tiệp vào da, che phủ khuyết điểm hoàn hảo, kiềm dầu giữ lớp nền mịn màng bền màu suốt 24 giờ.",
       "price": 1650000,
-      "stock": 22,
+      "stock": 21,
       "categoryId": "cat-makeup",
       "subCategoryId": "sub-cushion",
       "subCategoryName": "Cushion & Kem Nền",
@@ -329,7 +329,7 @@
         "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1000&auto=format&fit=crop"
       ],
       "createdAt": "2026-10-08T06:47:17.648Z",
-      "updatedAt": "2026-10-08T06:47:17.648Z",
+      "updatedAt": "2026-10-09T08:56:10.732Z",
       "nameLao": "ຄູຊັ່ນຜິວເນຽນທຳມະຊາດ YSL Le Cushion Encre De Peau SPF50 14g",
       "descriptionLao": "ຄູຊັ່ນລະດັບໄຮເອນຈາກ YSL ມອບງານຜິວແມັດເປັ່ງປະກາຍແບບ luminous matte. ປົກປິດຮອຍດ່າງດຳດີຢ້ຽມ, ບາງເບົາສະບາຍຜິວ ແລະ ຄຸມມັນຕະຫຼອດມື້.",
       "wholesalePrice": 1320000,
@@ -730,6 +730,28 @@
       "updatedAt": "2026-10-09T07:02:28.262Z",
       "wholesalePrice": 35,
       "minWholesaleQty": 3
+    },
+    {
+      "name": "tnt",
+      "nameLao": "tnt",
+      "sku": "NOVA-5218",
+      "slug": "tnt",
+      "description": "",
+      "price": 1000,
+      "wholesalePrice": 800,
+      "minWholesaleQty": 3,
+      "stock": 20,
+      "categoryId": "cat-skincare",
+      "subCategoryId": "sub-serum",
+      "subCategoryName": "Serum & Tinh Chất",
+      "subCategoryNameLao": "ເຊຣັ່ມ & ຫົວເຊື້ອ",
+      "status": "ACTIVE",
+      "images": [
+        "/uploads/phone-upload-1791534857206-p834k4.webp"
+      ],
+      "id": "prod-1791535821769",
+      "createdAt": "2026-10-09T08:50:21.769Z",
+      "updatedAt": "2026-10-09T08:50:21.769Z"
     }
   ],
   "orders": [
@@ -789,6 +811,55 @@
       ],
       "createdAt": "2026-10-08T06:47:17.649Z",
       "updatedAt": "2026-10-08T06:47:17.649Z"
+    },
+    {
+      "id": "ord-1791536170733",
+      "orderCode": "ORD-20261009-4110",
+      "userId": "usr-customer-1",
+      "customerName": "Nguyễn Thu Trang",
+      "customerPhone": "0912345678",
+      "customerType": "RETAIL",
+      "shippingAddress": "Số 123 Đường Kim Mã, Ba Đình, Hà Nội",
+      "note": "",
+      "totalPrice": 7050000,
+      "status": "PROCESSING",
+      "items": [
+        {
+          "id": "item-1791536170732-8m9g",
+          "orderId": "ord-1791536170733",
+          "productId": "prod-4",
+          "productName": "Nước Hoa Nữ Chanel Coco Mademoiselle Eau De Parfum 100ml",
+          "productNameLao": "ນ້ຳຫອມຜູ້ຍິງ Chanel Coco Mademoiselle Eau De Parfum 100ml",
+          "productImage": "https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1000&auto=format&fit=crop",
+          "quantity": 1,
+          "price": 4250000,
+          "isWholesale": false
+        },
+        {
+          "id": "item-1791536170732-54m4",
+          "orderId": "ord-1791536170733",
+          "productId": "prod-3",
+          "productName": "Son Thỏi Dior Rouge Dior Forever Matte 999 Velvet Red",
+          "productNameLao": "ລິບສະຕິກ Dior Rouge Dior Forever Matte 999 Velvet ແດງຄລາສສິກ",
+          "productImage": "https://images.unsplash.com/photo-1586495777744-4413f21062fa?q=80&w=1000&auto=format&fit=crop",
+          "quantity": 1,
+          "price": 1150000,
+          "isWholesale": false
+        },
+        {
+          "id": "item-1791536170732-bird",
+          "orderId": "ord-1791536170733",
+          "productId": "prod-5",
+          "productName": "Phấn Nước Cao Cấp YSL Le Cushion Encre De Peau SPF50 / PA+++ 14g",
+          "productNameLao": "ຄູຊັ່ນຜິວເນຽນທຳມະຊາດ YSL Le Cushion Encre De Peau SPF50 14g",
+          "productImage": "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?q=80&w=1000&auto=format&fit=crop",
+          "quantity": 1,
+          "price": 1650000,
+          "isWholesale": false
+        }
+      ],
+      "createdAt": "2026-10-09T08:56:10.732Z",
+      "updatedAt": "2026-10-09T08:57:26.991Z"
     }
   ],
   "siteSettings": {
@@ -824,7 +895,7 @@
     "productGridColumns": 4,
     "topBarBgColor": "zinc",
     "logoUrl": "",
-    "showFlashSale": true,
+    "showFlashSale": false,
     "flashSaleBadge": "⚡ FLASH SALE ຄວາມງາມ",
     "flashSaleTitle": "Flash Sale ເຄື່ອງສຳອາງ - ຫຼຸດລາຄາສູງສຸດ 50%",
     "flashSaleSubtitle": "ໂອກາດເປັນເຈົ້າຂອງເຄື່ອງສຳອາງ ແລະ ນ້ຳຫອມແທ້ໃນລາຄາທີ່ດີທີ່ສຸດມື້ນີ້",

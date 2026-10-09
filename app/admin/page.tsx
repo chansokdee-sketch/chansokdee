@@ -48,7 +48,7 @@ export default function AdminDashboardPage() {
   }, []);
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+    return (price || 0).toLocaleString('lo-LA') + ' ₭';
   };
 
   const formatDate = (iso: string) => {
@@ -70,28 +70,57 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
+      {/* Staff Order Desk Banner */}
+      <div className="bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-red-500/20 border border-amber-500/40 rounded-3xl p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-amber-500 text-zinc-950 font-black flex items-center justify-center text-xl shadow-lg shrink-0 animate-bounce">
+            🔔
+          </div>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-sm sm:text-base font-black text-white">Bàn Tiếp Nhận Order (Nhân Viên)</h2>
+              {(stats?.pendingOrdersCount || 0) > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-red-500 text-white text-[10px] sm:text-[11px] font-black animate-pulse">
+                  {stats?.pendingOrdersCount} đơn mới!
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] sm:text-xs text-zinc-300 mt-0.5">
+              Chuông Ting-Ting tự động khi có khách đặt • Gọi khách 1 chạm • Chuyển trạng thái bếp & giao hàng
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/admin/orders"
+          className="w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-zinc-950 font-black rounded-2xl text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 shrink-0"
+        >
+          ⚡ Vào Bàn Nhận Order Ngay
+          <ArrowUpRight className="w-4 h-4" />
+        </Link>
+      </div>
+
       {/* Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white">Tổng Quan Quản Trị</h1>
+          <h1 className="text-xl sm:text-2xl font-black text-white">Tổng Quan Quản Trị</h1>
           <p className="text-xs text-zinc-400 mt-1">
             Số liệu thống kê thời gian thực của hệ thống NovaStore
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/admin/settings"
-            className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-indigo-500/20"
+            className="px-3.5 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-indigo-500/20"
           >
             <Boxes className="w-4 h-4" />
-            Chỉnh sửa toàn bộ website
+            Chỉnh sửa website
           </Link>
           <Link
             href="/admin/products"
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-blue-500/20"
+            className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-blue-500/20"
           >
-            + Thêm sản phẩm mới
+            + Thêm món mới
           </Link>
         </div>
       </div>
@@ -210,7 +239,32 @@ export default function AdminDashboardPage() {
           </Link>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile View: Cards */}
+        <div className="md:hidden divide-y divide-zinc-800/80">
+          {stats?.recentOrders.map((o) => (
+            <div key={o.id} className="py-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-mono font-black text-xs text-blue-400">{o.orderCode}</span>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                  {o.status}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-white">{o.customerName}</span>
+                <a href={`tel:${o.customerPhone}`} className="text-zinc-400 font-mono text-[11px] underline">
+                  {o.customerPhone}
+                </a>
+              </div>
+              <div className="flex items-center justify-between text-xs pt-1">
+                <span className="text-[11px] text-zinc-500">{formatDate(o.createdAt)}</span>
+                <span className="font-black text-amber-400">{formatPrice(o.totalPrice)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop View: Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-zinc-800 text-zinc-400 uppercase tracking-wider text-[10px]">
@@ -228,7 +282,7 @@ export default function AdminDashboardPage() {
                   <td className="py-3.5 font-mono font-bold text-blue-400">{o.orderCode}</td>
                   <td className="py-3.5 font-medium text-white">{o.customerName}</td>
                   <td className="py-3.5 text-zinc-400 font-mono">{o.customerPhone}</td>
-                  <td className="py-3.5 font-bold text-emerald-400">{formatPrice(o.totalPrice)}</td>
+                  <td className="py-3.5 font-bold text-amber-400">{formatPrice(o.totalPrice)}</td>
                   <td className="py-3.5 text-zinc-400">{formatDate(o.createdAt)}</td>
                   <td className="py-3.5">
                     <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
