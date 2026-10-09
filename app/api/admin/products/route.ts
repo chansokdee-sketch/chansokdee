@@ -52,10 +52,13 @@ export async function POST(req: NextRequest) {
     }
 
     const generatedSku = sku?.trim() || `SKU-${Date.now().toString(36).toUpperCase()}`;
-    const slug = name
+    let slug = name
       .toLowerCase()
       .replace(/[^\w\s-]/g, '')
       .replace(/\s+/g, '-');
+    if (!slug || slug.replace(/-/g, '').length === 0) {
+      slug = `item-${Date.now().toString(36)}`;
+    }
 
     const newProduct = db.products.create({
       name: name.trim(),

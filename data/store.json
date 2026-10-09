@@ -666,6 +666,25 @@
       "updatedAt": "2026-10-08T06:47:17.648Z",
       "nameLao": "ໂລຊັ່ນບຳລຸງຜິວກາຍຂາວໃສກາງຄືນ Vaseline Gluta-Hya Flawless Glow 330ml",
       "descriptionLao": "ໂລຊັ່ນບຳລຸງຜິວກາຍທີ່ດີກວ່າວິຕາມິນ C 10 ເທົ່າ. ກລູຕ້າໂກລ ແລະ ໄຮຢາລູຣອນ ເຕີມຄວາມຊຸ່ມຊື່ນໃຫ້ຜິວເປັ່ງປະກາຍ, ກະຈ່າງໃສພາຍໃນ 5 ມື້."
+    },
+    {
+      "name": "cy",
+      "sku": "NOVA-7890",
+      "slug": "cy",
+      "description": "",
+      "price": 44,
+      "stock": 20,
+      "categoryId": "cat-skincare",
+      "subCategoryId": "sub-serum",
+      "subCategoryName": "Serum & Tinh Chất",
+      "subCategoryNameLao": "ເຊຣັ່ມ & ຫົວເຊື້ອ",
+      "status": "ACTIVE",
+      "images": [
+        "/uploads/phone-upload-1791529307840-cus7r3.webp"
+      ],
+      "id": "prod-1791529348262",
+      "createdAt": "2026-10-09T07:02:28.262Z",
+      "updatedAt": "2026-10-09T07:02:28.262Z"
     }
   ],
   "orders": [
