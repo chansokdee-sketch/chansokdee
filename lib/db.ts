@@ -48,6 +48,15 @@ function getInitialData(): DatabaseSchema {
       createdAt: now,
     },
     {
+      id: 'usr-manager-1',
+      phone: '0966666666',
+      passwordHash: '$2b$10$AiXYzOpYJY20DsVhy45FY.5cCpNVUks6VyP2b.DLb6qsdJwk/tpmq',
+      name: 'Quản Lý Cửa Hàng',
+      role: 'MANAGER',
+      address: 'Văn phòng Điều phối, Vientiane',
+      createdAt: now,
+    },
+    {
       id: 'usr-staff-1',
       phone: '0977777777',
       passwordHash: '$2b$10$6ADPzCohP/2CS4nozEZ0Pen7tNFvNm9XBqf70H71yQWMpHHBbTyku',
@@ -741,6 +750,37 @@ export const db = {
       writeData(data);
 
       return { order: newOrder };
+    },
+    update: (orderId: string, updates: Partial<Order>): Order | null => {
+      const data = readData();
+      const order = data.orders.find(o => o.id === orderId);
+      if (!order) return null;
+
+      const oldStatus = order.status;
+      if (updates.status && updates.status !== oldStatus) {
+        order.status = updates.status;
+        // If cancelled from an active status, restore stock
+        if (updates.status === 'CANCELLED' && oldStatus !== 'CANCELLED') {
+          for (const item of order.items) {
+            const prod = data.products.find(p => p.id === item.productId);
+            if (prod) {
+              prod.stock += item.quantity;
+              prod.updatedAt = new Date().toISOString();
+            }
+          }
+        }
+      }
+
+      if (updates.assignedStaffId !== undefined) order.assignedStaffId = updates.assignedStaffId;
+      if (updates.assignedStaffName !== undefined) order.assignedStaffName = updates.assignedStaffName;
+      if (updates.assignedStaffPhone !== undefined) order.assignedStaffPhone = updates.assignedStaffPhone;
+      if (updates.assignedAt !== undefined) order.assignedAt = updates.assignedAt;
+      if (updates.assignedBy !== undefined) order.assignedBy = updates.assignedBy;
+      if (updates.note !== undefined) order.note = updates.note;
+
+      order.updatedAt = new Date().toISOString();
+      writeData(data);
+      return order;
     },
     updateStatus: (orderId: string, status: OrderStatus): Order | null => {
       const data = readData();

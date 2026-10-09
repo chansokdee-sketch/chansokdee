@@ -95,6 +95,16 @@ export default function Navbar() {
                   {t('nav_admin_portal')}
                 </Link>
               </div>
+            ) : user?.role === 'MANAGER' ? (
+              <div className="hidden sm:flex items-center gap-2">
+                <Link 
+                  href="/admin" 
+                  className="flex items-center gap-1 text-purple-400 hover:text-purple-300 font-medium whitespace-nowrap"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>💼 Quản Lý NovaStore</span>
+                </Link>
+              </div>
             ) : user?.role === 'STAFF' ? (
               <div className="hidden sm:flex items-center gap-2">
                 <Link 
@@ -216,7 +226,7 @@ export default function Navbar() {
                   <div className="hidden sm:block text-left text-xs leading-tight">
                     <p className="font-semibold text-zinc-900 truncate max-w-[100px]">{user.name || user.phone}</p>
                     <p className="text-[10px] text-zinc-500 font-medium">
-                      {user.role === 'ADMIN' ? '👑 Boss Hải' : user.role === 'STAFF' ? '👔 Nhân Viên' : t('nav_customer_badge')}
+                      {user.role === 'ADMIN' ? '👑 Boss Hải' : user.role === 'MANAGER' ? '💼 Quản Lý' : user.role === 'STAFF' ? '👔 Nhân Viên' : t('nav_customer_badge')}
                     </p>
                   </div>
                 </button>
@@ -231,14 +241,14 @@ export default function Navbar() {
                       <p className="text-xs text-zinc-500">{user.phone}</p>
                     </div>
 
-                    {(user.role === 'ADMIN' || user.role === 'STAFF') && (
+                    {(user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'STAFF') && (
                       <Link
                         href="/admin"
                         onClick={() => setIsUserMenuOpen(false)}
                         className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-blue-600 hover:bg-blue-50 transition"
                       >
                         <ShieldCheck className="w-4 h-4" />
-                        {user.role === 'ADMIN' ? t('nav_admin_portal') : 'Bàn làm việc Nhân viên'}
+                        {user.role === 'ADMIN' ? t('nav_admin_portal') : user.role === 'MANAGER' ? '💼 Bàn Quản Lý (Giao đơn)' : '👔 Bàn làm việc Nhân viên'}
                       </Link>
                     )}
 
@@ -329,19 +339,19 @@ export default function Navbar() {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-zinc-900">{user.name || t('nav_account')}</p>
-                    <p className="text-[11px] text-zinc-500">{user.phone} ({user.role === 'ADMIN' ? '👑 Boss Hải' : user.role === 'STAFF' ? '👔 Nhân Viên' : t('nav_customer_badge')})</p>
+                    <p className="text-[11px] text-zinc-500">{user.phone} ({user.role === 'ADMIN' ? '👑 Boss Hải' : user.role === 'MANAGER' ? '💼 Quản Lý' : user.role === 'STAFF' ? '👔 Nhân Viên' : t('nav_customer_badge')})</p>
                   </div>
                 </div>
 
                 <div className="pt-2 border-t border-zinc-200/60 space-y-1 text-xs">
-                  {(user.role === 'ADMIN' || user.role === 'STAFF') && (
+                  {(user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'STAFF') && (
                     <Link
                       href="/admin"
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="flex items-center gap-2 py-2 px-3 text-emerald-600 font-bold hover:bg-emerald-50 rounded-xl"
                     >
                       <ShieldCheck className="w-4 h-4" />
-                      {user.role === 'ADMIN' ? (t('nav_admin_portal') || 'Trang Quản Trị') : '👔 Bàn làm việc Nhân viên'}
+                      {user.role === 'ADMIN' ? (t('nav_admin_portal') || 'Trang Quản Trị') : user.role === 'MANAGER' ? '💼 Bàn Quản Lý (Giao đơn)' : '👔 Bàn làm việc Nhân viên'}
                     </Link>
                   )}
                   <Link

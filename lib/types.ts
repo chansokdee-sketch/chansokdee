@@ -1,4 +1,4 @@
-export type Role = 'ADMIN' | 'STAFF' | 'USER';
+export type Role = 'ADMIN' | 'MANAGER' | 'STAFF' | 'USER';
 
 export type ProductStatus = 'ACTIVE' | 'HIDDEN';
 
@@ -95,6 +95,11 @@ export interface Order {
   totalPrice: number;
   status: OrderStatus;
   items: OrderItem[];
+  assignedStaffId?: string;
+  assignedStaffName?: string;
+  assignedStaffPhone?: string;
+  assignedAt?: string;
+  assignedBy?: string;
   createdAt: string;
   updatedAt: string;
 }

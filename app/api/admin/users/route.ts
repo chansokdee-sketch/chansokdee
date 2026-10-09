@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { requireAdmin } from '@/lib/auth';
+import { requireAdmin, requireManagerOrAdmin, requireStaffOrAdmin } from '@/lib/auth';
 
 import bcrypt from 'bcryptjs';
 
 export async function GET(req: NextRequest) {
   try {
-    const authRes = await requireAdmin(req);
+    const authRes = await requireStaffOrAdmin(req);
     if ('error' in authRes) {
       return NextResponse.json({ error: authRes.error }, { status: authRes.status });
     }
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const authRes = await requireAdmin(req);
+    const authRes = await requireManagerOrAdmin(req);
     if ('error' in authRes) {
       return NextResponse.json({ error: authRes.error }, { status: authRes.status });
     }
@@ -65,10 +65,19 @@ export async function POST(req: NextRequest) {
     }
 
     const passwordHash = bcrypt.hashSync(password, 10);
-    const assignedRole = role === 'STAFF' ? 'STAFF' : 'USER';
+    let assignedRole: 'ADMIN' | 'MANAGER' | 'STAFF' | 'USER' = 'USER';
+    if (role === 'MANAGER' && authRes.user.role === 'ADMIN') {
+      assignedRole = 'MANAGER';
+    } else if (role === 'STAFF') {
+      assignedRole = 'STAFF';
+    } else {
+      assignedRole = 'USER';
+    }
     const assignedCustomerType = customerType === 'WHOLESALE' ? 'WHOLESALE' : 'RETAIL';
 
-    const defaultName = assignedRole === 'STAFF' 
+    const defaultName = assignedRole === 'MANAGER'
+      ? 'Quản lý cửa hàng'
+      : assignedRole === 'STAFF' 
       ? 'Nhân viên bán hàng' 
       : (assignedCustomerType === 'WHOLESALE' ? 'Khách sỉ đại lý' : 'Khách mua lẻ');
 
@@ -91,7 +100,7 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const authRes = await requireAdmin(req);
+    const authRes = await requireManagerOrAdmin(req);
     if ('error' in authRes) {
       return NextResponse.json({ error: authRes.error }, { status: authRes.status });
     }
@@ -113,8 +122,13 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Không thể hạ quyền của Boss Hải' }, { status: 403 });
     }
 
+    // Only Boss Hai (ADMIN) can promote or modify MANAGER
+    if ((targetUser.role === 'MANAGER' || role === 'MANAGER') && authRes.user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Chỉ Boss Hải mới có quyền quản lý chức vụ Quản lý' }, { status: 403 });
+    }
+
     const updates: Partial<typeof targetUser> = {};
-    if (role && (role === 'STAFF' || role === 'USER')) {
+    if (role && (role === 'MANAGER' || role === 'STAFF' || role === 'USER')) {
       updates.role = role;
     }
     if (customerType && (customerType === 'RETAIL' || customerType === 'WHOLESALE')) {

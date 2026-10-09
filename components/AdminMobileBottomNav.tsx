@@ -22,8 +22,8 @@ export default function AdminMobileBottomNav() {
     return null;
   }
 
-  // Only show if user is admin or staff
-  if (!user || (user.role !== 'ADMIN' && user.role !== 'STAFF')) {
+  // Only show if user is admin, manager, or staff
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'MANAGER' && user.role !== 'STAFF')) {
     return null;
   }
 
@@ -70,8 +70,8 @@ export default function AdminMobileBottomNav() {
           <span className="text-[10px] mt-0.5 tracking-tight">Đơn hàng</span>
         </Link>
 
-        {/* 4. Khách hàng (cho Admin) hoặc Kho (cho Staff) */}
-        {user.role === 'ADMIN' ? (
+        {/* 4. Khách hàng/NV (cho Admin/Manager) hoặc Kho (cho Staff) */}
+        {user.role === 'ADMIN' || user.role === 'MANAGER' ? (
           <Link
             href="/admin/users"
             className={`flex flex-col items-center justify-center py-1 transition active:scale-95 ${
@@ -79,7 +79,7 @@ export default function AdminMobileBottomNav() {
             }`}
           >
             <Users className={`w-5 h-5 ${isUsers ? 'stroke-[2.5]' : 'stroke-2'}`} />
-            <span className="text-[10px] mt-0.5 tracking-tight">Khách sỉ/lẻ</span>
+            <span className="text-[10px] mt-0.5 tracking-tight">Người dùng</span>
           </Link>
         ) : (
           <Link

@@ -26,7 +26,11 @@ import {
   MapPin,
   Check,
   Boxes,
-  FileText
+  FileText,
+  UserPlus,
+  CheckCheck,
+  ShieldCheck,
+  Zap
 } from 'lucide-react';
 
 const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string; badgeBg: string }> = {
@@ -62,6 +66,13 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string; badgeBg
   },
 };
 
+interface StaffMember {
+  id: string;
+  name: string;
+  phone: string;
+  role: string;
+}
+
 export default function AdminOrdersPage() {
   const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -74,9 +85,33 @@ export default function AdminOrdersPage() {
   const [copiedToast, setCopiedToast] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Manager & Staff Assignment State
+  const [staffList, setStaffList] = useState<StaffMember[]>([]);
+  const [assignModalOrder, setAssignModalOrder] = useState<Order | null>(null);
+  const [selectedStaffId, setSelectedStaffId] = useState<string>('');
+  const [isAssigning, setIsAssigning] = useState(false);
+  const [assignToast, setAssignToast] = useState<string | null>(null);
+
   // Ref tracking seen order IDs to trigger audio & banner on new orders
   const knownOrderIdsRef = useRef<Set<string>>(new Set());
   const isFirstLoadRef = useRef(true);
+
+  // Fetch staff list for assignment
+  useEffect(() => {
+    const fetchStaff = async () => {
+      try {
+        const res = await fetch('/api/admin/users');
+        const data = await res.json();
+        if (data.users) {
+          const staffOnly = data.users.filter((u: any) => u.role === 'STAFF' || u.role === 'MANAGER');
+          setStaffList(staffOnly);
+        }
+      } catch (err) {
+        console.error('Fetch staff error:', err);
+      }
+    };
+    fetchStaff();
+  }, []);
 
   // Load sound setting from localStorage
   useEffect(() => {
@@ -211,6 +246,73 @@ export default function AdminOrdersPage() {
     }
   };
 
+  // Quản lý giao đơn cho nhân viên
+  const handleAssignOrder = async (orderId: string, staff: StaffMember | null) => {
+    setIsAssigning(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          assignedStaffId: staff ? staff.id : '',
+          assignedStaffName: staff ? staff.name : '',
+          assignedStaffPhone: staff ? staff.phone : '',
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setOrders(prev => prev.map(o => o.id === orderId ? data.order : o));
+        if (selectedOrder?.id === orderId) {
+          setSelectedOrder(data.order);
+        }
+        setAssignModalOrder(null);
+        setAssignToast(staff ? `Đã giao đơn thành công cho nhân viên ${staff.name}!` : 'Đã hủy phân công nhân viên');
+        setTimeout(() => setAssignToast(null), 3000);
+      } else {
+        alert(data.error || 'Giao việc cho nhân viên thất bại');
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
+  // Quản lý tự hoàn thành đơn
+  const handleManagerSelfComplete = async (orderId: string) => {
+    const ok = window.confirm('Quản lý xác nhận: Bạn muốn tự mình hoàn tất đơn hàng này ngay bây giờ?');
+    if (!ok) return;
+
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'COMPLETED',
+          assignedStaffId: user?.id,
+          assignedStaffName: user?.name || 'Quản Lý Cửa Hàng',
+          assignedStaffPhone: user?.phone || '',
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setOrders(prev => prev.map(o => o.id === orderId ? data.order : o));
+        if (selectedOrder?.id === orderId) {
+          setSelectedOrder(data.order);
+        }
+        if (newOrderAlert?.id === orderId) {
+          setNewOrderAlert(null);
+        }
+        setAssignToast(`🎉 Quản lý đã tự nhận và hoàn tất đơn #${data.order.orderCode}!`);
+        setTimeout(() => setAssignToast(null), 3500);
+      } else {
+        alert(data.error || 'Cập nhật thất bại');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('lo-LA').format(price) + ' ₭';
   };
@@ -243,6 +345,22 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
   const processingCount = orders.filter(o => o.status === 'PROCESSING' || o.status === 'CONFIRMED').length;
   const shippingCount = orders.filter(o => o.status === 'SHIPPING').length;
   const completedCount = orders.filter(o => o.status === 'COMPLETED').length;
+  const myAssignedCount = orders.filter(o => o.assignedStaffId === user?.id && o.status !== 'COMPLETED' && o.status !== 'CANCELLED').length;
+  const unassignedCount = orders.filter(o => !o.assignedStaffId && o.status !== 'COMPLETED' && o.status !== 'CANCELLED').length;
+
+  const displayedOrders = orders.filter(o => {
+    if (statusFilter === 'my_assigned') {
+      return o.assignedStaffId === user?.id;
+    }
+    if (statusFilter === 'unassigned') {
+      return !o.assignedStaffId && o.status !== 'COMPLETED' && o.status !== 'CANCELLED';
+    }
+    if (statusFilter === 'PENDING') return o.status === 'PENDING';
+    if (statusFilter === 'PROCESSING') return o.status === 'PROCESSING' || o.status === 'CONFIRMED';
+    if (statusFilter === 'SHIPPING') return o.status === 'SHIPPING';
+    if (statusFilter === 'COMPLETED') return o.status === 'COMPLETED';
+    return true;
+  });
 
   return (
     <div className="space-y-5 pb-12">
@@ -297,7 +415,7 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
         </div>
       )}
 
-      {/* Header & Staff Role Identity */}
+      {/* Header & Role Identity */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
@@ -312,12 +430,16 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
           </div>
 
           <p className="text-xs text-zinc-400 mt-1">
-            {user?.role === 'STAFF' ? (
+            {user?.role === 'MANAGER' ? (
+              <span className="text-purple-300 font-semibold">
+                💼 Tài khoản Quản Lý: Có quyền <strong>giao đơn order cho nhân viên</strong> hoặc <strong>tự mình hoàn thành order</strong>.
+              </span>
+            ) : user?.role === 'STAFF' ? (
               <span className="text-emerald-400 font-medium">
-                👔 Tài khoản Nhân Viên: Nhiệm vụ chính là <strong>tiếp nhận order, gọi khách xác nhận và chuẩn bị đơn hàng</strong>.
+                👔 Tài khoản Nhân Viên: Nhận các đơn order được giao, chuẩn bị món và giao cho khách.
               </span>
             ) : (
-              <span>Theo dõi thời gian thực, duyệt đơn và điều phối giao hàng cho khách.</span>
+              <span>👑 Boss Hải (Quản trị viên): Theo dõi trực tiếp, điều phối nhân sự và xử lý đơn hàng.</span>
             )}
           </p>
         </div>
@@ -356,7 +478,7 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
         </div>
       </div>
 
-      {/* QUICK STATUS TABS (Luồng công việc của nhân viên nhận đơn) */}
+      {/* QUICK STATUS TABS */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar text-xs font-bold">
         <button
           onClick={() => setStatusFilter('all')}
@@ -371,6 +493,46 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
             {orders.length}
           </span>
         </button>
+
+        {/* Tab dành cho Quản lý & Admin: Chưa giao NV */}
+        {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+          <button
+            onClick={() => setStatusFilter('unassigned')}
+            className={`px-3.5 py-2 rounded-xl transition whitespace-nowrap flex items-center gap-1.5 ${
+              statusFilter === 'unassigned'
+                ? 'bg-purple-600 text-white shadow-md'
+                : 'bg-zinc-900 text-purple-300 hover:text-white border border-purple-500/30'
+            }`}
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>👔 Chưa giao NV</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+              unassignedCount > 0 ? 'bg-purple-500 text-white font-black' : 'bg-zinc-950/70 text-zinc-400'
+            }`}>
+              {unassignedCount}
+            </span>
+          </button>
+        )}
+
+        {/* Tab dành riêng cho Nhân viên: Đơn giao cho tôi */}
+        {user?.role === 'STAFF' && (
+          <button
+            onClick={() => setStatusFilter('my_assigned')}
+            className={`px-3.5 py-2 rounded-xl transition whitespace-nowrap flex items-center gap-1.5 ${
+              statusFilter === 'my_assigned'
+                ? 'bg-emerald-600 text-white shadow-md'
+                : 'bg-zinc-900 text-emerald-300 hover:text-white border border-emerald-500/30'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>⭐ Đơn của tôi</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+              myAssignedCount > 0 ? 'bg-emerald-500 text-white font-black' : 'bg-zinc-950/70 text-zinc-400'
+            }`}>
+              {myAssignedCount}
+            </span>
+          </button>
+        )}
 
         <button
           onClick={() => setStatusFilter('PENDING')}
@@ -457,12 +619,12 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
           <div className="p-8 text-center text-zinc-400 text-xs animate-pulse">
             Đang tải danh sách đơn hàng...
           </div>
-        ) : orders.length === 0 ? (
+        ) : displayedOrders.length === 0 ? (
           <div className="p-8 text-center bg-zinc-900 border border-zinc-800 rounded-3xl text-zinc-400 text-xs">
             Không có đơn hàng nào trong mục này
           </div>
         ) : (
-          orders.map((o) => {
+          displayedOrders.map((o) => {
             const isPending = o.status === 'PENDING';
             const isConfirmed = o.status === 'CONFIRMED';
             const isProcessing = o.status === 'PROCESSING';
@@ -546,8 +708,59 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
                   )}
                 </div>
 
-                {/* Thao tác nhận đơn / chuyển trạng thái của Nhân viên */}
+                {/* 👔 Nhân viên phụ trách / Phân công đơn */}
+                <div className="p-2.5 rounded-2xl bg-zinc-950/80 border border-zinc-800/90 flex items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs flex-shrink-0 ${
+                      o.assignedStaffName ? 'bg-purple-500/20 text-purple-300' : 'bg-zinc-800 text-zinc-500'
+                    }`}>
+                      {o.assignedStaffName ? '👔' : '⚪'}
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[10px] text-zinc-500 uppercase tracking-wider block">Phụ trách:</span>
+                      <span className="font-bold text-xs text-white truncate block">
+                        {o.assignedStaffName ? `${o.assignedStaffName} (${o.assignedStaffPhone})` : 'Chưa giao nhân viên'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Nút Giao NV cho Quản lý & Admin */}
+                  {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+                    <button
+                      onClick={() => {
+                        setAssignModalOrder(o);
+                        setSelectedStaffId(o.assignedStaffId || '');
+                      }}
+                      className="px-2.5 py-1.5 bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/40 rounded-xl text-[11px] font-bold transition flex items-center gap-1 flex-shrink-0 active:scale-95"
+                    >
+                      <UserPlus className="w-3.5 h-3.5" />
+                      <span>{o.assignedStaffName ? 'Đổi NV' : 'Giao NV'}</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Banner khi đơn được giao cho Nhân viên đang đăng nhập */}
+                {user?.role === 'STAFF' && o.assignedStaffId === user?.id && (
+                  <div className="px-3 py-1.5 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/40 rounded-xl text-[11px] font-bold text-emerald-300 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" />
+                    <span>Quản lý đã chỉ định bạn phụ trách đơn hàng này!</span>
+                  </div>
+                )}
+
+                {/* Thao tác nhận đơn / chuyển trạng thái của Nhân viên & Quản lý */}
                 <div className="pt-1 flex flex-wrap items-center gap-2">
+                  {/* Nút hoàn thành tự động cho Quản lý & Admin */}
+                  {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && o.status !== 'COMPLETED' && o.status !== 'CANCELLED' && (
+                    <button
+                      onClick={() => handleManagerSelfComplete(o.id)}
+                      className="py-2.5 px-3 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white rounded-xl text-xs font-black shadow-md transition active:scale-95 flex items-center justify-center gap-1"
+                      title="Quản lý tự nhận và hoàn thành đơn này ngay"
+                    >
+                      <CheckCheck className="w-4 h-4" />
+                      <span>⚡ Tự Hoàn Thành</span>
+                    </button>
+                  )}
+
                   {isPending ? (
                     <button
                       onClick={() => handleUpdateStatus(o.id, 'CONFIRMED')}
@@ -615,12 +828,13 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
                 <th className="py-4 px-4 font-semibold">SĐT (Gọi)</th>
                 <th className="py-4 px-4 font-semibold">Sản phẩm</th>
                 <th className="py-4 px-4 font-semibold">Tổng tiền</th>
+                <th className="py-4 px-4 font-semibold">Phụ trách</th>
                 <th className="py-4 px-4 font-semibold">Trạng thái</th>
                 <th className="py-4 px-6 font-semibold text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/60">
-              {orders.map((o) => (
+              {displayedOrders.map((o) => (
                 <tr key={o.id} className="hover:bg-zinc-800/40 transition">
                   <td className="py-4 px-6 font-mono font-bold text-blue-400">
                     {o.orderCode}
@@ -663,6 +877,40 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
                     {formatPrice(o.totalPrice)}
                   </td>
 
+                  {/* Cột Phụ trách / Điều phối */}
+                  <td className="py-4 px-4">
+                    <div className="flex items-center gap-2">
+                      <div className="min-w-0">
+                        {o.assignedStaffName ? (
+                          <div>
+                            <span className="font-bold text-white block truncate max-w-[120px]">
+                              {o.assignedStaffName}
+                            </span>
+                            <span className="text-[10px] text-zinc-500 font-mono block">
+                              {o.assignedStaffPhone}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] text-zinc-500 italic">Chưa giao NV</span>
+                        )}
+                      </div>
+
+                      {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+                        <button
+                          onClick={() => {
+                            setAssignModalOrder(o);
+                            setSelectedStaffId(o.assignedStaffId || '');
+                          }}
+                          className="px-2 py-1 bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/40 rounded-lg text-[10px] font-bold transition flex items-center gap-1 whitespace-nowrap active:scale-95"
+                          title="Giao đơn cho nhân viên"
+                        >
+                          <UserPlus className="w-3 h-3" />
+                          <span>{o.assignedStaffName ? 'Đổi' : 'Giao NV'}</span>
+                        </button>
+                      )}
+                    </div>
+                  </td>
+
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-1.5">
                       <select
@@ -695,6 +943,16 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
 
                   <td className="py-4 px-6 text-right">
                     <div className="flex items-center justify-end gap-1.5">
+                      {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && o.status !== 'COMPLETED' && o.status !== 'CANCELLED' && (
+                        <button
+                          onClick={() => handleManagerSelfComplete(o.id)}
+                          className="px-2.5 py-1.5 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white rounded-xl text-[10px] font-black shadow-xs transition active:scale-95 flex items-center gap-1 whitespace-nowrap"
+                          title="Quản lý tự nhận và hoàn tất đơn này ngay"
+                        >
+                          <CheckCheck className="w-3.5 h-3.5" />
+                          <span>Tự hoàn tất</span>
+                        </button>
+                      )}
                       <button
                         onClick={() => handleCopyShipperInfo(o)}
                         className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition"
@@ -800,6 +1058,46 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
                 )}
               </div>
 
+              {/* Nhân viên phụ trách / Điều phối */}
+              <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800 space-y-2 text-xs">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <UserPlus className="w-4 h-4 text-purple-400" />
+                    <span className="font-bold text-white">Nhân viên phụ trách đơn:</span>
+                  </div>
+                  {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+                    <button
+                      onClick={() => {
+                        setAssignModalOrder(selectedOrder);
+                        setSelectedStaffId(selectedOrder.assignedStaffId || '');
+                      }}
+                      className="px-2.5 py-1 bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/40 rounded-lg text-[10px] font-bold transition flex items-center gap-1 active:scale-95"
+                    >
+                      <UserPlus className="w-3 h-3" />
+                      <span>{selectedOrder.assignedStaffName ? 'Đổi nhân viên' : 'Giao việc cho nhân viên'}</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between text-zinc-300 pt-1 border-t border-zinc-900">
+                  <span className="text-zinc-500">Tên nhân viên:</span>
+                  <span className="font-semibold text-white">
+                    {selectedOrder.assignedStaffName ? (
+                      <span className="text-purple-300 font-bold">👔 {selectedOrder.assignedStaffName} ({selectedOrder.assignedStaffPhone})</span>
+                    ) : (
+                      <span className="text-zinc-500 italic">Chưa giao nhân viên nào</span>
+                    )}
+                  </span>
+                </div>
+
+                {selectedOrder.assignedBy && (
+                  <div className="flex justify-between items-center text-[10px] text-zinc-500">
+                    <span>Người phân công:</span>
+                    <span>{selectedOrder.assignedBy}</span>
+                  </div>
+                )}
+              </div>
+
               {/* Items List */}
               <div className="space-y-2">
                 <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
@@ -848,6 +1146,17 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
 
             {/* Modal Actions Footer */}
             <div className="pt-3 border-t border-zinc-800 space-y-2.5 flex-shrink-0">
+              {/* Nút Quản lý tự hoàn thành đơn ngay */}
+              {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && selectedOrder.status !== 'COMPLETED' && selectedOrder.status !== 'CANCELLED' && (
+                <button
+                  onClick={() => handleManagerSelfComplete(selectedOrder.id)}
+                  className="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-md active:scale-95"
+                >
+                  <CheckCheck className="w-4 h-4" />
+                  <span>⚡ Quản Lý Tự Hoàn Thành Đơn Ngay</span>
+                </button>
+              )}
+
               <div className="flex flex-wrap items-center gap-2">
                 {selectedOrder.status === 'PENDING' && (
                   <button
@@ -920,6 +1229,118 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
             </div>
 
           </div>
+        </div>
+      )}
+
+      {/* ASSIGN STAFF MODAL (Dành cho Quản lý & Admin) */}
+      {assignModalOrder && (
+        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 sm:p-4">
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-xs" onClick={() => setAssignModalOrder(null)} />
+          
+          <div className="relative bg-zinc-900 border border-zinc-800 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl z-10 animate-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-purple-600/20 text-purple-300 flex items-center justify-center">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-black text-white">Giao Đơn Cho Nhân Viên</h3>
+                  <p className="text-[11px] text-zinc-400 font-mono">Đơn #{assignModalOrder.orderCode}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setAssignModalOrder(null)}
+                className="p-1.5 text-zinc-400 hover:text-white rounded-full hover:bg-zinc-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="py-4 space-y-3">
+              <p className="text-xs text-zinc-300">
+                Chọn nhân viên tiếp nhận và xử lý đơn hàng này:
+              </p>
+
+              {staffList.length === 0 ? (
+                <div className="p-4 bg-zinc-950 rounded-2xl border border-zinc-800 text-center text-xs text-zinc-400">
+                  Chưa có nhân viên nào trong hệ thống. Hãy vào mục <strong className="text-white">Người dùng</strong> để tạo tài khoản nhân viên.
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {staffList.map((st) => {
+                    const isSelected = selectedStaffId === st.id;
+                    const activeOrderCount = orders.filter(
+                      o => o.assignedStaffId === st.id && o.status !== 'COMPLETED' && o.status !== 'CANCELLED'
+                    ).length;
+
+                    return (
+                      <button
+                        key={st.id}
+                        type="button"
+                        onClick={() => setSelectedStaffId(st.id)}
+                        className={`w-full p-3 rounded-2xl border text-left transition flex items-center justify-between ${
+                          isSelected
+                            ? 'bg-purple-600/20 border-purple-500 ring-2 ring-purple-500/30'
+                            : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-purple-500/20 text-purple-300 font-bold flex items-center justify-center text-xs">
+                            {st.role === 'MANAGER' ? '💼' : '👔'}
+                          </div>
+                          <div>
+                            <p className="font-bold text-xs text-white">{st.name}</p>
+                            <p className="text-[11px] text-zinc-400 font-mono">{st.phone} • {st.role === 'MANAGER' ? 'Quản lý' : 'Nhân viên'}</p>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-bold">
+                            {activeOrderCount} đơn đang làm
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="pt-3 border-t border-zinc-800 flex items-center gap-2">
+              {assignModalOrder.assignedStaffId && (
+                <button
+                  type="button"
+                  onClick={() => handleAssignOrder(assignModalOrder.id, null)}
+                  disabled={isAssigning}
+                  className="py-2.5 px-3 bg-red-500/15 hover:bg-red-500/25 text-red-300 rounded-xl text-xs font-semibold transition"
+                >
+                  Hủy phân công
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  const chosen = staffList.find(s => s.id === selectedStaffId);
+                  if (chosen) {
+                    handleAssignOrder(assignModalOrder.id, chosen);
+                  }
+                }}
+                disabled={!selectedStaffId || isAssigning}
+                className="flex-1 py-2.5 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-md disabled:opacity-50 flex items-center justify-center gap-1.5"
+              >
+                <Check className="w-4 h-4" />
+                <span>{isAssigning ? 'Đang giao...' : 'Xác Nhận Giao Đơn'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Toast Notification */}
+      {assignToast && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold flex items-center gap-2 animate-in slide-in-from-bottom-5 border border-white/20">
+          <Sparkles className="w-4 h-4 text-amber-300" />
+          <span>{assignToast}</span>
         </div>
       )}
 

@@ -38,19 +38,41 @@ export async function PUT(
 
     const { id } = await params;
     const body = await req.json();
-    const { status } = body;
+    const { status, assignedStaffId, assignedStaffName, assignedStaffPhone, note } = body;
 
-    const validStatuses: OrderStatus[] = ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPING', 'COMPLETED', 'CANCELLED'];
-    if (!validStatuses.includes(status)) {
-      return NextResponse.json({ error: 'Trạng thái đơn hàng không hợp lệ' }, { status: 400 });
-    }
-
-    const updated = db.orders.updateStatus(id, status);
-    if (!updated) {
+    const existingOrder = db.orders.findById(id);
+    if (!existingOrder) {
       return NextResponse.json({ error: 'Không tìm thấy đơn hàng để cập nhật' }, { status: 404 });
     }
 
-    return NextResponse.json({ message: 'Cập nhật trạng thái đơn hàng thành công!', order: updated });
+    const updates: Record<string, any> = {};
+
+    if (status) {
+      const validStatuses: OrderStatus[] = ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPING', 'COMPLETED', 'CANCELLED'];
+      if (!validStatuses.includes(status)) {
+        return NextResponse.json({ error: 'Trạng thái đơn hàng không hợp lệ' }, { status: 400 });
+      }
+      updates.status = status;
+    }
+
+    if (assignedStaffId !== undefined) {
+      updates.assignedStaffId = assignedStaffId;
+      updates.assignedStaffName = assignedStaffName || '';
+      updates.assignedStaffPhone = assignedStaffPhone || '';
+      updates.assignedAt = assignedStaffId ? new Date().toISOString() : undefined;
+      updates.assignedBy = `${authRes.user.name || authRes.user.phone} (${authRes.user.role === 'ADMIN' ? 'Boss' : 'Quản lý'})`;
+    }
+
+    if (note !== undefined) {
+      updates.note = note;
+    }
+
+    const updated = db.orders.update(id, updates);
+    if (!updated) {
+      return NextResponse.json({ error: 'Không thể cập nhật đơn hàng' }, { status: 500 });
+    }
+
+    return NextResponse.json({ message: 'Cập nhật đơn hàng thành công!', order: updated });
   } catch (error) {
     console.error('Admin update order error:', error);
     return NextResponse.json({ error: 'Không thể cập nhật đơn hàng' }, { status: 500 });

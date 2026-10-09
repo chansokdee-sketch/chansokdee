@@ -28,7 +28,7 @@ interface UserItem {
   id: string;
   phone: string;
   name: string;
-  role: 'ADMIN' | 'STAFF' | 'USER';
+  role: 'ADMIN' | 'MANAGER' | 'STAFF' | 'USER';
   customerType?: 'RETAIL' | 'WHOLESALE';
   address?: string;
   createdAt: string;
@@ -40,16 +40,16 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState<'ALL' | 'WHOLESALE' | 'RETAIL' | 'STAFF'>('ALL');
+  const [activeTab, setActiveTab] = useState<'ALL' | 'WHOLESALE' | 'RETAIL' | 'MANAGER' | 'STAFF'>('ALL');
 
-  // Modal Thêm Mới Tài Khoản (Khách sỉ, Khách lẻ, Nhân viên)
+  // Modal Thêm Mới Tài Khoản (Khách sỉ, Khách lẻ, Quản lý, Nhân viên)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newUser, setNewUser] = useState({
     name: '',
     phone: '',
     password: 'Password@123',
     address: '',
-    role: 'USER' as 'USER' | 'STAFF',
+    role: 'USER' as 'USER' | 'STAFF' | 'MANAGER',
     customerType: 'WHOLESALE' as 'WHOLESALE' | 'RETAIL',
   });
 
@@ -60,7 +60,7 @@ export default function AdminUsersPage() {
     name: '',
     address: '',
     customerType: 'RETAIL' as 'WHOLESALE' | 'RETAIL',
-    role: 'USER' as 'USER' | 'STAFF' | 'ADMIN',
+    role: 'USER' as 'USER' | 'STAFF' | 'MANAGER' | 'ADMIN',
     newPassword: '',
   });
 
@@ -229,6 +229,7 @@ export default function AdminUsersPage() {
 
   const wholesaleCount = users.filter(u => u.role === 'USER' && u.customerType === 'WHOLESALE').length;
   const retailCount = users.filter(u => u.role === 'USER' && u.customerType !== 'WHOLESALE').length;
+  const managerCount = users.filter(u => u.role === 'MANAGER').length;
   const staffCount = users.filter(u => u.role === 'STAFF').length;
 
   const filteredUsers = users.filter(u => {
@@ -237,6 +238,7 @@ export default function AdminUsersPage() {
 
     if (activeTab === 'WHOLESALE') return u.role === 'USER' && u.customerType === 'WHOLESALE';
     if (activeTab === 'RETAIL') return u.role === 'USER' && u.customerType !== 'WHOLESALE';
+    if (activeTab === 'MANAGER') return u.role === 'MANAGER';
     if (activeTab === 'STAFF') return u.role === 'STAFF' || u.role === 'ADMIN';
     return true;
   });
@@ -350,6 +352,21 @@ export default function AdminUsersPage() {
           </button>
 
           <button
+            onClick={() => setActiveTab('MANAGER')}
+            className={`px-3.5 py-2 rounded-xl font-bold transition flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'MANAGER'
+                ? 'bg-purple-600 text-white shadow-xs'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>💼 Quản Lý</span>
+            <span className="text-[10px] bg-zinc-950 px-1.5 py-0.2 rounded-full text-zinc-300">
+              {managerCount}
+            </span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('STAFF')}
             className={`px-3.5 py-2 rounded-xl font-bold transition flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'STAFF'
@@ -389,6 +406,7 @@ export default function AdminUsersPage() {
         ) : (
           filteredUsers.map((u) => {
             const isAdmin = u.role === 'ADMIN';
+            const isManager = u.role === 'MANAGER';
             const isStaff = u.role === 'STAFF';
             const isWholesale = u.role === 'USER' && u.customerType === 'WHOLESALE';
             const isRetail = u.role === 'USER' && u.customerType !== 'WHOLESALE';
@@ -404,13 +422,15 @@ export default function AdminUsersPage() {
                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs flex-shrink-0 ${
                       isAdmin 
                         ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' 
+                        : isManager
+                        ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
                         : isStaff 
                         ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                         : isWholesale
                         ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
                         : 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
                     }`}>
-                      {isAdmin ? '👑' : isStaff ? '👔' : isWholesale ? '🏢' : '👤'}
+                      {isAdmin ? '👑' : isManager ? '💼' : isStaff ? '👔' : isWholesale ? '🏢' : '👤'}
                     </div>
                     <div>
                       <h4 className="font-bold text-white text-xs">{u.name || 'Chưa đặt tên'}</h4>
@@ -422,6 +442,10 @@ export default function AdminUsersPage() {
                     {isAdmin ? (
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40">
                         👑 Admin
+                      </span>
+                    ) : isManager ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40">
+                        💼 Quản Lý
                       </span>
                     ) : isStaff ? (
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
@@ -523,6 +547,7 @@ export default function AdminUsersPage() {
             <tbody className="divide-y divide-zinc-800/60">
               {filteredUsers.map((u) => {
                 const isAdmin = u.role === 'ADMIN';
+                const isManager = u.role === 'MANAGER';
                 const isStaff = u.role === 'STAFF';
                 const isWholesale = u.role === 'USER' && u.customerType === 'WHOLESALE';
                 const isRetail = u.role === 'USER' && u.customerType !== 'WHOLESALE';
@@ -534,13 +559,15 @@ export default function AdminUsersPage() {
                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs ${
                           isAdmin 
                             ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' 
+                            : isManager
+                            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
                             : isStaff 
                             ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                             : isWholesale
                             ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
                             : 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
                         }`}>
-                          {isAdmin ? '👑' : isStaff ? '👔' : isWholesale ? '🏢' : '👤'}
+                          {isAdmin ? '👑' : isManager ? '💼' : isStaff ? '👔' : isWholesale ? '🏢' : '👤'}
                         </div>
                         <div>
                           <p className="font-bold text-white">{u.name || 'Chưa đặt tên'}</p>
@@ -560,6 +587,10 @@ export default function AdminUsersPage() {
                       {isAdmin ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40">
                           👑 Boss Hải (Quản trị)
+                        </span>
+                      ) : isManager ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40">
+                          💼 Quản Lý (Điều phối)
                         </span>
                       ) : isStaff ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
@@ -669,7 +700,7 @@ export default function AdminUsersPage() {
               {/* Chọn loại tài khoản */}
               <div>
                 <label className="block text-zinc-300 font-bold mb-1.5">Loại tài khoản muốn tạo *</label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <button
                     type="button"
                     onClick={() => setNewUser({ ...newUser, role: 'USER', customerType: 'WHOLESALE' })}
@@ -698,6 +729,19 @@ export default function AdminUsersPage() {
 
                   <button
                     type="button"
+                    onClick={() => setNewUser({ ...newUser, role: 'MANAGER', customerType: 'RETAIL' })}
+                    className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center gap-1 ${
+                      newUser.role === 'MANAGER'
+                        ? 'bg-purple-500/20 border-purple-500 text-purple-300 font-bold'
+                        : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    <span className="text-[11px]">Quản Lý 💼</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => setNewUser({ ...newUser, role: 'STAFF', customerType: 'RETAIL' })}
                     className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center gap-1 ${
                       newUser.role === 'STAFF'
@@ -706,7 +750,7 @@ export default function AdminUsersPage() {
                     }`}
                   >
                     <UserCheck className="w-4 h-4" />
-                    <span className="text-[11px]">Nhân Viên</span>
+                    <span className="text-[11px]">Nhân Viên 👔</span>
                   </button>
                 </div>
               </div>
@@ -827,35 +871,61 @@ export default function AdminUsersPage() {
 
             <form onSubmit={handleUpdateUser} className="space-y-3.5 mt-4 text-xs">
               
-              {/* Phân loại khách hàng / Nhân viên */}
+              {/* Phân loại khách hàng / Quản lý / Nhân viên */}
               {editingUser.role !== 'ADMIN' && (
                 <div>
                   <label className="block text-zinc-300 font-bold mb-1.5">Phân loại tài khoản *</label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     <button
                       type="button"
                       onClick={() => setEditForm({ ...editForm, role: 'USER', customerType: 'WHOLESALE' })}
-                      className={`p-2.5 rounded-xl border text-center transition flex items-center justify-center gap-1.5 ${
+                      className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 ${
                         editForm.role === 'USER' && editForm.customerType === 'WHOLESALE'
                           ? 'bg-amber-500/20 border-amber-500 text-amber-300 font-bold'
-                          : 'bg-zinc-950 border-zinc-800 text-zinc-400'
+                          : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-white'
                       }`}
                     >
                       <Boxes className="w-4 h-4" />
-                      <span>Khách Sỉ ⚡ (Giá sỉ)</span>
+                      <span className="text-[11px]">Khách Sỉ ⚡</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setEditForm({ ...editForm, role: 'USER', customerType: 'RETAIL' })}
-                      className={`p-2.5 rounded-xl border text-center transition flex items-center justify-center gap-1.5 ${
+                      className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 ${
                         editForm.role === 'USER' && editForm.customerType === 'RETAIL'
                           ? 'bg-blue-500/20 border-blue-500 text-blue-300 font-bold'
-                          : 'bg-zinc-950 border-zinc-800 text-zinc-400'
+                          : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-white'
                       }`}
                     >
                       <Tag className="w-4 h-4" />
-                      <span>Khách Lẻ (Giá lẻ)</span>
+                      <span className="text-[11px]">Khách Lẻ</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setEditForm({ ...editForm, role: 'MANAGER', customerType: 'RETAIL' })}
+                      className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 ${
+                        editForm.role === 'MANAGER'
+                          ? 'bg-purple-500/20 border-purple-500 text-purple-300 font-bold'
+                          : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-white'
+                      }`}
+                    >
+                      <ShieldCheck className="w-4 h-4" />
+                      <span className="text-[11px]">Quản Lý 💼</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setEditForm({ ...editForm, role: 'STAFF', customerType: 'RETAIL' })}
+                      className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 ${
+                        editForm.role === 'STAFF'
+                          ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 font-bold'
+                          : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-white'
+                      }`}
+                    >
+                      <UserCheck className="w-4 h-4" />
+                      <span className="text-[11px]">Nhân Viên 👔</span>
                     </button>
                   </div>
                 </div>

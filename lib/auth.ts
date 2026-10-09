@@ -95,14 +95,27 @@ export async function requireAdmin(req: NextRequest): Promise<{ user: User } | {
   return { user: authRes.user };
 }
 
+export async function requireManagerOrAdmin(req: NextRequest): Promise<{ user: User } | { error: string; status: number }> {
+  const authRes = await requireAuth(req);
+  if ('error' in authRes) {
+    return authRes;
+  }
+
+  if (authRes.user.role !== 'ADMIN' && authRes.user.role !== 'MANAGER') {
+    return { error: 'Truy cập bị từ chối! Bạn không có quyền Quản lý hoặc Quản trị viên.', status: 403 };
+  }
+
+  return { user: authRes.user };
+}
+
 export async function requireStaffOrAdmin(req: NextRequest): Promise<{ user: User } | { error: string; status: number }> {
   const authRes = await requireAuth(req);
   if ('error' in authRes) {
     return authRes;
   }
 
-  if (authRes.user.role !== 'ADMIN' && authRes.user.role !== 'STAFF') {
-    return { error: 'Truy cập bị từ chối! Bạn không có quyền Nhân viên hoặc Quản trị viên.', status: 403 };
+  if (authRes.user.role !== 'ADMIN' && authRes.user.role !== 'MANAGER' && authRes.user.role !== 'STAFF') {
+    return { error: 'Truy cập bị từ chối! Bạn không có quyền Nhân viên, Quản lý hoặc Quản trị viên.', status: 403 };
   }
 
   return { user: authRes.user };

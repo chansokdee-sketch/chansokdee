@@ -11,6 +11,16 @@
       "customerType": "RETAIL"
     },
     {
+      "id": "usr-manager-1",
+      "phone": "0966666666",
+      "passwordHash": "$2b$10$AiXYzOpYJY20DsVhy45FY.5cCpNVUks6VyP2b.DLb6qsdJwk/tpmq",
+      "name": "Quản Lý Cửa Hàng",
+      "role": "MANAGER",
+      "address": "Văn phòng Điều phối, Vientiane",
+      "createdAt": "2026-10-09T09:00:00.000Z",
+      "customerType": "RETAIL"
+    },
+    {
       "id": "usr-staff-1",
       "phone": "0977777777",
       "passwordHash": "$2b$10$6ADPzCohP/2CS4nozEZ0Pen7tNFvNm9XBqf70H71yQWMpHHBbTyku",

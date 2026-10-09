@@ -30,6 +30,15 @@ const ADMIN_NAV_ITEMS = [
   { href: '/admin/settings', label: 'Chỉnh sửa web (Settings)', icon: ShieldCheck },
 ];
 
+const MANAGER_NAV_ITEMS = [
+  { href: '/admin', label: 'Tổng quan (Dashboard)', icon: LayoutDashboard },
+  { href: '/admin/orders', label: 'Điều phối & Nhận order', icon: ShoppingCart },
+  { href: '/admin/products', label: 'Sản phẩm & Món ăn', icon: Package },
+  { href: '/admin/categories', label: 'Danh mục (Categories)', icon: FolderTree },
+  { href: '/admin/users', label: 'Nhân viên & Khách hàng', icon: Users },
+  { href: '/admin/inventory', label: 'Quản lý kho (Inventory)', icon: Boxes },
+];
+
 const STAFF_NAV_ITEMS = [
   { href: '/admin', label: 'Tổng quan (Dashboard)', icon: LayoutDashboard },
   { href: '/admin/products', label: 'Quản lý món / Thêm món', icon: Package },
@@ -56,8 +65,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  // Strict RBAC: User must have ADMIN or STAFF role
-  if (!user || (user.role !== 'ADMIN' && user.role !== 'STAFF')) {
+  // Strict RBAC: User must have ADMIN, MANAGER, or STAFF role
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'MANAGER' && user.role !== 'STAFF')) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-950 p-4">
         <div className="max-w-md w-full bg-zinc-900 border border-zinc-800 rounded-3xl p-6 sm:p-8 text-center space-y-6 shadow-2xl">
@@ -68,7 +77,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="space-y-2">
             <h1 className="text-xl font-bold text-white">Truy Cập Bị Từ Chối</h1>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Khu vực quản lý chỉ dành cho <strong>Boss Hải (Quản trị viên)</strong> và <strong>Nhân viên</strong> của hệ thống.
+              Khu vực quản lý chỉ dành cho <strong>Boss Hải (Quản trị viên)</strong>, <strong>Quản lý</strong> và <strong>Nhân viên</strong> của hệ thống.
             </p>
           </div>
 
@@ -76,6 +85,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div>
               <p className="font-semibold text-white">👑 Tài khoản Boss Hải (Quản trị viên):</p>
               <p>Số điện thoại: <strong className="text-blue-400">0988888888</strong> | Pass: <strong className="text-blue-400">AdminPassword@123</strong></p>
+            </div>
+            <div className="pt-1 border-t border-zinc-700/50">
+              <p className="font-semibold text-amber-400">💼 Tài khoản Quản Lý (Điều phối đơn, giao việc NV):</p>
+              <p>Số điện thoại: <strong className="text-amber-400">0966666666</strong> | Pass: <strong className="text-amber-400">ManagerPassword@123</strong></p>
             </div>
             <div className="pt-1 border-t border-zinc-700/50">
               <p className="font-semibold text-emerald-400">👔 Tài khoản Nhân Viên (Thêm món, nhận order):</p>
@@ -162,7 +175,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Navigation Items */}
         <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
-          {(user?.role === 'STAFF' ? STAFF_NAV_ITEMS : ADMIN_NAV_ITEMS).map((item) => {
+          {(user?.role === 'ADMIN' ? ADMIN_NAV_ITEMS : user?.role === 'MANAGER' ? MANAGER_NAV_ITEMS : STAFF_NAV_ITEMS).map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
 
@@ -188,17 +201,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="p-4 border-t border-zinc-800 space-y-3 bg-zinc-900/50">
           <div className="flex items-center gap-3 px-2">
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shadow-xs ${
-              user?.role === 'ADMIN' ? 'bg-amber-500/20 text-amber-300' : 'bg-emerald-500/20 text-emerald-300'
+              user?.role === 'ADMIN' ? 'bg-amber-500/20 text-amber-300' : user?.role === 'MANAGER' ? 'bg-purple-500/20 text-purple-300' : 'bg-emerald-500/20 text-emerald-300'
             }`}>
-              {user?.role === 'ADMIN' ? '👑' : '👔'}
+              {user?.role === 'ADMIN' ? '👑' : user?.role === 'MANAGER' ? '💼' : '👔'}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-bold text-white truncate">{user?.name || 'Tài khoản'}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold uppercase tracking-wider ${
-                  user?.role === 'ADMIN' ? 'bg-amber-400/20 text-amber-300' : 'bg-emerald-400/20 text-emerald-300'
+                  user?.role === 'ADMIN' ? 'bg-amber-400/20 text-amber-300' : user?.role === 'MANAGER' ? 'bg-purple-400/20 text-purple-300' : 'bg-emerald-400/20 text-emerald-300'
                 }`}>
-                  {user?.role === 'ADMIN' ? 'Boss Hải' : 'Nhân Viên'}
+                  {user?.role === 'ADMIN' ? 'Boss Hải' : user?.role === 'MANAGER' ? 'Quản Lý' : 'Nhân Viên'}
                 </span>
                 <span className="text-[10px] text-zinc-400 truncate">{user?.phone}</span>
               </div>
