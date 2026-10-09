@@ -749,15 +749,15 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
 
                 {/* Thao tác nhận đơn / chuyển trạng thái của Nhân viên & Quản lý */}
                 <div className="pt-1 flex flex-wrap items-center gap-2">
-                  {/* Nút hoàn thành tự động cho Quản lý & Admin */}
-                  {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && o.status !== 'COMPLETED' && o.status !== 'CANCELLED' && (
+                  {/* Nút hoàn thành tự động cho Quản lý, Nhân viên & Admin */}
+                  {(user?.role === 'ADMIN' || user?.role === 'MANAGER' || user?.role === 'STAFF') && o.status !== 'COMPLETED' && o.status !== 'CANCELLED' && (
                     <button
                       onClick={() => handleManagerSelfComplete(o.id)}
                       className="py-2.5 px-3 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white rounded-xl text-xs font-black shadow-md transition active:scale-95 flex items-center justify-center gap-1"
-                      title="Quản lý tự nhận và hoàn thành đơn này ngay"
+                      title="Hoàn thành đơn này ngay"
                     >
                       <CheckCheck className="w-4 h-4" />
-                      <span>⚡ Tự Hoàn Thành</span>
+                      <span>⚡ Hoàn Thành Đơn</span>
                     </button>
                   )}
 
@@ -943,14 +943,14 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
 
                   <td className="py-4 px-6 text-right">
                     <div className="flex items-center justify-end gap-1.5">
-                      {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && o.status !== 'COMPLETED' && o.status !== 'CANCELLED' && (
+                      {(user?.role === 'ADMIN' || user?.role === 'MANAGER' || user?.role === 'STAFF') && o.status !== 'COMPLETED' && o.status !== 'CANCELLED' && (
                         <button
                           onClick={() => handleManagerSelfComplete(o.id)}
                           className="px-2.5 py-1.5 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white rounded-xl text-[10px] font-black shadow-xs transition active:scale-95 flex items-center gap-1 whitespace-nowrap"
-                          title="Quản lý tự nhận và hoàn tất đơn này ngay"
+                          title="Hoàn tất đơn này ngay"
                         >
                           <CheckCheck className="w-3.5 h-3.5" />
-                          <span>Tự hoàn tất</span>
+                          <span>Hoàn tất đơn</span>
                         </button>
                       )}
                       <button
@@ -1146,14 +1146,14 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
 
             {/* Modal Actions Footer */}
             <div className="pt-3 border-t border-zinc-800 space-y-2.5 flex-shrink-0">
-              {/* Nút Quản lý tự hoàn thành đơn ngay */}
-              {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && selectedOrder.status !== 'COMPLETED' && selectedOrder.status !== 'CANCELLED' && (
+              {/* Nút hoàn thành đơn ngay */}
+              {(user?.role === 'ADMIN' || user?.role === 'MANAGER' || user?.role === 'STAFF') && selectedOrder.status !== 'COMPLETED' && selectedOrder.status !== 'CANCELLED' && (
                 <button
                   onClick={() => handleManagerSelfComplete(selectedOrder.id)}
                   className="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-md active:scale-95"
                 >
                   <CheckCheck className="w-4 h-4" />
-                  <span>⚡ Quản Lý Tự Hoàn Thành Đơn Ngay</span>
+                  <span>⚡ Hoàn Thành Đơn Ngay</span>
                 </button>
               )}
 

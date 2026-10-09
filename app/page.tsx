@@ -20,6 +20,7 @@ import {
   SlidersHorizontal,
   ChevronRight,
   Edit,
+  Edit3,
   ShieldCheck,
   Zap,
   Tag,
@@ -757,7 +758,39 @@ function HomeContent() {
       <main id="product-catalog" className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-10 pb-28 sm:pb-12 flex-1 w-full relative ${
         visualEditMode ? 'ring-4 ring-emerald-400 rounded-3xl' : ''
       }`}>
-        
+        {/* Banner thông báo chế độ Quản Lý & Nhân Viên */}
+        {user && (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'STAFF') && (
+          <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-zinc-900 to-zinc-800 text-white flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg border border-zinc-700/60 animate-in fade-in">
+            <div className="flex items-center gap-3 text-xs w-full sm:w-auto">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 font-bold flex items-center justify-center flex-shrink-0 text-base border border-blue-400/30">
+                {user.role === 'ADMIN' ? '👑' : user.role === 'MANAGER' ? '💼' : '👔'}
+              </div>
+              <div>
+                <p className="font-bold text-sm text-white">
+                  {user.role === 'ADMIN' ? '👑 Boss Hải (Quản trị viên)' : user.role === 'MANAGER' ? '💼 Quản Lý Cửa Hàng' : '👔 Nhân Viên Bán Hàng'}
+                </p>
+                <p className="text-[11px] text-zinc-300">
+                  Tài khoản nội bộ không có mục mua hàng. Vai trò của bạn là <strong>nhận order</strong>, <strong>hoàn thành order</strong> và <strong>thêm sản phẩm mới</strong>.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto flex-shrink-0">
+              <Link
+                href="/admin/orders"
+                className="flex-1 sm:flex-initial px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs transition shadow-md text-center flex items-center justify-center gap-1.5 active:scale-95"
+              >
+                <span>📋 Nhận & Hoàn Thành Order</span>
+              </Link>
+              <Link
+                href="/admin/products"
+                className="flex-1 sm:flex-initial px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition shadow-md text-center flex items-center justify-center gap-1.5 active:scale-95"
+              >
+                <span>➕ Thêm Món Mới</span>
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Title and Category Filter Bar */}
         <div className="space-y-6 mb-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1020,15 +1053,27 @@ function HomeContent() {
                       })()}
                     </div>
 
-                    <button
-                      onClick={(e) => handleAddToCart(product, e)}
-                      disabled={isOutOfStock}
-                      className={`h-8 sm:h-9 px-3 rounded-full bg-zinc-900 hover:bg-rose-600 text-white text-xs font-medium transition flex items-center gap-1.5 disabled:opacity-30 disabled:pointer-events-none active:scale-95 shadow-2xs`}
-                      title={t('add_to_cart')}
-                    >
-                      <ShoppingBag className="w-3.5 h-3.5" />
-                      <span className="text-[11px] font-semibold">{t('add_to_cart')}</span>
-                    </button>
+                    {user && (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'STAFF') ? (
+                      <Link
+                        href="/admin/products"
+                        onClick={(e) => e.stopPropagation()}
+                        className="h-8 sm:h-9 px-3 rounded-full bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white text-xs font-bold transition flex items-center gap-1.5 border border-blue-200 active:scale-95 shadow-2xs"
+                        title="Quản lý & Chỉnh sửa món này"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span className="text-[11px]">Sửa món</span>
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={(e) => handleAddToCart(product, e)}
+                        disabled={isOutOfStock}
+                        className={`h-8 sm:h-9 px-3 rounded-full bg-zinc-900 hover:bg-rose-600 text-white text-xs font-medium transition flex items-center gap-1.5 disabled:opacity-30 disabled:pointer-events-none active:scale-95 shadow-2xs`}
+                        title={t('add_to_cart')}
+                      >
+                        <ShoppingBag className="w-3.5 h-3.5" />
+                        <span className="text-[11px] font-semibold">{t('add_to_cart')}</span>
+                      </button>
+                    )}
                   </div>
 
                 </div>

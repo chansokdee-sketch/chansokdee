@@ -31,19 +31,19 @@ const ADMIN_NAV_ITEMS = [
 ];
 
 const MANAGER_NAV_ITEMS = [
-  { href: '/admin', label: 'Tổng quan (Dashboard)', icon: LayoutDashboard },
   { href: '/admin/orders', label: 'Điều phối & Nhận order', icon: ShoppingCart },
-  { href: '/admin/products', label: 'Sản phẩm & Món ăn', icon: Package },
+  { href: '/admin/products', label: 'Thêm sản phẩm mới (Món ăn)', icon: Package },
   { href: '/admin/categories', label: 'Danh mục (Categories)', icon: FolderTree },
   { href: '/admin/users', label: 'Nhân viên & Khách hàng', icon: Users },
   { href: '/admin/inventory', label: 'Quản lý kho (Inventory)', icon: Boxes },
+  { href: '/admin', label: 'Tổng quan (Dashboard)', icon: LayoutDashboard },
 ];
 
 const STAFF_NAV_ITEMS = [
-  { href: '/admin', label: 'Tổng quan (Dashboard)', icon: LayoutDashboard },
-  { href: '/admin/products', label: 'Quản lý món / Thêm món', icon: Package },
-  { href: '/admin/orders', label: 'Nhận order từ khách', icon: ShoppingCart },
+  { href: '/admin/orders', label: 'Nhận & Hoàn thành order', icon: ShoppingCart },
+  { href: '/admin/products', label: 'Thêm sản phẩm mới (Món ăn)', icon: Package },
   { href: '/admin/inventory', label: 'Kiểm tra tồn kho', icon: Boxes },
+  { href: '/admin', label: 'Tổng quan (Dashboard)', icon: LayoutDashboard },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

@@ -20,7 +20,9 @@ import {
   AlertCircle,
   Tag,
   Boxes,
-  Sparkles
+  Sparkles,
+  ShoppingCart,
+  Package
 } from 'lucide-react';
 
 export default function CartPage() {
@@ -55,6 +57,56 @@ export default function CartPage() {
       if (user.address) setShippingAddress(user.address);
     }
   }, [user]);
+
+  // Quản lý & Nhân viên không có mục mua hàng
+  if (user && (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'STAFF')) {
+    return (
+      <div className="min-h-screen flex flex-col bg-zinc-950 text-white">
+        <Navbar />
+        <div className="flex-1 max-w-lg mx-auto w-full px-4 pt-32 pb-24 text-center">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-4 shadow-2xl">
+            <div className="w-16 h-16 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center mx-auto text-2xl border border-blue-500/30">
+              {user.role === 'ADMIN' ? '👑' : user.role === 'MANAGER' ? '💼' : '👔'}
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-white">
+                {user.role === 'ADMIN' ? '👑 Quyền Boss Hải' : user.role === 'MANAGER' ? '💼 Tài Khoản Quản Lý' : '👔 Tài Khoản Nhân Viên'}
+              </h2>
+              <p className="text-xs text-zinc-400 mt-2 leading-relaxed">
+                Tài khoản nội bộ <strong>không sử dụng chức năng mua hàng</strong>.
+                <br />
+                Vai trò của bạn là <strong>nhận order từ khách</strong>, <strong>hoàn thành order</strong> và <strong>thêm sản phẩm mới</strong> giống với Admin.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2.5 pt-3">
+              <Link
+                href="/admin/orders"
+                className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl text-xs transition shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                <span>📋 Đến Bàn Nhận & Hoàn Thành Order</span>
+              </Link>
+              <Link
+                href="/admin/products"
+                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl text-xs transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2"
+              >
+                <Package className="w-4 h-4" />
+                <span>➕ Thêm Sản Phẩm Mới</span>
+              </Link>
+              <Link
+                href="/"
+                className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold rounded-2xl text-xs transition"
+              >
+                Quay lại trang chủ cửa hàng
+              </Link>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();

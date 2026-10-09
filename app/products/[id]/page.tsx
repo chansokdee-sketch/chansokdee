@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { Product, Category } from '@/lib/types';
 import { 
@@ -21,13 +22,16 @@ import {
   Tag,
   Boxes,
   Sparkles,
-  Phone
+  Phone,
+  ShoppingCart,
+  Edit3
 } from 'lucide-react';
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id } = use(params);
   const { addToCart, setIsCartOpen, customerMode } = useCart();
+  const { user } = useAuth();
   const { t, formatPrice, isLao } = useLanguage();
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -276,54 +280,85 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                   );
                 })()}
 
-                {/* Quantity selector */}
-                {!isOutOfStock && (
-                  <div className="space-y-2 pt-2">
-                    <label className="text-xs font-bold text-zinc-700 block">{t('pd_quantity')}</label>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center border border-zinc-200 rounded-xl bg-white overflow-hidden">
-                        <button
-                          type="button"
-                          onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                          className="p-2.5 hover:bg-zinc-100 text-zinc-600 transition"
-                        >
-                          <Minus className="w-4 h-4" />
-                        </button>
-                        <span className="w-12 text-center text-sm font-bold text-zinc-900">{quantity}</span>
-                        <button
-                          type="button"
-                          onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                          disabled={quantity >= product.stock}
-                          className="p-2.5 hover:bg-zinc-100 text-zinc-600 disabled:opacity-40 transition"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <span className="text-xs text-zinc-500">
-                        ({t('pd_remaining', { stock: product.stock })})
-                      </span>
+                {/* NỘI BỘ (Quản Lý & Nhân Viên & Admin): Không có mục mua hàng */}
+                {user && (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'STAFF') ? (
+                  <div className="mt-4 p-4 rounded-2xl bg-zinc-900 text-white space-y-3 border border-zinc-800 shadow-lg animate-in fade-in">
+                    <div className="flex items-center gap-2 font-bold text-amber-400 text-xs uppercase tracking-wider">
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>{user.role === 'ADMIN' ? '👑 Boss Hải (Quản trị)' : user.role === 'MANAGER' ? '💼 Quản Lý Cửa Hàng' : '👔 Nhân Viên Bán Hàng'}</span>
+                    </div>
+                    <p className="text-xs text-zinc-300 leading-relaxed">
+                      Tài khoản nội bộ không sử dụng chức năng mua hàng. Bạn có thể <strong>sửa thông tin món</strong> hoặc chuyển sang <strong>bàn nhận order</strong>:
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
+                      <Link
+                        href="/admin/products"
+                        className="flex-1 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs text-center transition flex items-center justify-center gap-2 shadow-md active:scale-95"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                        <span>✏️ Quản Lý / Sửa Món Này</span>
+                      </Link>
+                      <Link
+                        href="/admin/orders"
+                        className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs text-center transition flex items-center justify-center gap-2 shadow-md active:scale-95"
+                      >
+                        <ShoppingCart className="w-4 h-4" />
+                        <span>📋 Đến Bàn Nhận Order</span>
+                      </Link>
                     </div>
                   </div>
-                )}
+                ) : (
+                  <>
+                    {/* Quantity selector */}
+                    {!isOutOfStock && (
+                      <div className="space-y-2 pt-2">
+                        <label className="text-xs font-bold text-zinc-700 block">{t('pd_quantity')}</label>
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center border border-zinc-200 rounded-xl bg-white overflow-hidden">
+                            <button
+                              type="button"
+                              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                              className="p-2.5 hover:bg-zinc-100 text-zinc-600 transition"
+                            >
+                              <Minus className="w-4 h-4" />
+                            </button>
+                            <span className="w-12 text-center text-sm font-bold text-zinc-900">{quantity}</span>
+                            <button
+                              type="button"
+                              onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                              disabled={quantity >= product.stock}
+                              className="p-2.5 hover:bg-zinc-100 text-zinc-600 disabled:opacity-40 transition"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <span className="text-xs text-zinc-500">
+                            ({t('pd_remaining', { stock: product.stock })})
+                          </span>
+                        </div>
+                      </div>
+                    )}
 
-                {/* Action Buttons */}
-                <div className="pt-4 flex flex-col sm:flex-row gap-3">
-                  <button
-                    onClick={handleAddToCart}
-                    disabled={isOutOfStock}
-                    className="flex-1 py-3.5 px-6 rounded-2xl bg-zinc-100 hover:bg-blue-50 hover:text-blue-600 text-zinc-800 font-bold text-sm transition flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    <ShoppingBag className="w-4 h-4" />
-                    {t('add_to_cart')}
-                  </button>
-                  <button
-                    onClick={handleBuyNow}
-                    disabled={isOutOfStock}
-                    className="flex-1 py-3.5 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/20 transition flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    {t('buy_now')}
-                  </button>
-                </div>
+                    {/* Action Buttons */}
+                    <div className="pt-4 flex flex-col sm:flex-row gap-3">
+                      <button
+                        onClick={handleAddToCart}
+                        disabled={isOutOfStock}
+                        className="flex-1 py-3.5 px-6 rounded-2xl bg-zinc-100 hover:bg-blue-50 hover:text-blue-600 text-zinc-800 font-bold text-sm transition flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        <ShoppingBag className="w-4 h-4" />
+                        {t('add_to_cart')}
+                      </button>
+                      <button
+                        onClick={handleBuyNow}
+                        disabled={isOutOfStock}
+                        className="flex-1 py-3.5 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/20 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        {t('buy_now')}
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Guarantees Box */}

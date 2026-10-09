@@ -3,10 +3,12 @@
 import React from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, Tag, Boxes, Sparkles } from 'lucide-react';
 
 export default function CartDrawer() {
+  const { user } = useAuth();
   const { 
     cart, 
     isCartOpen, 
@@ -22,7 +24,10 @@ export default function CartDrawer() {
   } = useCart();
   const { t, formatPrice, isLao } = useLanguage();
 
-  if (!isCartOpen) return null;
+  // Nội bộ (Quản lý & Nhân viên & Admin) không sử dụng giỏ hàng
+  if (!isCartOpen || (user && (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'STAFF'))) {
+    return null;
+  }
 
   // Tính tổng giá nếu mua theo giá lẻ để hiển thị số tiền tiết kiệm được
   const regularTotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);

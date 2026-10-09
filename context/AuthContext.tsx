@@ -56,6 +56,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setUser(data.user);
       setIsAuthModalOpen(false);
+      
+      // Quản lý & Nhân viên chỉ nhận order & thêm món, chuyển thẳng tới bàn làm việc
+      if (data.user && (data.user.role === 'ADMIN' || data.user.role === 'MANAGER' || data.user.role === 'STAFF')) {
+        if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/admin')) {
+          window.location.href = '/admin/orders';
+        }
+      }
+
       return { success: true };
     } catch {
       return { success: false, error: 'Lỗi kết nối máy chủ' };

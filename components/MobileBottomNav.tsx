@@ -12,7 +12,10 @@ import {
   ShoppingBag, 
   Package, 
   User as UserIcon, 
-  ShieldCheck 
+  ShieldCheck,
+  ShoppingCart,
+  Plus,
+  Boxes
 } from 'lucide-react';
 
 export default function MobileBottomNav() {
@@ -30,6 +33,71 @@ export default function MobileBottomNav() {
   const isOrders = pathname === '/orders';
   const isCart = pathname === '/cart';
 
+  // Dành riêng cho Quản Lý & Nhân Viên & Admin: KHÔNG CÓ MỤC MUA HÀNG
+  if (user && (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'STAFF')) {
+    return (
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 shadow-2xl px-2 py-1.5 safe-area-pb">
+        <div className="grid grid-cols-5 items-center justify-around text-center">
+          {/* 1. Xem Web Cửa hàng */}
+          <Link
+            href="/"
+            className={`flex flex-col items-center justify-center py-1 transition active:scale-95 ${
+              isHome ? 'text-blue-400 font-bold' : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <Home className={`w-5 h-5 ${isHome ? 'stroke-[2.5]' : 'stroke-2'}`} />
+            <span className="text-[10px] mt-0.5">Cửa hàng</span>
+          </Link>
+
+          {/* 2. Nhận Order & Điều phối */}
+          <Link
+            href="/admin/orders"
+            className="flex flex-col items-center justify-center py-1 text-cyan-400 hover:text-cyan-300 font-bold transition active:scale-95"
+          >
+            <ShoppingCart className="w-5 h-5 stroke-[2.5]" />
+            <span className="text-[10px] mt-0.5">Nhận Order</span>
+          </Link>
+
+          {/* 3. Thêm Món Mới */}
+          <Link
+            href="/admin/products"
+            className="flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 font-bold transition active:scale-95"
+          >
+            <Plus className="w-5 h-5 stroke-[2.5]" />
+            <span className="text-[10px] mt-0.5">Thêm Món</span>
+          </Link>
+
+          {/* 4. Kiểm tra kho */}
+          <Link
+            href="/admin/inventory"
+            className="flex flex-col items-center justify-center py-1 text-amber-400 hover:text-amber-300 font-bold transition active:scale-95"
+          >
+            <Boxes className="w-5 h-5 stroke-2" />
+            <span className="text-[10px] mt-0.5">Kho hàng</span>
+          </Link>
+
+          {/* 5. Bàn Quản Trị Tổng */}
+          <Link
+            href="/admin"
+            className={`flex flex-col items-center justify-center py-1 font-bold transition active:scale-95 ${
+              user.role === 'ADMIN'
+                ? 'text-emerald-400'
+                : user.role === 'MANAGER'
+                ? 'text-purple-400'
+                : 'text-blue-400'
+            }`}
+          >
+            <ShieldCheck className="w-5 h-5 stroke-[2.5]" />
+            <span className="text-[10px] mt-0.5">
+              {user.role === 'ADMIN' ? 'Boss Hải' : user.role === 'MANAGER' ? 'Quản Lý' : 'Nhân Viên'}
+            </span>
+          </Link>
+        </div>
+      </nav>
+    );
+  }
+
+  // Dành cho Khách Hàng (Người mua hàng)
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-zinc-200/90 shadow-xl px-2 py-1.5 safe-area-pb">
       <div className="grid grid-cols-5 items-center justify-around text-center">
@@ -83,30 +151,8 @@ export default function MobileBottomNav() {
           <span className="text-[10px] mt-0.5">{t('mb_orders')}</span>
         </Link>
 
-        {/* 5. Tài khoản / Admin / Quản Lý / Nhân Viên */}
-        {user?.role === 'ADMIN' || user?.role === 'MANAGER' || user?.role === 'STAFF' ? (
-          <Link
-            href="/admin"
-            className={`flex flex-col items-center justify-center py-1 font-bold transition active:scale-95 ${
-              user.role === 'ADMIN'
-                ? 'text-emerald-600'
-                : user.role === 'MANAGER'
-                ? 'text-purple-600'
-                : 'text-blue-600'
-            }`}
-          >
-            <ShieldCheck className={`w-5 h-5 stroke-[2.5] ${
-              user.role === 'ADMIN'
-                ? 'text-emerald-600'
-                : user.role === 'MANAGER'
-                ? 'text-purple-600'
-                : 'text-blue-600'
-            }`} />
-            <span className="text-[10px] mt-0.5">
-              {user.role === 'ADMIN' ? t('mb_admin') : user.role === 'MANAGER' ? 'Quản Lý' : 'Nhân Viên'}
-            </span>
-          </Link>
-        ) : user ? (
+        {/* 5. Tài khoản Khách */}
+        {user ? (
           <Link
             href="/orders"
             className="flex flex-col items-center justify-center py-1 text-zinc-600 hover:text-blue-600 transition active:scale-95"

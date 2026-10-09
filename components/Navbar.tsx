@@ -18,7 +18,9 @@ import {
   X,
   PhoneCall,
   Boxes,
-  Tag
+  Tag,
+  ShoppingCart,
+  Plus
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -198,20 +200,41 @@ export default function Navbar() {
               </button>
             </div>
 
-            {/* Cart Button */}
-            <button
-              onClick={() => setIsCartOpen(true)}
-              className="relative p-2.5 sm:px-4 sm:py-2.5 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-800 flex items-center gap-2 transition"
-              title={t('nav_cart')}
-            >
-              <ShoppingBag className="w-5 h-5 text-zinc-700" />
-              <span className="hidden sm:inline text-xs font-semibold">{t('nav_cart')}</span>
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 sm:static bg-blue-600 text-white text-[11px] font-bold rounded-full w-5 h-5 sm:w-auto sm:px-2 flex items-center justify-center">
-                  {totalItems}
-                </span>
-              )}
-            </button>
+            {/* Action Buttons: Nội bộ (Nhận Order & Thêm Món) vs Khách hàng (Giỏ hàng) */}
+            {user && (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'STAFF') ? (
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Link
+                  href="/admin/orders"
+                  className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-full bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200 text-xs font-bold transition flex items-center gap-1.5 shadow-2xs"
+                  title="Nhận Order & Điều phối"
+                >
+                  <ShoppingCart className="w-4 h-4 text-blue-600" />
+                  <span className="hidden sm:inline">Nhận Order</span>
+                </Link>
+                <Link
+                  href="/admin/products"
+                  className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-full bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 text-xs font-bold transition flex items-center gap-1.5 shadow-2xs"
+                  title="Thêm Món / Quản lý sản phẩm"
+                >
+                  <Plus className="w-4 h-4 text-emerald-600" />
+                  <span className="hidden sm:inline">Thêm Món</span>
+                </Link>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="relative p-2.5 sm:px-4 sm:py-2.5 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-800 flex items-center gap-2 transition"
+                title={t('nav_cart')}
+              >
+                <ShoppingBag className="w-5 h-5 text-zinc-700" />
+                <span className="hidden sm:inline text-xs font-semibold">{t('nav_cart')}</span>
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 sm:static bg-blue-600 text-white text-[11px] font-bold rounded-full w-5 h-5 sm:w-auto sm:px-2 flex items-center justify-center">
+                    {totalItems}
+                  </span>
+                )}
+              </button>
+            )}
 
             {/* User Account */}
             {user ? (
@@ -241,25 +264,43 @@ export default function Navbar() {
                       <p className="text-xs text-zinc-500">{user.phone}</p>
                     </div>
 
-                    {(user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'STAFF') && (
+                    {(user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'STAFF') ? (
+                      <>
+                        <Link
+                          href="/admin/orders"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-blue-600 hover:bg-blue-50 transition"
+                        >
+                          <ShoppingCart className="w-4 h-4" />
+                          <span>📋 Nhận & Hoàn Thành Order</span>
+                        </Link>
+                        <Link
+                          href="/admin/products"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 transition"
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span>➕ Thêm Sản Phẩm Mới</span>
+                        </Link>
+                        <Link
+                          href="/admin"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-purple-600 hover:bg-purple-50 transition"
+                        >
+                          <ShieldCheck className="w-4 h-4" />
+                          <span>💼 Bàn Làm Việc Tổng</span>
+                        </Link>
+                      </>
+                    ) : (
                       <Link
-                        href="/admin"
+                        href="/orders"
                         onClick={() => setIsUserMenuOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-blue-600 hover:bg-blue-50 transition"
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-xs text-zinc-700 hover:bg-zinc-50 transition"
                       >
-                        <ShieldCheck className="w-4 h-4" />
-                        {user.role === 'ADMIN' ? t('nav_admin_portal') : user.role === 'MANAGER' ? '💼 Bàn Quản Lý (Giao đơn)' : '👔 Bàn làm việc Nhân viên'}
+                        <Package className="w-4 h-4 text-zinc-500" />
+                        {t('nav_my_orders')}
                       </Link>
                     )}
-
-                    <Link
-                      href="/orders"
-                      onClick={() => setIsUserMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-xs text-zinc-700 hover:bg-zinc-50 transition"
-                    >
-                      <Package className="w-4 h-4 text-zinc-500" />
-                      {t('nav_my_orders')}
-                    </Link>
 
                     <button
                       onClick={() => { setIsUserMenuOpen(false); logout(); }}
@@ -344,24 +385,43 @@ export default function Navbar() {
                 </div>
 
                 <div className="pt-2 border-t border-zinc-200/60 space-y-1 text-xs">
-                  {(user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'STAFF') && (
+                  {(user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'STAFF') ? (
+                    <>
+                      <Link
+                        href="/admin/orders"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center gap-2 py-2 px-3 text-blue-600 font-bold hover:bg-blue-50 rounded-xl"
+                      >
+                        <ShoppingCart className="w-4 h-4" />
+                        <span>📋 Nhận & Hoàn Thành Order</span>
+                      </Link>
+                      <Link
+                        href="/admin/products"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center gap-2 py-2 px-3 text-emerald-600 font-bold hover:bg-emerald-50 rounded-xl"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>➕ Thêm Món / Quản lý sản phẩm</span>
+                      </Link>
+                      <Link
+                        href="/admin"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center gap-2 py-2 px-3 text-purple-600 font-bold hover:bg-purple-50 rounded-xl"
+                      >
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>💼 Bàn Quản Trị Tổng</span>
+                      </Link>
+                    </>
+                  ) : (
                     <Link
-                      href="/admin"
+                      href="/orders"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex items-center gap-2 py-2 px-3 text-emerald-600 font-bold hover:bg-emerald-50 rounded-xl"
+                      className="flex items-center gap-2 py-2 px-3 text-zinc-700 font-medium hover:bg-zinc-100 rounded-xl"
                     >
-                      <ShieldCheck className="w-4 h-4" />
-                      {user.role === 'ADMIN' ? (t('nav_admin_portal') || 'Trang Quản Trị') : user.role === 'MANAGER' ? '💼 Bàn Quản Lý (Giao đơn)' : '👔 Bàn làm việc Nhân viên'}
+                      <Package className="w-4 h-4" />
+                      {t('nav_my_orders')}
                     </Link>
                   )}
-                  <Link
-                    href="/orders"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-2 py-2 px-3 text-zinc-700 font-medium hover:bg-zinc-100 rounded-xl"
-                  >
-                    <Package className="w-4 h-4" />
-                    {t('nav_my_orders')}
-                  </Link>
                   <button
                     onClick={() => { setIsMobileMenuOpen(false); logout(); }}
                     className="w-full flex items-center gap-2 py-2 px-3 text-red-600 font-medium hover:bg-red-50 rounded-xl text-left"
