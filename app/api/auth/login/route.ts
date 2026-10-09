@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
         phone: user.phone,
         name: user.name,
         role: user.role,
+        customerType: user.customerType || 'RETAIL',
         address: user.address,
       },
       token,

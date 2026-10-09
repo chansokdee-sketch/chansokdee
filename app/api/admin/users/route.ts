@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
         phone: user.phone,
         name: user.name,
         role: user.role,
+        customerType: user.customerType || 'RETAIL',
         address: user.address,
         createdAt: user.createdAt,
         orderCount: userOrders.length,
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { phone, password, name, role = 'STAFF', address } = body;
+    const { phone, password, name, role = 'USER', customerType = 'RETAIL', address } = body;
 
     if (!phone || typeof phone !== 'string' || phone.trim().length < 8) {
       return NextResponse.json({ error: 'Số điện thoại không hợp lệ (tối thiểu 8 số)' }, { status: 400 });
@@ -65,11 +66,18 @@ export async function POST(req: NextRequest) {
 
     const passwordHash = bcrypt.hashSync(password, 10);
     const assignedRole = role === 'STAFF' ? 'STAFF' : 'USER';
+    const assignedCustomerType = customerType === 'WHOLESALE' ? 'WHOLESALE' : 'RETAIL';
+
+    const defaultName = assignedRole === 'STAFF' 
+      ? 'Nhân viên bán hàng' 
+      : (assignedCustomerType === 'WHOLESALE' ? 'Khách sỉ đại lý' : 'Khách mua lẻ');
+
     const newUser = db.users.create({
       phone: cleanPhone,
       passwordHash,
-      name: name?.trim() || (assignedRole === 'STAFF' ? 'Nhân viên bán hàng' : 'Khách hàng'),
+      name: name?.trim() || defaultName,
       role: assignedRole,
+      customerType: assignedCustomerType,
       address: address?.trim() || '',
     });
 
@@ -89,7 +97,7 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { id, role, name, address } = body;
+    const { id, role, customerType, name, address, password } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'Thiếu ID người dùng' }, { status: 400 });
@@ -109,11 +117,17 @@ export async function PUT(req: NextRequest) {
     if (role && (role === 'STAFF' || role === 'USER')) {
       updates.role = role;
     }
+    if (customerType && (customerType === 'RETAIL' || customerType === 'WHOLESALE')) {
+      updates.customerType = customerType;
+    }
     if (typeof name === 'string' && name.trim()) {
       updates.name = name.trim();
     }
     if (typeof address === 'string') {
       updates.address = address.trim();
+    }
+    if (typeof password === 'string' && password.trim().length >= 6) {
+      updates.passwordHash = bcrypt.hashSync(password.trim(), 10);
     }
 
     const updated = db.users.update(id, updates);

@@ -16,6 +16,7 @@ export interface User {
   passwordHash: string;
   name?: string;
   role: Role;
+  customerType?: 'RETAIL' | 'WHOLESALE';
   address?: string;
   createdAt: string;
 }

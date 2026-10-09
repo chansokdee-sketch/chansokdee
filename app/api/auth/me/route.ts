@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
       phone: user.phone,
       name: user.name,
       role: user.role,
+      customerType: user.customerType || 'RETAIL',
       address: user.address,
     },
   });

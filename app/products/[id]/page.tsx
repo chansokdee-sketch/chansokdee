@@ -218,8 +218,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                   const wholesalePrice = product.wholesalePrice !== undefined && product.wholesalePrice > 0
                     ? product.wholesalePrice
                     : Math.round(product.price * 0.8);
-                  const minQty = product.minWholesaleQty || 3;
-                  const isWholesaleActive = customerMode === 'WHOLESALE' || quantity >= minQty;
+                  const isWholesaleActive = customerMode === 'WHOLESALE';
 
                   return (
                     <div className="space-y-2.5">
@@ -237,14 +236,14 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                             </span>
                             {!isWholesaleActive && (
                               <span className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">
-                                Đang chọn
+                                Đang áp dụng
                               </span>
                             )}
                           </div>
                           <div className="text-xl sm:text-2xl font-black text-blue-700 font-mono">
                             {formatPrice(product.price)}
                           </div>
-                          <span className="text-[10px] text-zinc-400">Đơn giá khi mua 1-{minQty - 1} cái</span>
+                          <span className="text-[10px] text-zinc-400">Dành cho Khách mua lẻ</span>
                         </div>
 
                         {/* Bảng giá sỉ */}
@@ -260,7 +259,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                             </span>
                             {isWholesaleActive && (
                               <span className="text-[10px] bg-amber-500 text-amber-950 px-2 py-0.5 rounded-full font-black">
-                                Áp dụng giá sỉ!
+                                Đang áp dụng
                               </span>
                             )}
                           </div>
@@ -268,20 +267,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                             {formatPrice(wholesalePrice)}
                           </div>
                           <span className="text-[10px] text-amber-700/80 font-medium">
-                            Áp dụng khi mua từ ≥ {minQty} cái hoặc khách sỉ
+                            Dành cho Khách sỉ & Đại lý buôn
                           </span>
                         </div>
                       </div>
-
-                      {/* Thông báo ưu đãi sỉ khi tăng số lượng */}
-                      {quantity >= minQty && (
-                        <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center gap-2 font-semibold">
-                          <Sparkles className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                          <span>
-                            🎉 Đang mua {quantity} cái: Tự động tính theo <strong>Giá bán sỉ ({formatPrice(wholesalePrice)}/cái)</strong>!
-                          </span>
-                        </div>
-                      )}
                     </div>
                   );
                 })()}

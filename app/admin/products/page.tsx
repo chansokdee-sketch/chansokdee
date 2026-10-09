@@ -531,7 +531,7 @@ export default function AdminProductsPage() {
                     <td className="py-4 px-4">
                       <div className="font-bold text-amber-400 text-sm font-mono">{formatPriceLAK(wholesalePrice)}</div>
                       <span className="text-[10px] text-amber-300/80 bg-amber-500/10 px-1.5 py-0.2 rounded font-medium border border-amber-500/20 inline-block">
-                        Áp dụng từ ≥ {minQty} cái
+                        Khách sỉ ⚡
                       </span>
                     </td>
 
@@ -704,19 +704,16 @@ export default function AdminProductsPage() {
                   </div>
                 </div>
 
-                {/* Điều kiện tính giá sỉ */}
-                <div className="flex items-center justify-between pt-2 border-t border-zinc-900 text-zinc-400 text-[11px]">
-                  <span>Điều kiện tự động áp dụng giá sỉ: Mua từ</span>
-                  <div className="flex items-center gap-1.5">
-                    <input
-                      type="number"
-                      min="1"
-                      value={formData.minWholesaleQty}
-                      onChange={(e) => setFormData({ ...formData, minWholesaleQty: e.target.value })}
-                      className="w-16 bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1 text-center font-bold text-white focus:outline-none focus:border-amber-500 text-xs"
-                    />
-                    <span className="font-semibold text-zinc-300">cái trở lên</span>
-                  </div>
+                {/* Ghi chú phân loại bảng giá */}
+                <div className="pt-2 border-t border-zinc-900 text-zinc-400 text-[11px] flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                  <span className="flex items-center gap-1.5 text-zinc-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    <span>Khách lẻ: Mua theo <strong>Giá bán lẻ</strong></span>
+                  </span>
+                  <span className="flex items-center gap-1.5 text-amber-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    <span>Khách sỉ ⚡: Mua theo <strong>Giá bán sỉ</strong></span>
+                  </span>
                 </div>
               </div>
 

@@ -61,22 +61,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const getItemPrice = (product: Product, quantity = 1): number => {
+  const getItemPrice = (product: Product, _quantity?: number): number => {
     const wholesale = product.wholesalePrice !== undefined && product.wholesalePrice > 0
       ? product.wholesalePrice
       : Math.round(product.price * 0.8);
-    const minQty = product.minWholesaleQty || 3;
 
-    // Nếu đang ở chế độ Khách sỉ hoặc số lượng đạt mốc mua sỉ tối thiểu
-    if (customerMode === 'WHOLESALE' || quantity >= minQty) {
+    // Khách sỉ mua giá sỉ, khách lẻ mua giá lẻ (không phụ thuộc số lượng)
+    if (customerMode === 'WHOLESALE') {
       return wholesale;
     }
     return product.price;
   };
 
-  const isItemWholesalePrice = (product: Product, quantity = 1): boolean => {
-    const minQty = product.minWholesaleQty || 3;
-    return customerMode === 'WHOLESALE' || quantity >= minQty;
+  const isItemWholesalePrice = (product: Product, _quantity?: number): boolean => {
+    return customerMode === 'WHOLESALE';
   };
 
   const addToCart = (product: Product, quantity = 1): { success: boolean; message: string } => {

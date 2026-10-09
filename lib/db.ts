@@ -431,6 +431,10 @@ function readData(): DatabaseSchema {
       wholesalePrice: p.wholesalePrice !== undefined ? p.wholesalePrice : Math.round(p.price * 0.8),
       minWholesaleQty: p.minWholesaleQty || 3,
     }));
+    parsed.users = (parsed.users || []).map(u => ({
+      ...u,
+      customerType: u.customerType || 'RETAIL',
+    }));
     return parsed;
   } catch (error) {
     console.error('Error reading db file, regenerating:', error);
@@ -676,7 +680,7 @@ export const db = {
           };
         }
 
-        const isWholesale = orderInput.customerType === 'WHOLESALE' || item.quantity >= (product.minWholesaleQty || 3);
+        const isWholesale = orderInput.customerType === 'WHOLESALE';
         const itemPrice = isWholesale
           ? (product.wholesalePrice !== undefined && product.wholesalePrice > 0 ? product.wholesalePrice : Math.round(product.price * 0.8))
           : product.price;

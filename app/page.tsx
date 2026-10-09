@@ -1012,7 +1012,7 @@ function HomeContent() {
                               {formatPrice(product.price)}
                             </span>
                             <span className="text-[10px] text-zinc-500 block font-medium">
-                              Sỉ: <strong className="text-amber-600 font-bold">{formatPrice(wholesalePrice)}</strong> (≥{minQty} cái)
+                              Giá sỉ: <strong className="text-amber-600 font-bold">{formatPrice(wholesalePrice)}</strong>
                             </span>
                           </div>
                         );
