@@ -64,37 +64,42 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-zinc-200">
       {/* Top Banner */}
-      <div className="bg-zinc-900 text-zinc-300 text-xs py-1.5 px-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5 text-zinc-300">
-              <PhoneCall className="w-3.5 h-3.5 text-rose-400" />
-              {t('nav_hotline')} <strong className="text-white">{storeInfo.hotline}</strong>
-            </span>
-            <span className="hidden sm:inline text-zinc-400">| {storeInfo.topAnnouncement}</span>
+      <div className="bg-zinc-900 text-zinc-300 text-xs py-1.5 px-3 sm:px-4">
+        <div className="max-w-7xl mx-auto flex justify-between items-center text-[11px] sm:text-xs">
+          <div className="flex items-center gap-2 truncate">
+            <a 
+              href={`tel:${storeInfo.hotline.replace(/\s/g, '')}`} 
+              className="flex items-center gap-1.5 text-zinc-300 hover:text-white transition whitespace-nowrap"
+            >
+              <PhoneCall className="w-3 h-3 text-rose-400 flex-shrink-0" />
+              <span className="hidden sm:inline">{t('nav_hotline')}</span>
+              <strong className="text-white font-mono">{storeInfo.hotline}</strong>
+            </a>
+            <span className="hidden md:inline text-zinc-400">| {storeInfo.topAnnouncement}</span>
           </div>
-          <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             {user?.role === 'ADMIN' ? (
-              <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2.5">
                 <Link 
                   href="/admin/settings" 
-                  className="flex items-center gap-1 text-amber-400 hover:text-amber-300 font-medium"
+                  className="flex items-center gap-1 text-amber-400 hover:text-amber-300 font-medium whitespace-nowrap"
                 >
                   {t('nav_admin_settings')}
                 </Link>
                 <Link 
                   href="/admin" 
-                  className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 font-medium"
+                  className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 font-medium whitespace-nowrap"
                 >
                   <ShieldCheck className="w-3.5 h-3.5" />
                   {t('nav_admin_portal')}
                 </Link>
               </div>
             ) : user?.role === 'STAFF' ? (
-              <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2">
                 <Link 
                   href="/admin" 
-                  className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 font-medium"
+                  className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 font-medium whitespace-nowrap"
                 >
                   <ShieldCheck className="w-3.5 h-3.5" />
                   <span>{t('nav_admin_portal') || 'Bàn làm việc Nhân viên'}</span>
@@ -109,25 +114,25 @@ export default function Navbar() {
       </div>
 
       {/* Main Navbar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20 gap-3 sm:gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 sm:h-20 gap-2 sm:gap-4">
           
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 flex-shrink-0 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-600 to-pink-500 flex items-center justify-center text-white shadow-md shadow-rose-500/25 group-hover:scale-105 transition">
-              <ShoppingBag className="w-5 h-5" />
+          <Link href="/" className="flex items-center gap-2 flex-shrink-0 group min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-rose-600 to-pink-500 flex items-center justify-center text-white shadow-md shadow-rose-500/25 group-hover:scale-105 transition flex-shrink-0">
+              <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <span className="text-xl sm:text-2xl font-black tracking-tight text-zinc-900">
+            <div className="min-w-0">
+              <span className="text-lg sm:text-2xl font-black tracking-tight text-zinc-900 block truncate">
                 {storeInfo.storeName}
               </span>
-              <span className="block text-[10px] text-zinc-500 -mt-1 font-medium tracking-wider uppercase">
+              <span className="hidden sm:block text-[10px] text-zinc-500 -mt-1 font-medium tracking-wider uppercase truncate">
                 {storeInfo.slogan}
               </span>
             </div>
           </Link>
 
-          {/* Search Bar */}
+          {/* Search Bar (Desktop) */}
           <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-lg mx-6 relative">
             <input
               type="text"
@@ -149,35 +154,37 @@ export default function Navbar() {
           </form>
 
           {/* Actions */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
             
-            {/* Chế độ Giá: Khách Lẻ vs Khách Sỉ */}
+            {/* Chế độ Giá: Khách Lẻ vs Khách Sỉ (gọn gàng trên mobile) */}
             <div className="flex items-center bg-zinc-100 p-0.5 rounded-full border border-zinc-200 text-xs font-bold shadow-2xs">
               <button
                 type="button"
                 onClick={() => setCustomerMode('RETAIL')}
-                className={`px-2.5 sm:px-3 py-1.5 rounded-full transition flex items-center gap-1.5 ${
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full transition flex items-center gap-1 ${
                   customerMode === 'RETAIL'
                     ? 'bg-white text-zinc-900 shadow-xs'
                     : 'text-zinc-500 hover:text-zinc-800'
                 }`}
                 title="Chế độ giá bán lẻ (ລາຄາຂາຍຍ່ອຍ)"
               >
-                <Tag className="w-3.5 h-3.5 text-blue-600" />
-                <span className="text-[11px] font-bold">Khách lẻ</span>
+                <Tag className="w-3 h-3 text-blue-600 flex-shrink-0" />
+                <span className="hidden sm:inline text-[11px] font-bold">Khách lẻ</span>
+                <span className="sm:hidden text-[10px] font-bold">Lẻ</span>
               </button>
               <button
                 type="button"
                 onClick={() => setCustomerMode('WHOLESALE')}
-                className={`px-2.5 sm:px-3 py-1.5 rounded-full transition flex items-center gap-1.5 ${
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full transition flex items-center gap-1 ${
                   customerMode === 'WHOLESALE'
                     ? 'bg-amber-400 text-amber-950 font-black shadow-xs'
                     : 'text-zinc-500 hover:text-zinc-800'
                 }`}
                 title="Chế độ giá bán sỉ / buôn (ລາຄາຂາຍສົ່ງ)"
               >
-                <Boxes className="w-3.5 h-3.5 text-amber-900" />
-                <span className="text-[11px] font-black">Khách sỉ ⚡</span>
+                <Boxes className="w-3 h-3 text-amber-900 flex-shrink-0" />
+                <span className="hidden sm:inline text-[11px] font-black">Khách sỉ ⚡</span>
+                <span className="sm:hidden text-[10px] font-black">Sỉ ⚡</span>
               </button>
             </div>
 

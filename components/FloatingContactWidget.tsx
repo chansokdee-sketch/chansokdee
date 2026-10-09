@@ -41,7 +41,7 @@ export default function FloatingContactWidget() {
   return (
     <>
       {/* Floating Trigger Button */}
-      <div className="fixed bottom-16 right-3.5 sm:bottom-6 sm:right-6 z-30">
+      <div className="fixed bottom-18 right-3.5 sm:bottom-6 sm:right-6 z-30">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="relative group p-3 sm:p-3.5 bg-gradient-to-tr from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white rounded-full shadow-xl shadow-emerald-600/30 transition-all active:scale-95 flex items-center justify-center border-2 border-white/80"
