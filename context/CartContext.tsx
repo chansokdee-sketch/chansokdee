@@ -20,6 +20,7 @@ interface CartContextType {
   setCustomerMode: (mode: CustomerPriceMode) => void;
   getItemPrice: (product: Product, quantity?: number) => number;
   isItemWholesalePrice: (product: Product, quantity?: number) => boolean;
+  hasFullPriceAccess: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -30,12 +31,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Chỉ khi đăng nhập bằng tài khoản Khách Sỉ (customerType === 'WHOLESALE') mới có thể kích hoạt giá sỉ
-  // Khách lẻ và người chưa đăng nhập 100% luôn luôn chỉ thấy và mua bằng Giá Lẻ
-  const isWholesaleUser = Boolean(user && user.customerType === 'WHOLESALE');
+  // Không giới hạn đối với các chức vụ khác: Admin, Quản Lý, Nhân Viên và Khách Sỉ (WHOLESALE)
+  // Chỉ giới hạn duy nhất đối với Khách Mua Lẻ (RETAIL) và người chưa đăng nhập
+  const hasFullPriceAccess = Boolean(
+    user && (
+      user.role === 'ADMIN' ||
+      user.role === 'MANAGER' ||
+      user.role === 'STAFF' ||
+      user.customerType === 'WHOLESALE'
+    )
+  );
+
   const [wholesaleToggle, setWholesaleToggle] = useState<CustomerPriceMode>('WHOLESALE');
 
-  const customerMode: CustomerPriceMode = isWholesaleUser ? wholesaleToggle : 'RETAIL';
+  // Người có quyền xem toàn bộ giá mặc định hiển thị cả Giá Sỉ và Giá Lẻ
+  // Khách lẻ và người chưa đăng nhập bị khóa cứng ở chế độ RETAIL (chỉ xem Giá Lẻ)
+  const customerMode: CustomerPriceMode = hasFullPriceAccess ? wholesaleToggle : 'RETAIL';
 
   useEffect(() => {
     try {
@@ -57,8 +68,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [cart, isInitialized]);
 
   const setCustomerMode = (mode: CustomerPriceMode) => {
-    // Chỉ tài khoản khách sỉ mới được chuyển đổi chế độ xem
-    if (isWholesaleUser) {
+    // Các chức vụ không bị giới hạn (Admin, Quản Lý, Nhân Viên, Khách Sỉ) được tự do chuyển chế độ xem
+    if (hasFullPriceAccess) {
       setWholesaleToggle(mode);
     }
   };
@@ -169,6 +180,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setCustomerMode,
         getItemPrice,
         isItemWholesalePrice,
+        hasFullPriceAccess,
       }}
     >
       {children}

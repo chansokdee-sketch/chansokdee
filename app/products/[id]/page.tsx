@@ -30,7 +30,7 @@ import {
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id } = use(params);
-  const { addToCart, setIsCartOpen, customerMode } = useCart();
+  const { addToCart, setIsCartOpen, customerMode, hasFullPriceAccess } = useCart();
   const { user, setIsAuthModalOpen, setAuthModalMode } = useAuth();
   const { t, formatPrice, isLao } = useLanguage();
 
@@ -231,7 +231,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                       <div className="space-y-3">
                         <div className="flex items-center gap-2 p-2.5 bg-amber-500/15 rounded-xl border border-amber-500/30 text-xs text-amber-950 font-bold">
                           <span className="text-sm">⚡</span>
-                          <span>Tài khoản Khách Sỉ: Bạn được xem toàn bộ <strong>Giá Sỉ</strong> và <strong>Giá Bán Lẻ</strong></span>
+                          <span>
+                            {user?.role === 'ADMIN' ? '👑 Boss Hải (Quản trị): Xem toàn bộ Giá Sỉ & Giá Lẻ' :
+                             user?.role === 'MANAGER' ? '💼 Quản Lý Cửa Hàng: Xem toàn bộ Giá Sỉ & Giá Lẻ' :
+                             user?.role === 'STAFF' ? '👔 Nhân Viên Bán Hàng: Xem toàn bộ Giá Sỉ & Giá Lẻ' :
+                             (isLao ? 'ບັນຊີລູກຄ້າຂາຍສົ່ງ: ທ່ານໄດ້ຮັບສິດເບິ່ງທັງໝົດ ລາຄາສົ່ງ ແລະ ລາຄາຍ່ອຍ' : 'Tài khoản Khách Sỉ: Bạn được xem toàn bộ Giá Sỉ và Giá Bán Lẻ')}
+                          </span>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {/* Card 1: Giá Sỉ */}
@@ -239,17 +244,17 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                             <div className="flex items-center justify-between text-xs font-semibold text-zinc-500">
                               <span className="flex items-center gap-1.5 text-amber-900 font-bold">
                                 <Boxes className="w-4 h-4 text-amber-600" />
-                                <span>Giá Bán Sỉ (Áp dụng mua) ⚡</span>
+                                <span>{isLao ? 'ລາຄາຂາຍສົ່ງ (ນຳໃຊ້)' : 'Giá Bán Sỉ (Áp dụng mua)'} ⚡</span>
                               </span>
                               <span className="text-[10px] bg-amber-500 text-amber-950 px-2 py-0.5 rounded-full font-black">
-                                Giá của bạn
+                                {isLao ? 'ລາຄາຂອງທ່ານ' : 'Giá của bạn'}
                               </span>
                             </div>
                             <div className="text-2xl font-black text-amber-600 font-mono">
                               {formatPrice(wholesalePrice)}
                             </div>
                             <span className="text-[11px] text-amber-700/80 font-medium block">
-                              Dành cho đơn mua buôn / đại lý
+                              {isLao ? 'ລາຄາພິເສດສຳລັບຍົກໂຫຼ / ຕົວແທນ' : 'Dành cho đơn mua buôn / đại lý'}
                             </span>
                           </div>
 
@@ -258,7 +263,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                             <div className="flex items-center justify-between text-xs font-semibold text-zinc-500">
                               <span className="flex items-center gap-1.5 text-zinc-700 font-bold">
                                 <Tag className="w-4 h-4 text-blue-600" />
-                                <span>Giá Bán Lẻ Niêm Yết</span>
+                                <span>{isLao ? 'ລາຄາຂາຍຍ່ອຍປົກກະຕິ' : 'Giá Bán Lẻ Niêm Yết'}</span>
                               </span>
                             </div>
                             <div className="text-2xl font-black text-zinc-700 font-mono">
@@ -266,7 +271,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                             </div>
                             {profit > 0 && (
                               <span className="text-[11px] text-emerald-600 font-bold block">
-                                Lợi nhuận bán lẻ: +{formatPrice(profit)}
+                                {isLao ? `ກຳໄລຂາຍຍ່ອຍ: +${formatPrice(profit)}` : `Lợi nhuận bán lẻ: +${formatPrice(profit)}`}
                               </span>
                             )}
                           </div>
@@ -282,28 +287,30 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                         <div className="flex items-center justify-between text-xs font-semibold text-zinc-500 mb-1">
                           <span className="flex items-center gap-1.5 text-zinc-700 font-medium">
                             <Tag className="w-4 h-4 text-blue-600" />
-                            <span>Giá bán</span>
+                            <span>{t('pd_status')} {isLao ? 'ລາຄາຂາຍ' : 'Giá bán'}</span>
                           </span>
                         </div>
                         <div className="text-2xl sm:text-3xl font-black text-blue-700 font-mono">
                           {formatPrice(product.price)}
                         </div>
                       </div>
-                      <div className="p-2.5 bg-amber-50/80 border border-amber-200/80 rounded-xl flex items-center justify-between gap-2 text-xs">
-                        <span className="text-[11px] text-amber-900 font-medium">
-                          ⚡ Bạn là đại lý hoặc mua sỉ số lượng lớn?
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAuthModalMode('login');
-                            setIsAuthModalOpen(true);
-                          }}
-                          className="text-[11px] font-black text-amber-800 hover:text-amber-950 underline flex-shrink-0"
-                        >
-                          Đăng nhập Khách Sỉ ⚡
-                        </button>
-                      </div>
+                      {!hasFullPriceAccess && (
+                        <div className="p-2.5 bg-amber-50/80 border border-amber-200/80 rounded-xl flex items-center justify-between gap-2 text-xs">
+                          <span className="text-[11px] text-amber-900 font-medium">
+                            {isLao ? '⚡ ທ່ານຕ້ອງການຊື້ຍົກໂຫຼ ຫຼື ລາຄາສົ່ງ?' : '⚡ Bạn là đại lý hoặc mua buôn số lượng lớn?'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAuthModalMode('login');
+                              setIsAuthModalOpen(true);
+                            }}
+                            className="text-[11px] font-black text-amber-800 hover:text-amber-950 underline flex-shrink-0"
+                          >
+                            {isLao ? 'ເຂົ້າສູ່ລະບົບລູກຄ້າຂາຍສົ່ງ ⚡' : 'Đăng nhập Khách Sỉ ⚡'}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })()}

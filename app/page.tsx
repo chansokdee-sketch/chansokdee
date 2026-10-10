@@ -78,7 +78,7 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const initialSearch = searchParams.get('search') || '';
 
-  const { addToCart, setIsCartOpen, customerMode } = useCart();
+  const { addToCart, setIsCartOpen, customerMode, hasFullPriceAccess } = useCart();
   const { user, setIsAuthModalOpen, setAuthModalMode } = useAuth();
   const { t, formatPrice, isLao } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
@@ -511,7 +511,7 @@ function HomeContent() {
             </div>
           </div>
 
-          {/* Wholesale Mode Active Banner */}
+          {/* Wholesale / Role Banner (Admin, Manager, Staff, Wholesale - Không bị giới hạn giá) */}
           {customerMode === 'WHOLESALE' && (
             <div className="p-3 sm:p-3.5 bg-gradient-to-r from-amber-500/15 via-amber-400/20 to-orange-500/10 border border-amber-300 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-xs">
               <div className="flex items-center gap-2.5">
@@ -520,23 +520,28 @@ function HomeContent() {
                 </span>
                 <div>
                   <p className="font-extrabold text-amber-950 text-xs sm:text-sm">
-                    Tài khoản Khách Sỉ (ລາຄາຂາຍສົ່ງ) - Đang hiển thị toàn bộ Giá Sỉ & Giá Lẻ
+                    {user?.role === 'ADMIN' ? '👑 Boss Hải (Quản trị) — Toàn quyền xem Giá Sỉ & Giá Lẻ' :
+                     user?.role === 'MANAGER' ? '💼 Quản Lý Cửa Hàng — Toàn quyền xem Giá Sỉ & Giá Lẻ' :
+                     user?.role === 'STAFF' ? '👔 Nhân Viên Tiếp Nhận Đơn — Xem Giá Sỉ & Giá Lẻ' :
+                     (isLao ? 'ບັນຊີລູກຄ້າຂາຍສົ່ງ (ລາຄາຂາຍສົ່ງ) - ສະແດງທັງໝົດລາຄາສົ່ງ & ລາຄາຍ່ອຍ' : 'Tài khoản Khách Sỉ (Đại lý) — Đang hiển thị toàn bộ Giá Sỉ & Giá Lẻ')}
                   </p>
                   <p className="text-[11px] text-amber-800">
-                    Bạn được xem cả <strong>Giá Sỉ</strong> (đang áp dụng mua) và <strong>Giá Bán Lẻ</strong> (niêm yết) trên từng sản phẩm.
+                    {isLao
+                      ? 'ບັນຊີຂອງທ່ານບໍ່ຈຳກັດ: ສາມາດເບິ່ງໄດ້ທັງ ລາຄາຂາຍສົ່ງ (ລາຄາຊື້) ແລະ ລາຄາຂາຍຍ່ອຍ ໃນແຕ່ລະສິນຄ້າ.'
+                      : 'Chức vụ không bị giới hạn: đang hiển thị đồng thời cả Giá Sỉ (giá buôn áp dụng) và Giá Bán Lẻ niêm yết trên từng sản phẩm.'}
                   </p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Wholesale Prompt for Retail Visitors */}
-          {customerMode !== 'WHOLESALE' && (
+          {/* Wholesale Prompt for Retail Visitors (Chỉ hiển thị cho khách lẻ & vãng lai bị giới hạn) */}
+          {customerMode !== 'WHOLESALE' && !hasFullPriceAccess && (
             <div className="p-2.5 sm:p-3 bg-amber-50/80 border border-amber-200/90 rounded-2xl flex items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2 text-amber-950">
                 <span className="text-base flex-shrink-0">⚡</span>
                 <span className="text-[11px] sm:text-xs font-semibold">
-                  Bạn là đại lý hoặc mua buôn số lượng lớn?
+                  {isLao ? 'ທ່ານຕ້ອງການຊື້ຍົກໂຫຼ ຫຼື ລາຄາສົ່ງ?' : 'Bạn là đại lý hoặc mua buôn số lượng lớn?'}
                 </span>
               </div>
               <button
@@ -547,7 +552,7 @@ function HomeContent() {
                 }}
                 className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-xl text-[11px] transition shadow-xs flex-shrink-0 active:scale-95"
               >
-                Đăng nhập Khách Sỉ ⚡
+                {isLao ? 'ເຂົ້າສູ່ລະບົບລູກຄ້າຂາຍສົ່ງ ⚡' : 'Đăng nhập Khách Sỉ ⚡'}
               </button>
             </div>
           )}

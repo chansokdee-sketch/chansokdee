@@ -7,7 +7,7 @@ import { X, Lock, Phone, User as UserIcon, Shield, Sparkles, AlertCircle, Boxes 
 
 export default function AuthModal() {
   const { isAuthModalOpen, setIsAuthModalOpen, authModalMode, setAuthModalMode, login, register } = useAuth();
-  const { t } = useLanguage();
+  const { t, isLao } = useLanguage();
   
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -148,60 +148,112 @@ export default function AuthModal() {
         </div>
 
         {/* Quick Demo Test Fill */}
-        <div className="mb-6 p-3 bg-blue-50/70 rounded-2xl border border-blue-100 text-xs">
-          <div className="flex items-center gap-1.5 font-bold text-blue-800 mb-2">
-            <Sparkles className="w-4 h-4 text-blue-600" />
-            {t('auth_demo_title')}
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mb-2">
-            <button
-              type="button"
-              onClick={handleQuickAdmin}
-              className="py-2 px-2 bg-white text-blue-700 font-bold rounded-xl border border-blue-200 hover:bg-blue-600 hover:text-white transition shadow-2xs text-center text-[11px] flex items-center justify-center gap-1"
-              title="Boss Hải (Quản trị viên - 0988888888)"
-            >
-              <span>👑</span>
-              <span className="truncate">Boss Hải</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleQuickManager}
-              className="py-2 px-2 bg-white text-purple-700 font-bold rounded-xl border border-purple-200 hover:bg-purple-600 hover:text-white transition shadow-2xs text-center text-[11px] flex items-center justify-center gap-1 ring-1 ring-purple-300"
-              title="Quản Lý (Giao việc NV, tự hoàn thành - 0966666666)"
-            >
-              <span>💼</span>
-              <span className="truncate">Quản Lý</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleQuickStaff}
-              className="py-2 px-2 bg-white text-emerald-700 font-bold rounded-xl border border-emerald-200 hover:bg-emerald-600 hover:text-white transition shadow-2xs text-center text-[11px] flex items-center justify-center gap-1"
-              title="Nhân Viên (Nhận đơn, làm món - 0977777777)"
-            >
-              <span>👔</span>
-              <span className="truncate">Nhân Viên</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleQuickUser}
-              className="py-2 px-2 bg-white text-zinc-700 font-bold rounded-xl border border-zinc-200 hover:bg-zinc-800 hover:text-white transition shadow-2xs text-center text-[11px] flex items-center justify-center gap-1"
-              title="Khách Hàng (Giá lẻ - 0912345678)"
-            >
-              <span>👤</span>
-              <span className="truncate">Khách Lẻ</span>
-            </button>
+        <div className="mb-5 p-3.5 bg-gradient-to-br from-blue-50/80 via-indigo-50/40 to-amber-50/50 rounded-2xl border border-blue-100/90 text-xs">
+          <div className="flex items-center justify-between gap-2 mb-2.5">
+            <div className="flex items-center gap-1.5 font-bold text-blue-900">
+              <Sparkles className="w-4 h-4 text-blue-600 flex-shrink-0" />
+              <span>{isLao ? 'ບັນຊີຕົວຢ່າງທົດສອບ (ກົດເພື່ອເຂົ້າສູ່ລະບົບໄວ):' : 'Tài khoản mẫu thử nghiệm (Bấm để đăng nhập nhanh):'}</span>
+            </div>
           </div>
 
-          {/* Quick Wholesale Login Button */}
-          <button
-            type="button"
-            onClick={handleQuickWholesale}
-            className="w-full py-2 px-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-xl border border-amber-500 transition shadow-xs text-[11px] flex items-center justify-center gap-2 active:scale-95"
-            title="Đăng nhập tài khoản Khách Sỉ (0911223344 - Xem toàn bộ giá sỉ & giá lẻ)"
-          >
-            <Boxes className="w-4 h-4 text-white" />
-            <span>⚡ Đăng nhập Khách Sỉ (0911223344 - Xem toàn bộ Giá Sỉ & Lẻ)</span>
-          </button>
+          {/* Nhóm 1: Quản trị & Nội bộ (Toàn quyền, không giới hạn giá) */}
+          <div className="mb-2.5">
+            <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-1.5 px-0.5">
+              <span>{isLao ? 'ພາຍໃນ & ຜູ້ຈັດການ (ບໍ່ຈຳກັດລາຄາ)' : 'Nội bộ & Quản lý (Xem toàn bộ giá)'}</span>
+              <span className="text-emerald-600 font-bold lowercase bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200/60">full access</span>
+            </div>
+            <div className="grid grid-cols-3 gap-1.5">
+              <button
+                type="button"
+                onClick={handleQuickAdmin}
+                className="py-2 px-1.5 bg-white hover:bg-blue-600 text-blue-800 hover:text-white font-bold rounded-xl border border-blue-200/80 transition shadow-2xs text-center flex flex-col items-center justify-center gap-0.5 active:scale-95"
+                title="Boss Hải (Quản trị viên - 0988888888)"
+              >
+                <div className="flex items-center gap-1 text-[11px] whitespace-nowrap">
+                  <span>👑</span>
+                  <span className="font-extrabold">Boss Hải</span>
+                </div>
+                <span className="text-[9px] opacity-75 whitespace-nowrap">{isLao ? 'ຜູ້ບໍລິຫານ' : 'Admin'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleQuickManager}
+                className="py-2 px-1.5 bg-white hover:bg-purple-600 text-purple-800 hover:text-white font-bold rounded-xl border border-purple-200/80 transition shadow-2xs text-center flex flex-col items-center justify-center gap-0.5 active:scale-95 ring-1 ring-purple-200"
+                title="Quản Lý Cửa Hàng (0966666666)"
+              >
+                <div className="flex items-center gap-1 text-[11px] whitespace-nowrap">
+                  <span>💼</span>
+                  <span className="font-extrabold">{isLao ? 'ຜູ້ຈັດການ' : 'Quản Lý'}</span>
+                </div>
+                <span className="text-[9px] opacity-75 whitespace-nowrap">{isLao ? 'ຈັດການ' : 'Manager'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleQuickStaff}
+                className="py-2 px-1.5 bg-white hover:bg-emerald-600 text-emerald-800 hover:text-white font-bold rounded-xl border border-emerald-200/80 transition shadow-2xs text-center flex flex-col items-center justify-center gap-0.5 active:scale-95"
+                title="Nhân Viên Tiếp Nhận Đơn (0977777777)"
+              >
+                <div className="flex items-center gap-1 text-[11px] whitespace-nowrap">
+                  <span>👔</span>
+                  <span className="font-extrabold">{isLao ? 'ພະນັກງານ' : 'Nhân Viên'}</span>
+                </div>
+                <span className="text-[9px] opacity-75 whitespace-nowrap">{isLao ? 'ຮັບອໍເດີ' : 'Nhận đơn'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Nhóm 2: Khách hàng (Khách sỉ xem full giá vs Khách lẻ bị giới hạn) */}
+          <div>
+            <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-1.5 px-0.5">
+              <span>{isLao ? 'ລູກຄ້າ (ແບ່ງສິດລາຄາ)' : 'Khách hàng (Phân cấp xem giá)'}</span>
+              <span className="text-amber-700 font-semibold">{isLao ? 'ລາຄາສົ່ງ vs ລາຄາຍ່ອຍ' : 'Sỉ vs Lẻ'}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {/* Khách sỉ - Toàn quyền xem giá sỉ & lẻ */}
+              <button
+                type="button"
+                onClick={handleQuickWholesale}
+                className="p-2 sm:p-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-xl border border-amber-400 transition shadow-xs text-left active:scale-95"
+                title="Khách Sỉ / Đại Lý: Xem toàn bộ Giá Sỉ & Lẻ (0911223344)"
+              >
+                <div className="flex items-center justify-between gap-1">
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <span>⚡</span>
+                    <span className="whitespace-nowrap">{isLao ? 'ລູກຄ້າຂາຍສົ່ງ' : 'Khách Sỉ / Đại Lý'}</span>
+                  </div>
+                  <span className="text-[9px] bg-white/25 px-1 py-0.2 rounded font-black text-white whitespace-nowrap">
+                    Full giá
+                  </span>
+                </div>
+                <p className="text-[10px] text-amber-100 font-medium mt-0.5 leading-tight">
+                  {isLao ? 'ເບິ່ງທັງໝົດ ລາຄາສົ່ງ & ຍ່ອຍ' : 'Xem cả Giá Sỉ & Giá Lẻ'}
+                </p>
+              </button>
+
+              {/* Khách lẻ - Giới hạn chỉ xem giá lẻ */}
+              <button
+                type="button"
+                onClick={handleQuickUser}
+                className="p-2 sm:p-2.5 bg-white hover:bg-zinc-800 text-zinc-800 hover:text-white font-bold rounded-xl border border-zinc-200 transition shadow-2xs text-left active:scale-95 group"
+                title="Khách Mua Lẻ: Chỉ xem Giá Lẻ (0912345678)"
+              >
+                <div className="flex items-center justify-between gap-1">
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <span>👤</span>
+                    <span className="whitespace-nowrap">{isLao ? 'ລູກຄ້າຂາຍຍ່ອຍ' : 'Khách Mua Lẻ'}</span>
+                  </div>
+                  <span className="text-[9px] bg-zinc-100 group-hover:bg-zinc-700 group-hover:text-zinc-200 text-zinc-600 px-1 py-0.2 rounded font-semibold whitespace-nowrap">
+                    {isLao ? 'ຈຳກັດ' : 'Giới hạn'}
+                  </span>
+                </div>
+                <p className="text-[10px] text-zinc-500 group-hover:text-zinc-300 mt-0.5 leading-tight">
+                  {isLao ? 'ເບິ່ງສະເພາະ ລາຄາຂາຍຍ່ອຍ' : 'Chỉ xem duy nhất Giá Lẻ'}
+                </p>
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Error Alert */}
@@ -219,7 +271,7 @@ export default function AuthModal() {
           {authModalMode === 'register' && (
             <div>
               <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
-                Loại tài khoản đăng ký *
+                {isLao ? 'ປະເພດບັນຊີລົງທະບຽນ *' : 'Loại tài khoản đăng ký *'}
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -233,9 +285,11 @@ export default function AuthModal() {
                 >
                   <div className="flex items-center gap-1.5 text-xs font-bold">
                     <UserIcon className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Khách Mua Lẻ</span>
+                    <span>{isLao ? 'ລູກຄ້າຂາຍຍ່ອຍ' : 'Khách Mua Lẻ'}</span>
                   </div>
-                  <p className="text-[10px] text-zinc-500 mt-0.5">Xem & mua giá bán lẻ</p>
+                  <p className="text-[10px] text-zinc-500 mt-0.5">
+                    {isLao ? 'ເບິ່ງ & ຊື້ຕາມລາຄາຍ່ອຍ' : 'Xem & mua giá bán lẻ'}
+                  </p>
                 </button>
 
                 <button
@@ -249,9 +303,11 @@ export default function AuthModal() {
                 >
                   <div className="flex items-center gap-1.5 text-xs font-black text-amber-900">
                     <Boxes className="w-3.5 h-3.5 text-amber-600" />
-                    <span>Khách Sỉ / Đại Lý ⚡</span>
+                    <span>{isLao ? 'ລູກຄ້າຂາຍສົ່ງ ⚡' : 'Khách Sỉ / Đại Lý ⚡'}</span>
                   </div>
-                  <p className="text-[10px] text-amber-800/80 mt-0.5">Xem toàn bộ Giá sỉ & lẻ</p>
+                  <p className="text-[10px] text-amber-800/80 mt-0.5">
+                    {isLao ? 'ເບິ່ງທັງໝົດ ລາຄາສົ່ງ & ຍ່ອຍ' : 'Xem toàn bộ Giá sỉ & lẻ'}
+                  </p>
                 </button>
               </div>
             </div>
@@ -276,7 +332,7 @@ export default function AuthModal() {
                 }`}
               >
                 <UserIcon className="w-3.5 h-3.5 text-blue-600" />
-                <span>Khách Mua Lẻ</span>
+                <span>{isLao ? 'ລູກຄ້າຂາຍຍ່ອຍ' : 'Khách Mua Lẻ'}</span>
               </button>
               <button
                 type="button"
@@ -287,12 +343,12 @@ export default function AuthModal() {
                 }}
                 className={`flex-1 py-2 rounded-xl transition flex items-center justify-center gap-1.5 ${
                   loginCategory === 'WHOLESALE'
-                    ? 'bg-amber-400 text-amber-950 font-black shadow-xs'
+                    ? 'bg-amber-400 text-amber-950 font-black shadow-xs ring-1 ring-amber-300'
                     : 'text-zinc-500 hover:text-amber-800'
                 }`}
               >
                 <Boxes className="w-3.5 h-3.5 text-amber-900" />
-                <span>Khách Sỉ / Đại Lý ⚡</span>
+                <span>{isLao ? 'ລູກຄ້າຂາຍສົ່ງ / ຕົວແທນ ⚡' : 'Khách Sỉ / Đại Lý ⚡'}</span>
               </button>
             </div>
           )}
@@ -300,7 +356,11 @@ export default function AuthModal() {
           {authModalMode === 'login' && loginCategory === 'WHOLESALE' && (
             <div className="p-2.5 bg-amber-50 border border-amber-200/80 rounded-xl text-[11px] text-amber-900 flex items-center gap-2">
               <Boxes className="w-4 h-4 text-amber-600 flex-shrink-0" />
-              <span>Đăng nhập tài khoản Khách Sỉ để xem <strong>Bảng Giá Sỉ</strong> và toàn bộ <strong>Giá Lẻ</strong>.</span>
+              <span>
+                {isLao 
+                  ? 'ເຂົ້າສູ່ລະບົບລູກຄ້າຂາຍສົ່ງ ເພື່ອເບິ່ງທັງໝົດ ລາຄາສົ່ງ & ລາຄາຍ່ອຍ.' 
+                  : 'Đăng nhập tài khoản Khách Sỉ để xem Bảng Giá Sỉ và toàn bộ Giá Lẻ.'}
+              </span>
             </div>
           )}
 

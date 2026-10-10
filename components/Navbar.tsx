@@ -26,7 +26,7 @@ import {
 export default function Navbar() {
   const router = useRouter();
   const { user, logout, setIsAuthModalOpen, setAuthModalMode } = useAuth();
-  const { totalItems, setIsCartOpen, customerMode, setCustomerMode } = useCart();
+  const { totalItems, setIsCartOpen, customerMode, setCustomerMode, hasFullPriceAccess } = useCart();
   const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -187,7 +187,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => {
-                  if (user?.customerType === 'WHOLESALE') {
+                  if (hasFullPriceAccess) {
                     setCustomerMode('WHOLESALE');
                   } else {
                     setAuthModalMode('login');
@@ -199,7 +199,7 @@ export default function Navbar() {
                     ? 'bg-amber-400 text-amber-950 font-black shadow-xs ring-2 ring-amber-300'
                     : 'text-zinc-600 hover:text-amber-800 hover:bg-amber-50'
                 }`}
-                title={user?.customerType === 'WHOLESALE' ? "Chế độ Khách Sỉ (Đang xem toàn bộ giá)" : "Đăng nhập Khách Sỉ để xem Bảng Giá Buôn"}
+                title={hasFullPriceAccess ? "Chế độ xem toàn bộ giá (Giá Sỉ & Giá Lẻ)" : "Đăng nhập Khách Sỉ để xem Bảng Giá Buôn"}
               >
                 <Boxes className="w-3 h-3 text-amber-900 flex-shrink-0" />
                 <span className="hidden sm:inline text-[11px] font-black">Khách sỉ ⚡</span>
