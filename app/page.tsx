@@ -37,7 +37,11 @@ import {
   MapPin,
   Truck,
   Store,
-  ArrowDown
+  ArrowDown,
+  Boxes,
+  RotateCcw,
+  Maximize2,
+  Filter
 } from 'lucide-react';
 
 const CountdownTimer = React.memo(function CountdownTimer({ label }: { label: string }) {
@@ -88,6 +92,14 @@ function HomeContent() {
   const [sortBy, setSortBy] = useState<string>('newest');
   const [loading, setLoading] = useState(true);
   const [addedNotice, setAddedNotice] = useState<string | null>(null);
+
+  // Bộ lọc sản phẩm (Filter: Quy cách đóng gói, màu sắc, kích cỡ, khoảng giá, tình trạng kho)
+  const [selectedPackagingFilter, setSelectedPackagingFilter] = useState<'all' | 'PACK' | 'BOX' | 'CARTON'>('all');
+  const [selectedColorFilter, setSelectedColorFilter] = useState<string>('all');
+  const [selectedSizeFilter, setSelectedSizeFilter] = useState<string>('all');
+  const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
+  const [onlyInStock, setOnlyInStock] = useState<boolean>(false);
+  const [showFiltersPanel, setShowFiltersPanel] = useState<boolean>(false);
 
   // Live Customizer Drawer & Visual Edit State
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
@@ -375,6 +387,73 @@ function HomeContent() {
     }
   };
 
+  // Lấy danh sách màu sắc & kích cỡ từ các sản phẩm hiện có
+  const allAvailableColors = React.useMemo(() => {
+    const set = new Set<string>();
+    products.forEach(p => {
+      if (p.colors && Array.isArray(p.colors)) {
+        p.colors.forEach(c => set.add(c));
+      }
+    });
+    return Array.from(set);
+  }, [products]);
+
+  const allAvailableSizes = React.useMemo(() => {
+    const set = new Set<string>();
+    products.forEach(p => {
+      if (p.sizes && Array.isArray(p.sizes)) {
+        p.sizes.forEach(s => set.add(s));
+      }
+    });
+    return Array.from(set);
+  }, [products]);
+
+  // Bộ lọc sản phẩm (Client-side filtering kết hợp đa điều kiện)
+  const filteredProducts = React.useMemo(() => {
+    return products.filter(product => {
+      // 1. Tồn kho
+      if (onlyInStock && product.stock <= 0) return false;
+
+      // 2. Khoảng giá tiền
+      const p = product.price;
+      if (selectedPriceRange === 'under300k' && p >= 300000) return false;
+      if (selectedPriceRange === '300k-1m' && (p < 300000 || p > 1000000)) return false;
+      if (selectedPriceRange === '1m-3m' && (p < 1000000 || p > 3000000)) return false;
+      if (selectedPriceRange === 'above3m' && p <= 3000000) return false;
+
+      // 3. Quy cách mua hàng (Lốc, Hộp, Thùng)
+      if (selectedPackagingFilter === 'PACK' && (!product.packQty || product.packQty <= 1)) return false;
+      if (selectedPackagingFilter === 'BOX' && (!product.boxQty || product.boxQty <= 1)) return false;
+      if (selectedPackagingFilter === 'CARTON' && (!product.cartonQty || product.cartonQty <= 1)) return false;
+
+      // 4. Màu sắc
+      if (selectedColorFilter !== 'all') {
+        if (!product.colors || !product.colors.includes(selectedColorFilter)) return false;
+      }
+
+      // 5. Kích cỡ / Dung tích
+      if (selectedSizeFilter !== 'all') {
+        if (!product.sizes || !product.sizes.includes(selectedSizeFilter)) return false;
+      }
+
+      return true;
+    });
+  }, [products, onlyInStock, selectedPriceRange, selectedPackagingFilter, selectedColorFilter, selectedSizeFilter]);
+
+  const activeFiltersCount = (selectedPriceRange !== 'all' ? 1 : 0) +
+    (selectedPackagingFilter !== 'all' ? 1 : 0) +
+    (selectedColorFilter !== 'all' ? 1 : 0) +
+    (selectedSizeFilter !== 'all' ? 1 : 0) +
+    (onlyInStock ? 1 : 0);
+
+  const resetAllFilters = () => {
+    setSelectedPriceRange('all');
+    setSelectedPackagingFilter('all');
+    setSelectedColorFilter('all');
+    setSelectedSizeFilter('all');
+    setOnlyInStock(false);
+  };
+
   return (
     <div className={`min-h-screen flex flex-col bg-zinc-50 relative ${theme.selection} selection:text-white`}>
       <Navbar />
@@ -658,6 +737,209 @@ function HomeContent() {
           )}
         </div>
 
+        {/* BỘ LỌC TÌM KIẾM SẢN PHẨM ("Bộ lọc mấy cái" - Filters) */}
+        <div className="mb-6 bg-white rounded-3xl border border-zinc-200/80 p-3.5 sm:p-4 shadow-xs space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowFiltersPanel(!showFiltersPanel)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border ${
+                  showFiltersPanel || activeFiltersCount > 0
+                    ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs'
+                    : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 border-zinc-200'
+                }`}
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
+                <span>{isLao ? 'ຕົວກັ່ນຕອງຄົ້ນຫາ' : 'Bộ lọc tìm kiếm'}</span>
+                {activeFiltersCount > 0 && (
+                  <span className="w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center">
+                    {activeFiltersCount}
+                  </span>
+                )}
+              </button>
+
+              <span className="text-xs text-zinc-500">
+                {isLao ? `ພົບເຫັນ ${filteredProducts.length} ສິນຄ້າ` : `Tìm thấy ${filteredProducts.length} sản phẩm`}
+              </span>
+            </div>
+
+            {/* Quick Sorter */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-zinc-400 hidden sm:inline">{t('sort_by')}</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-zinc-50 border border-zinc-200 text-zinc-700 text-xs font-semibold rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-zinc-400"
+              >
+                <option value="newest">{t('sort_newest')}</option>
+                <option value="price_asc">{t('sort_price_asc')}</option>
+                <option value="price_desc">{t('sort_price_desc')}</option>
+                <option value="name_asc">{t('sort_name_asc')}</option>
+              </select>
+
+              {activeFiltersCount > 0 && (
+                <button
+                  type="button"
+                  onClick={resetAllFilters}
+                  className="text-xs text-rose-600 hover:text-rose-700 font-bold flex items-center gap-1 px-2.5 py-1.5 hover:bg-rose-50 rounded-xl transition"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>{isLao ? 'ລຶບຕົວກັ່ນຕອງ' : 'Xóa bộ lọc'}</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Filter Chips (Hiển thị ngay cho khách bấm nhanh) */}
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-100">
+            {/* Lọc theo quy cách */}
+            <div className="flex items-center gap-1 flex-wrap">
+              <span className="text-[11px] font-bold text-zinc-400 mr-0.5">📦 Quy cách:</span>
+              {(['all', 'PACK', 'BOX', 'CARTON'] as const).map(u => (
+                <button
+                  key={u}
+                  type="button"
+                  onClick={() => setSelectedPackagingFilter(u)}
+                  className={`text-[11px] px-2.5 py-1 rounded-lg font-bold transition border ${
+                    selectedPackagingFilter === u
+                      ? 'bg-amber-500 text-white border-amber-500 shadow-2xs'
+                      : 'bg-zinc-50 text-zinc-600 border-zinc-200 hover:bg-zinc-100'
+                  }`}
+                >
+                  {u === 'all' ? (isLao ? 'ທັງໝົດ' : 'Tất cả') :
+                   u === 'PACK' ? (isLao ? '⚡ ແພັກ (Lốc)' : '⚡ Có Lốc') :
+                   u === 'BOX' ? (isLao ? 'ກ່ອງ (Hộp)' : 'Có Hộp') :
+                   (isLao ? 'ລັງ (Thùng)' : 'Có Thùng')}
+                </button>
+              ))}
+            </div>
+
+            <div className="h-4 w-px bg-zinc-200 mx-1 hidden sm:block"></div>
+
+            {/* Lọc theo mức giá */}
+            <div className="flex items-center gap-1 flex-wrap">
+              <span className="text-[11px] font-bold text-zinc-400 mr-0.5">💰 Giá:</span>
+              {[
+                { id: 'all', label: isLao ? 'ທັງໝົດ' : 'Tất cả' },
+                { id: 'under300k', label: '< 300k' },
+                { id: '300k-1m', label: '300k - 1M' },
+                { id: '1m-3m', label: '1M - 3M' },
+                { id: 'above3m', label: '> 3M' },
+              ].map(pr => (
+                <button
+                  key={pr.id}
+                  type="button"
+                  onClick={() => setSelectedPriceRange(pr.id)}
+                  className={`text-[11px] px-2.5 py-1 rounded-lg font-bold transition border ${
+                    selectedPriceRange === pr.id
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                      : 'bg-zinc-50 text-zinc-600 border-zinc-200 hover:bg-zinc-100'
+                  }`}
+                >
+                  {pr.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="h-4 w-px bg-zinc-200 mx-1 hidden sm:block"></div>
+
+            {/* Checkbox còn hàng */}
+            <button
+              type="button"
+              onClick={() => setOnlyInStock(!onlyInStock)}
+              className={`text-[11px] px-2.5 py-1 rounded-lg font-bold transition border flex items-center gap-1 ${
+                onlyInStock
+                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+                  : 'bg-zinc-50 text-zinc-600 border-zinc-200 hover:bg-zinc-100'
+              }`}
+            >
+              <span>{onlyInStock ? '✓' : '○'}</span>
+              <span>{isLao ? 'ຍັງມີເຄື່ອງ' : 'Còn hàng'}</span>
+            </button>
+          </div>
+
+          {/* Panel mở rộng chi tiết khi bấm vào hoặc có nhiều màu / size */}
+          {(showFiltersPanel || allAvailableColors.length > 0 || allAvailableSizes.length > 0) && (
+            <div className="pt-2 border-t border-zinc-100 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs animate-in fade-in">
+              {/* Lọc theo màu sắc */}
+              {allAvailableColors.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-bold text-zinc-500 flex items-center gap-1">
+                    <Palette className="w-3.5 h-3.5 text-rose-500" />
+                    <span>Lọc theo màu sắc:</span>
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedColorFilter('all')}
+                      className={`text-[11px] px-2.5 py-0.5 rounded-lg font-bold border transition ${
+                        selectedColorFilter === 'all'
+                          ? 'bg-zinc-800 text-white border-zinc-800'
+                          : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50'
+                      }`}
+                    >
+                      {isLao ? 'ທຸກສີ' : 'Tất cả màu'}
+                    </button>
+                    {allAvailableColors.map(color => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setSelectedColorFilter(selectedColorFilter === color ? 'all' : color)}
+                        className={`text-[11px] px-2.5 py-0.5 rounded-lg font-bold border transition flex items-center gap-1 ${
+                          selectedColorFilter === color
+                            ? 'bg-rose-600 text-white border-rose-600 shadow-2xs ring-1 ring-rose-400'
+                            : 'bg-white text-zinc-700 border-zinc-200 hover:bg-rose-50'
+                        }`}
+                      >
+                        <span className="w-2 h-2 rounded-full bg-rose-500 inline-block"></span>
+                        <span>{color}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Lọc theo kích cỡ / dung tích */}
+              {allAvailableSizes.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-bold text-zinc-500 flex items-center gap-1">
+                    <Maximize2 className="w-3.5 h-3.5 text-blue-500" />
+                    <span>Lọc theo kích cỡ / dung tích:</span>
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSizeFilter('all')}
+                      className={`text-[11px] px-2.5 py-0.5 rounded-lg font-bold border transition ${
+                        selectedSizeFilter === 'all'
+                          ? 'bg-zinc-800 text-white border-zinc-800'
+                          : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50'
+                      }`}
+                    >
+                      {isLao ? 'ທຸກຂະໜາດ' : 'Tất cả cỡ'}
+                    </button>
+                    {allAvailableSizes.map(size => (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => setSelectedSizeFilter(selectedSizeFilter === size ? 'all' : size)}
+                        className={`text-[11px] px-2.5 py-0.5 rounded-lg font-bold border transition ${
+                          selectedSizeFilter === size
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-2xs ring-1 ring-blue-400'
+                            : 'bg-white text-zinc-700 border-zinc-200 hover:bg-blue-50'
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Product Grid */}
         {loading ? (
           <div className={`grid ${gridColsClass} gap-4 sm:gap-6 py-12`}>
@@ -670,23 +952,23 @@ function HomeContent() {
               </div>
             ))}
           </div>
-        ) : products.length === 0 ? (
+        ) : filteredProducts.length === 0 ? (
           <div className={`bg-white ${cardRadiusClass} border border-zinc-100 p-12 text-center my-8`}>
             <ShoppingBag className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
-            <h3 className="text-base font-bold text-zinc-800">{isLao ? 'ບໍ່ພົບສິນຄ້າໃດໆ' : 'Không tìm thấy sản phẩm nào'}</h3>
+            <h3 className="text-base font-bold text-zinc-800">{isLao ? 'ບໍ່ພົບສິນຄ້າທີ່ກົງກັບຕົວກັ່ນຕອງ' : 'Không tìm thấy sản phẩm phù hợp bộ lọc'}</h3>
             <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
-              {isLao ? 'ລອງຄົ້ນຫາດ້ວຍຄຳສັບອື່ນ ຫຼື ປ່ຽນໝວດໝູ່ເພື່ອເບິ່ງສິນຄ້າເພີ່ມເຕີມ.' : 'Thử tìm kiếm với từ khóa khác hoặc chuyển sang danh mục khác để xem thêm sản phẩm nhé.'}
+              {isLao ? 'ລອງປ່ຽນຊ່ວງລາຄາ, ສີສັນ ຫຼື ລຶບຕົວກັ່ນຕອງເພື່ອເບິ່ງສິນຄ້າທັງໝົດ.' : 'Thử đổi mức giá, màu sắc hoặc bấm nút xóa bộ lọc để xem lại tất cả sản phẩm.'}
             </p>
             <button
-              onClick={() => { setSelectedCategory('all'); router.push('/'); }}
+              onClick={resetAllFilters}
               className={`mt-4 px-4 py-2 ${theme.btnPrimary} text-white text-xs font-bold rounded-xl`}
             >
-              {t('all_categories')}
+              {isLao ? 'ລຶບຕົວກັ່ນຕອງທັງໝົດ' : 'Xóa tất cả bộ lọc'}
             </button>
           </div>
         ) : (
           <div className={`grid ${gridColsClass} gap-4 sm:gap-6`}>
-            {products.map((product) => {
+            {filteredProducts.map((product) => {
               const isLowStock = product.stock > 0 && product.stock <= 5;
               const isOutOfStock = product.stock <= 0;
 
@@ -734,6 +1016,31 @@ function HomeContent() {
                           {isLao && product.nameLao ? product.nameLao : product.name}
                         </h3>
                       </Link>
+
+                      {/* Packaging & Variants Indicators */}
+                      <div className="flex flex-wrap items-center gap-1 pt-1">
+                        {product.packQty && product.packQty > 1 ? (
+                          <span className="text-[9px] font-bold bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded border border-emerald-200">
+                            Lốc x{product.packQty}
+                          </span>
+                        ) : null}
+                        {product.boxQty && product.boxQty > 1 ? (
+                          <span className="text-[9px] font-bold bg-purple-50 text-purple-700 px-1.5 py-0.2 rounded border border-purple-200">
+                            Hộp x{product.boxQty}
+                          </span>
+                        ) : null}
+                        {product.colors && product.colors.length > 0 ? (
+                          <span className="text-[9px] font-semibold bg-rose-50 text-rose-700 px-1.5 py-0.2 rounded border border-rose-200 flex items-center gap-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span>
+                            {product.colors.length} màu
+                          </span>
+                        ) : null}
+                        {product.sizes && product.sizes.length > 0 ? (
+                          <span className="text-[9px] font-semibold bg-blue-50 text-blue-700 px-1.5 py-0.2 rounded border border-blue-200">
+                            {product.sizes.length} cỡ
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
 

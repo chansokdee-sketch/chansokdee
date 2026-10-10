@@ -85,6 +85,17 @@ export interface TranslationDictionary {
   pd_guarantee_2: string;
   pd_guarantee_3: string;
   pd_back: string;
+  unit_piece: string;
+  unit_pack: string;
+  unit_box: string;
+  unit_carton: string;
+  unit_select_title: string;
+  unit_piece_desc: string;
+  unit_pack_desc: string;
+  unit_box_desc: string;
+  unit_carton_desc: string;
+  product_color: string;
+  product_size: string;
 
   // Cart & Checkout
   cart_title: string;
@@ -255,6 +266,17 @@ export const translations: Record<Language, TranslationDictionary> = {
     pd_guarantee_2: 'Miễn phí giao hàng toàn quốc, kiểm tra trước khi nhận',
     pd_guarantee_3: 'Đổi mới trong 7 ngày nếu lỗi từ nhà sản xuất',
     pd_back: 'Quay lại cửa hàng',
+    unit_piece: 'Cái',
+    unit_pack: 'Lốc',
+    unit_box: 'Hộp',
+    unit_carton: 'Thùng',
+    unit_select_title: 'Quy cách đóng gói:',
+    unit_piece_desc: 'Mua lẻ 1 cái',
+    unit_pack_desc: 'Lốc ({qty} cái)',
+    unit_box_desc: 'Hộp ({qty} cái)',
+    unit_carton_desc: 'Thùng ({qty} cái)',
+    product_color: 'Màu sắc:',
+    product_size: 'Kích cỡ / Dung tích:',
 
     // Cart & Checkout
     cart_title: 'Giỏ hàng & Thanh toán',
@@ -424,6 +446,17 @@ export const translations: Record<Language, TranslationDictionary> = {
     pd_guarantee_2: 'ຈັດສົ່ງຟຣີທົ່ວປະເທດ, ກວດກາກ່ອນຊຳລະເງິນ',
     pd_guarantee_3: 'ປ່ຽນໃໝ່ພາຍໃນ 7 ມື້ ຖ້າມີຂໍ້ບົກຜ່ອງ',
     pd_back: 'ກັບຄືນໜ້າຮ້ານ',
+    unit_piece: 'ອັນ',
+    unit_pack: 'ແພັກ',
+    unit_box: 'ກ່ອງ',
+    unit_carton: 'ລັງ',
+    unit_select_title: 'ເລືອກຮູບແບບການຊື້:',
+    unit_piece_desc: 'ຊື້ຍ່ອຍ 1 ອັນ',
+    unit_pack_desc: 'ແພັກ ({qty} ອັນ)',
+    unit_box_desc: 'ກ່ອງ ({qty} ອັນ)',
+    unit_carton_desc: 'ລັງ ({qty} ອັນ)',
+    product_color: 'ສີສັນ:',
+    product_size: 'ຂະໜາດ / ປະລິມານ:',
 
     // Cart & Checkout
     cart_title: 'ກະຕ່າສິນຄ້າ & ຊຳລະເງິນ',

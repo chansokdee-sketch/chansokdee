@@ -1,16 +1,27 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Product, CartItem } from '@/lib/types';
+import { Product, CartItem, PackagingUnit } from '@/lib/types';
 import { useAuth } from '@/context/AuthContext';
 
 export type CustomerPriceMode = 'RETAIL' | 'WHOLESALE';
 
+export interface AddToCartExtraOptions {
+  unit?: PackagingUnit;
+  unitQuantity?: number;
+  selectedColor?: string;
+  selectedSize?: string;
+}
+
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (product: Product, quantity?: number) => { success: boolean; message: string };
-  updateQuantity: (productId: string, quantity: number) => { success: boolean; message?: string };
-  removeFromCart: (productId: string) => void;
+  addToCart: (
+    product: Product, 
+    quantity?: number, 
+    options?: AddToCartExtraOptions
+  ) => { success: boolean; message: string };
+  updateQuantity: (cartItemIdOrProductId: string, quantity: number) => { success: boolean; message?: string };
+  removeFromCart: (cartItemIdOrProductId: string) => void;
   clearCart: () => void;
   totalPrice: number;
   totalItems: number;
@@ -18,7 +29,7 @@ interface CartContextType {
   setIsCartOpen: (open: boolean) => void;
   customerMode: CustomerPriceMode;
   setCustomerMode: (mode: CustomerPriceMode) => void;
-  getItemPrice: (product: Product, quantity?: number) => number;
+  getItemPrice: (product: Product, unitOrQuantity?: PackagingUnit | number) => number;
   isItemWholesalePrice: (product: Product, quantity?: number) => boolean;
   hasFullPriceAccess: boolean;
 }
@@ -74,94 +85,173 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const getItemPrice = (product: Product, _quantity?: number): number => {
+  const getItemPrice = (product: Product, unitOrQuantity?: PackagingUnit | number): number => {
+    const unit: PackagingUnit = typeof unitOrQuantity === 'string' ? unitOrQuantity : 'PIECE';
     const wholesale = product.wholesalePrice !== undefined && product.wholesalePrice > 0
       ? product.wholesalePrice
       : Math.round(product.price * 0.8);
 
-    // Khách sỉ mua giá sỉ, khách lẻ mua giá lẻ (không phụ thuộc số lượng)
-    if (customerMode === 'WHOLESALE') {
-      return wholesale;
+    const basePrice = customerMode === 'WHOLESALE' ? wholesale : product.price;
+
+    if (unit === 'PACK') {
+      const packQty = product.packQty || 6;
+      return product.packPrice && product.packPrice > 0 ? product.packPrice : basePrice * packQty;
     }
-    return product.price;
+
+    if (unit === 'BOX') {
+      const boxQty = product.boxQty || 10;
+      return product.boxPrice && product.boxPrice > 0 ? product.boxPrice : basePrice * boxQty;
+    }
+
+    if (unit === 'CARTON') {
+      const cartonQty = product.cartonQty || 50;
+      return product.cartonPrice && product.cartonPrice > 0 ? product.cartonPrice : basePrice * cartonQty;
+    }
+
+    return basePrice;
   };
 
-  const isItemWholesalePrice = (product: Product, _quantity?: number): boolean => {
+  const isItemWholesalePrice = (_product: Product, _quantity?: number): boolean => {
     return customerMode === 'WHOLESALE';
   };
 
-  const addToCart = (product: Product, quantity = 1): { success: boolean; message: string } => {
+  const addToCart = (
+    product: Product, 
+    quantity = 1,
+    options?: AddToCartExtraOptions
+  ): { success: boolean; message: string } => {
     if (product.stock <= 0) {
       return { success: false, message: 'Sản phẩm này hiện đã hết hàng.' };
     }
 
-    const existingIndex = cart.findIndex(item => item.product.id === product.id);
+    const unit: PackagingUnit = options?.unit || 'PIECE';
+    const packQty = product.packQty || 6;
+    const boxQty = product.boxQty || 10;
+    const cartonQty = product.cartonQty || 50;
+    const multiplier = unit === 'CARTON' ? cartonQty : unit === 'BOX' ? boxQty : unit === 'PACK' ? packQty : 1;
+    const unitQuantity = options?.unitQuantity !== undefined ? options.unitQuantity : quantity;
+    const targetPieceQty = unitQuantity * multiplier;
+
+    const unitNameVi = unit === 'CARTON' ? 'thùng' : unit === 'BOX' ? 'hộp' : unit === 'PACK' ? 'lốc' : 'cái';
+
+    if (targetPieceQty > product.stock) {
+      return {
+        success: false,
+        message: `Kho hiện chỉ còn ${product.stock} sản phẩm (không đủ ${unitQuantity} ${unitNameVi}).`,
+      };
+    }
+
+    const selectedColor = options?.selectedColor;
+    const selectedSize = options?.selectedSize;
+    const itemId = `${product.id}_${unit}_${selectedColor || 'def'}_${selectedSize || 'def'}`;
+
+    const existingIndex = cart.findIndex(
+      item => item.id === itemId || 
+      (item.product.id === product.id && 
+       (item.unit || 'PIECE') === unit && 
+       (item.selectedColor || '') === (selectedColor || '') && 
+       (item.selectedSize || '') === (selectedSize || ''))
+    );
+
     let newCart = [...cart];
 
     if (existingIndex > -1) {
-      const currentQty = newCart[existingIndex].quantity;
-      const targetQty = currentQty + quantity;
+      const currentUnitQty = newCart[existingIndex].unitQuantity || Math.floor(newCart[existingIndex].quantity / multiplier) || 1;
+      const nextUnitQty = currentUnitQty + unitQuantity;
+      const nextPieceQty = nextUnitQty * multiplier;
 
-      if (targetQty > product.stock) {
-        newCart[existingIndex].quantity = product.stock;
-        setCart(newCart);
+      if (nextPieceQty > product.stock) {
         return {
           success: false,
-          message: `Chỉ còn ${product.stock} sản phẩm trong kho. Đã cập nhật giỏ hàng theo số lượng tối đa.`,
+          message: `Kho chỉ còn ${product.stock} sản phẩm trong kho.`,
         };
-      } else {
-        newCart[existingIndex].quantity = targetQty;
-        setCart(newCart);
-        return { success: true, message: `Đã cập nhật giỏ hàng (${targetQty} sản phẩm).` };
       }
-    } else {
-      const targetQty = Math.min(quantity, product.stock);
-      newCart.push({ product, quantity: targetQty });
+
+      newCart[existingIndex] = {
+        ...newCart[existingIndex],
+        id: itemId,
+        unit,
+        unitQuantity: nextUnitQty,
+        quantity: nextPieceQty,
+        selectedColor,
+        selectedSize,
+      };
       setCart(newCart);
-      return { success: true, message: 'Đã thêm sản phẩm vào giỏ hàng!' };
+      return { 
+        success: true, 
+        message: `Đã cập nhật giỏ hàng: ${nextUnitQty} ${unitNameVi}.` 
+      };
+    } else {
+      newCart.push({
+        id: itemId,
+        product,
+        unit,
+        unitQuantity,
+        quantity: targetPieceQty,
+        selectedColor,
+        selectedSize,
+      });
+      setCart(newCart);
+      return { 
+        success: true, 
+        message: `Đã thêm ${unitQuantity} ${unitNameVi} vào giỏ hàng!` 
+      };
     }
   };
 
-  const updateQuantity = (productId: string, quantity: number): { success: boolean; message?: string } => {
-    if (quantity <= 0) {
-      removeFromCart(productId);
+  const updateQuantity = (cartItemIdOrProductId: string, newUnitQuantity: number): { success: boolean; message?: string } => {
+    if (newUnitQuantity <= 0) {
+      removeFromCart(cartItemIdOrProductId);
       return { success: true };
     }
 
-    const existingIndex = cart.findIndex(item => item.product.id === productId);
+    const existingIndex = cart.findIndex(
+      item => item.id === cartItemIdOrProductId || item.product.id === cartItemIdOrProductId
+    );
     if (existingIndex === -1) return { success: false };
 
-    const product = cart[existingIndex].product;
-    if (quantity > product.stock) {
-      const newCart = [...cart];
-      newCart[existingIndex].quantity = product.stock;
-      setCart(newCart);
+    const item = cart[existingIndex];
+    const unit = item.unit || 'PIECE';
+    const packQty = item.product.packQty || 6;
+    const boxQty = item.product.boxQty || 10;
+    const cartonQty = item.product.cartonQty || 50;
+    const multiplier = unit === 'CARTON' ? cartonQty : unit === 'BOX' ? boxQty : unit === 'PACK' ? packQty : 1;
+    const totalPieceQty = newUnitQuantity * multiplier;
+
+    if (totalPieceQty > item.product.stock) {
       return {
         success: false,
-        message: `Số lượng tối đa có thể mua là ${product.stock} chiếc.`,
+        message: `Số lượng tối đa còn trong kho là ${item.product.stock} chiếc.`,
       };
     }
 
     const newCart = [...cart];
-    newCart[existingIndex].quantity = quantity;
+    newCart[existingIndex] = {
+      ...item,
+      unitQuantity: newUnitQuantity,
+      quantity: totalPieceQty,
+    };
     setCart(newCart);
     return { success: true };
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart(prev => prev.filter(item => item.product.id !== productId));
+  const removeFromCart = (cartItemIdOrProductId: string) => {
+    setCart(prev => prev.filter(item => item.id !== cartItemIdOrProductId && item.product.id !== cartItemIdOrProductId));
   };
 
   const clearCart = () => {
     setCart([]);
   };
 
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  // Tổng số đơn vị (cái, hộp, thùng)
+  const totalItems = cart.reduce((sum, item) => sum + (item.unitQuantity !== undefined ? item.unitQuantity : item.quantity), 0);
   
-  // Tính tổng tiền dựa trên giá sỉ hoặc giá lẻ theo từng món và chế độ khách hàng
+  // Tính tổng tiền dựa trên đơn vị đã chọn của từng món
   const totalPrice = cart.reduce((sum, item) => {
-    const unitPrice = getItemPrice(item.product, item.quantity);
-    return sum + unitPrice * item.quantity;
+    const unit = item.unit || 'PIECE';
+    const unitPrice = getItemPrice(item.product, unit);
+    const unitQty = item.unitQuantity !== undefined ? item.unitQuantity : item.quantity;
+    return sum + unitPrice * unitQty;
   }, 0);
 
   return (

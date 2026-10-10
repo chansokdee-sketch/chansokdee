@@ -23,7 +23,8 @@ import {
   DollarSign,
   Tag,
   Boxes,
-  FolderTree
+  FolderTree,
+  Palette
 } from 'lucide-react';
 
 // Kho ảnh mẫu mỹ phẩm cao cấp có sẵn (1 chạm để thêm ảnh nhanh)
@@ -103,6 +104,14 @@ export default function AdminProductsPage() {
     price: '',              // Giá bán lẻ (Khách lẻ)
     wholesalePrice: '',     // Giá bán sỉ (Khách sỉ)
     minWholesaleQty: '3',   // Số lượng tối thiểu tính giá sỉ
+    packQty: '6',           // Số cái / Lốc (mặc định 6)
+    boxQty: '10',           // Số cái / Hộp (mặc định 10)
+    cartonQty: '50',        // Số cái / Thùng (mặc định 50)
+    packPrice: '',          // Giá bán Lốc (tùy chọn)
+    boxPrice: '',           // Giá bán Hộp (tùy chọn)
+    cartonPrice: '',        // Giá bán Thùng (tùy chọn)
+    colors: '',             // Chuỗi màu sắc phân cách bằng dấu phẩy
+    sizes: '',              // Chuỗi kích cỡ phân cách bằng dấu phẩy
     stock: '20',
     categoryId: '',
     subCategoryId: '',
@@ -220,6 +229,14 @@ export default function AdminProductsPage() {
       price: '',
       wholesalePrice: '',
       minWholesaleQty: '3',
+      packQty: '6',
+      boxQty: '10',
+      cartonQty: '50',
+      packPrice: '',
+      boxPrice: '',
+      cartonPrice: '',
+      colors: '',
+      sizes: '',
       stock: '20',
       categoryId: defaultCatId,
       subCategoryId: defaultSubId,
@@ -249,6 +266,14 @@ export default function AdminProductsPage() {
       price: retail.toString(),
       wholesalePrice: wholesale.toString(),
       minWholesaleQty: minQty.toString(),
+      packQty: (p.packQty || 6).toString(),
+      boxQty: (p.boxQty || 10).toString(),
+      cartonQty: (p.cartonQty || 50).toString(),
+      packPrice: p.packPrice ? p.packPrice.toString() : '',
+      boxPrice: p.boxPrice ? p.boxPrice.toString() : '',
+      cartonPrice: p.cartonPrice ? p.cartonPrice.toString() : '',
+      colors: p.colors ? p.colors.join(', ') : '',
+      sizes: p.sizes ? p.sizes.join(', ') : '',
       stock: p.stock.toString(),
       categoryId: p.categoryId,
       subCategoryId: p.subCategoryId || '',
@@ -359,6 +384,13 @@ export default function AdminProductsPage() {
       : Math.round(retailPrice * 0.8);
     const minWholesaleQty = Math.max(1, Number(formData.minWholesaleQty) || 3);
 
+    const parsedColors = formData.colors
+      ? formData.colors.split(',').map(s => s.trim()).filter(Boolean)
+      : undefined;
+    const parsedSizes = formData.sizes
+      ? formData.sizes.split(',').map(s => s.trim()).filter(Boolean)
+      : undefined;
+
     setSubmitting(true);
 
     const images = productImages.length > 0
@@ -377,6 +409,14 @@ export default function AdminProductsPage() {
       price: retailPrice,
       wholesalePrice,
       minWholesaleQty,
+      packQty: Number(formData.packQty) || 6,
+      boxQty: Number(formData.boxQty) || 10,
+      cartonQty: Number(formData.cartonQty) || 50,
+      packPrice: formData.packPrice && Number(formData.packPrice) > 0 ? Number(formData.packPrice) : undefined,
+      boxPrice: formData.boxPrice && Number(formData.boxPrice) > 0 ? Number(formData.boxPrice) : undefined,
+      cartonPrice: formData.cartonPrice && Number(formData.cartonPrice) > 0 ? Number(formData.cartonPrice) : undefined,
+      colors: parsedColors && parsedColors.length > 0 ? parsedColors : undefined,
+      sizes: parsedSizes && parsedSizes.length > 0 ? parsedSizes : undefined,
       stock: Number(formData.stock) || 0,
       categoryId: formData.categoryId,
       subCategoryId: formData.subCategoryId || undefined,
@@ -1033,6 +1073,144 @@ export default function AdminProductsPage() {
                     {b}
                   </button>
                 ))}
+              </div>
+
+              {/* QUY CÁCH ĐÓNG GÓI: LỐC, HỘP, THÙNG */}
+              <div className="p-4 bg-zinc-950 rounded-2xl border border-zinc-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <Boxes className="w-4 h-4 text-amber-500" />
+                    <span>Quy Cách Mua Hàng: Lốc, Hộp, Thùng (ຮູບແບບການຊື້)</span>
+                  </label>
+                  <span className="text-[10px] text-zinc-500">Để trống giá thì hệ thống tự tính</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* Lốc (PACK) */}
+                  <div className="p-3 bg-zinc-900/80 rounded-xl border border-emerald-500/30 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-emerald-400">📦 1. Mua theo Lốc (ແພັກ)</span>
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-zinc-400 block mb-0.5">Số cái / 1 Lốc</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={formData.packQty}
+                        onChange={(e) => setFormData({ ...formData, packQty: e.target.value })}
+                        placeholder="Mặc định 6"
+                        className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-white font-mono text-xs focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-zinc-400 block mb-0.5">Giá bán 1 Lốc (₭ LAK)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.packPrice}
+                        onChange={(e) => setFormData({ ...formData, packPrice: e.target.value })}
+                        placeholder="Tự tính nếu trống"
+                        className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-emerald-400 font-mono text-xs focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Hộp (BOX) */}
+                  <div className="p-3 bg-zinc-900/80 rounded-xl border border-purple-500/30 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-purple-400">📦 2. Mua theo Hộp (ກ່ອງ)</span>
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-zinc-400 block mb-0.5">Số cái / 1 Hộp</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={formData.boxQty}
+                        onChange={(e) => setFormData({ ...formData, boxQty: e.target.value })}
+                        placeholder="Mặc định 10"
+                        className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-white font-mono text-xs focus:outline-none focus:border-purple-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-zinc-400 block mb-0.5">Giá bán 1 Hộp (₭ LAK)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.boxPrice}
+                        onChange={(e) => setFormData({ ...formData, boxPrice: e.target.value })}
+                        placeholder="Tự tính nếu trống"
+                        className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-purple-400 font-mono text-xs focus:outline-none focus:border-purple-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Thùng (CARTON) */}
+                  <div className="p-3 bg-zinc-900/80 rounded-xl border border-amber-500/30 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-amber-400">📦 3. Mua theo Thùng (ລັງ)</span>
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-zinc-400 block mb-0.5">Số cái / 1 Thùng</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={formData.cartonQty}
+                        onChange={(e) => setFormData({ ...formData, cartonQty: e.target.value })}
+                        placeholder="Mặc định 50"
+                        className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-white font-mono text-xs focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-zinc-400 block mb-0.5">Giá bán 1 Thùng (₭ LAK)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.cartonPrice}
+                        onChange={(e) => setFormData({ ...formData, cartonPrice: e.target.value })}
+                        placeholder="Tự tính nếu trống"
+                        className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-amber-400 font-mono text-xs focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* PHÂN LOẠI BIẾN THỂ: MÀU SẮC & KÍCH CỠ */}
+              <div className="p-4 bg-zinc-950 rounded-2xl border border-zinc-800 space-y-3">
+                <label className="text-xs font-bold text-white flex items-center gap-1.5">
+                  <Palette className="w-4 h-4 text-rose-500" />
+                  <span>Phân Loại Sản Phẩm: Màu Sắc & Kích Cỡ (ສີສັນ & ຂະໜາດ)</span>
+                </label>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-zinc-300 font-bold mb-1">
+                      Màu sắc (phân cách bằng dấu phẩy)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.colors}
+                      onChange={(e) => setFormData({ ...formData, colors: e.target.value })}
+                      placeholder="Ví dụ: Đỏ Ruby, Cam Đất, Hồng Đào, Nâu Đất"
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white placeholder-zinc-500 text-xs focus:outline-none focus:border-rose-500"
+                    />
+                    <span className="text-[10px] text-zinc-500 mt-0.5 block">Khách hàng sẽ bấm chọn màu trực tiếp khi mua</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-300 font-bold mb-1">
+                      Kích cỡ / Dung tích (phân cách bằng dấu phẩy)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.sizes}
+                      onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
+                      placeholder="Ví dụ: 30ml, 50ml, 100ml hoặc S, M, L, XL"
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white placeholder-zinc-500 text-xs focus:outline-none focus:border-blue-500"
+                    />
+                    <span className="text-[10px] text-zinc-500 mt-0.5 block">Dung tích chai, kích thước đóng gói</span>
+                  </div>
+                </div>
               </div>
 
               {/* Chụp ảnh Camera & Chọn ảnh */}

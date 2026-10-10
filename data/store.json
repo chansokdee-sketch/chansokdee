@@ -227,6 +227,15 @@
           "categoryId": "cat-body-hair"
         }
       ]
+    },
+    {
+      "id": "cat-1791617185851",
+      "name": "dầu gội",
+      "nameLao": "",
+      "slug": "du-gi",
+      "icon": "🧴",
+      "subCategories": [],
+      "createdAt": "2026-10-10T07:26:25.851Z"
     }
   ],
   "products": [
@@ -253,7 +262,11 @@
       "nameLao": "ເຊຣັ່ມຟື້ນຟູ & ຊະລໍໄວ Estée Lauder Advanced Night Repair 50ml",
       "descriptionLao": "ຫົວເຊື້ອຟື້ນຟູຜິວອັນດັບ 1 ຂອງໂລກ ດ້ວຍເທັກໂນໂລຢີ Chronolux Power Signal. ຊ່ວຍປົກປ້ອງຜິວຈາກມົນລະພິດ, ເຕີມຄວາມຊຸ່ມຊື່ນເລິກ 72 ຊົ່ວໂມງ, ຮັດຮູຂຸມຂົນ ແລະ ຫຼຸດຮອຍຫ່ຽວຍົ່ນພາຍໃນ 3 ອາທິດ.",
       "wholesalePrice": 2200000,
-      "minWholesaleQty": 3
+      "minWholesaleQty": 3,
+      "packQty": 6,
+      "boxQty": 10,
+      "cartonQty": 50,
+      "sizes": ["30ml", "50ml", "100ml"]
     },
     {
       "id": "prod-2",
@@ -278,7 +291,11 @@
       "nameLao": "ຄີມກັນແດດຄຸມມັນ La Roche-Posay Anthelios Oil Control 50ml",
       "descriptionLao": "ຄີມກັນແດດຄຸມມັນອັນດັບ 1 ຈາກປະເທດຝຣັ່ງ ສຳລັບຜິວມັນແລະເປັນສິວງ່າຍ. ນະວັດຕະກຳ Mexoryl 400 ປ້ອງກັນລັງສີ Ultra-long UVA, ຄຸມມັນແຫ້ງສະບາຍຍາວນານ 12 ຊົ່ວໂມງ ບໍ່ໜຽວໜຶບ.",
       "wholesalePrice": 372000,
-      "minWholesaleQty": 3
+      "minWholesaleQty": 3,
+      "packQty": 6,
+      "boxQty": 10,
+      "cartonQty": 50,
+      "sizes": ["50ml", "100ml"]
     },
     {
       "id": "prod-3",
@@ -303,7 +320,11 @@
       "nameLao": "ລິບສະຕິກ Dior Rouge Dior Forever Matte 999 Velvet ແດງຄລາສສິກ",
       "descriptionLao": "ຕຳນານສີແດງສຸດຫຼູຫຼາຈາກແບຣນ Dior ຝຣັ່ງ. ສູດຕິດທົນບໍ່ເລິະຕະຫຼອດ 16 ຊົ່ວໂມງ, ສານສະກັດຈາກດອກໂບຕັນແດງບຳລຸງຮິມສົບນຸ່ມນຽນຕະຫຼອດມື້.",
       "wholesalePrice": 920000,
-      "minWholesaleQty": 3
+      "minWholesaleQty": 3,
+      "packQty": 6,
+      "boxQty": 12,
+      "cartonQty": 60,
+      "colors": ["Đỏ 999 Velvet", "Cam Cháy 777", "Hồng Đào 525"]
     },
     {
       "id": "prod-4",
@@ -328,7 +349,11 @@
       "nameLao": "ນ້ຳຫອມຜູ້ຍິງ Chanel Coco Mademoiselle Eau De Parfum 100ml",
       "descriptionLao": "ກິ່ນຫອມສັນຍະລັກແຫ່ງຄວາມຫຼູຫຼາ, ມີສະເໜ່ ແລະ ໂດດເດັ່ນຈາກ ປາຣີ. ກິ່ນສົ້ມສົດຊື່ນຜະສົມຜະສານກັບດອກກຸຫຼາບຕວັກກີ ແລະ ດອກມະລິສຸດໂຣແມນຕິກ.",
       "wholesalePrice": 3400000,
-      "minWholesaleQty": 3
+      "minWholesaleQty": 3,
+      "packQty": 4,
+      "boxQty": 8,
+      "cartonQty": 32,
+      "sizes": ["50ml", "100ml"]
     },
     {
       "id": "prod-5",
@@ -731,34 +756,13 @@
       "minWholesaleQty": 3
     },
     {
-      "name": "cy",
-      "sku": "NOVA-7890",
-      "slug": "cy",
+      "name": "Babi mild 380ml",
+      "nameLao": "Babi mild 380ml",
+      "sku": "NOVA-4251",
+      "slug": "babi-mild-380ml",
       "description": "",
-      "price": 44,
-      "stock": 20,
-      "categoryId": "cat-skincare",
-      "subCategoryId": "sub-serum",
-      "subCategoryName": "Serum & Tinh Chất",
-      "subCategoryNameLao": "ເຊຣັ່ມ & ຫົວເຊື້ອ",
-      "status": "ACTIVE",
-      "images": [
-        "/uploads/phone-upload-1791529307840-cus7r3.webp"
-      ],
-      "id": "prod-1791529348262",
-      "createdAt": "2026-10-09T07:02:28.262Z",
-      "updatedAt": "2026-10-09T07:02:28.262Z",
-      "wholesalePrice": 35,
-      "minWholesaleQty": 3
-    },
-    {
-      "name": "tnt",
-      "nameLao": "tnt",
-      "sku": "NOVA-5218",
-      "slug": "tnt",
-      "description": "",
-      "price": 1000,
-      "wholesalePrice": 800,
+      "price": 59000,
+      "wholesalePrice": 52000,
       "minWholesaleQty": 3,
       "stock": 20,
       "categoryId": "cat-skincare",
@@ -767,11 +771,11 @@
       "subCategoryNameLao": "ເຊຣັ່ມ & ຫົວເຊື້ອ",
       "status": "ACTIVE",
       "images": [
-        "/uploads/phone-upload-1791534857206-p834k4.webp"
+        "/uploads/phone-upload-1791616388650-iq9unf.jpg"
       ],
-      "id": "prod-1791535821769",
-      "createdAt": "2026-10-09T08:50:21.769Z",
-      "updatedAt": "2026-10-09T08:50:21.769Z"
+      "id": "prod-1791616486979",
+      "createdAt": "2026-10-10T07:14:46.979Z",
+      "updatedAt": "2026-10-10T07:14:46.979Z"
     }
   ],
   "orders": [

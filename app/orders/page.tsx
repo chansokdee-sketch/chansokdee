@@ -156,15 +156,30 @@ export default function MyOrdersPage() {
                             <h4 className="text-xs sm:text-sm font-bold text-zinc-900 truncate">
                               {isLao && item.productNameLao ? item.productNameLao : item.productName}
                             </h4>
-                            <p className="text-xs text-zinc-400 mt-0.5">
-                              x{item.quantity} | {formatPrice(item.price)}
-                            </p>
+                            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                              <span className="text-[10px] font-bold bg-zinc-100 text-zinc-700 px-1.5 py-0.5 rounded">
+                                📦 {item.unitName || 'Cái'} x{item.unitQuantity !== undefined ? item.unitQuantity : item.quantity}
+                              </span>
+                              {item.selectedColor && (
+                                <span className="text-[10px] font-semibold bg-rose-50 text-rose-700 px-1.5 py-0.5 rounded border border-rose-200">
+                                  {item.selectedColor}
+                                </span>
+                              )}
+                              {item.selectedSize && (
+                                <span className="text-[10px] font-semibold bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200">
+                                  {item.selectedSize}
+                                </span>
+                              )}
+                              <span className="text-xs text-zinc-400">
+                                • {formatPrice(item.price)}
+                              </span>
+                            </div>
                           </div>
                         </div>
 
                         <div className="text-right flex-shrink-0">
                           <span className="text-xs sm:text-sm font-bold text-zinc-800">
-                            {formatPrice(item.price * item.quantity)}
+                            {formatPrice(item.price * (item.unitQuantity !== undefined ? item.unitQuantity : item.quantity))}
                           </span>
                         </div>
                       </div>

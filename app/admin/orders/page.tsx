@@ -698,7 +698,7 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
                   </div>
 
                   <p className="text-[11px] text-zinc-300 line-clamp-2">
-                    {o.items.map(i => `${i.productName} (x${i.quantity})`).join(', ')}
+                    {o.items.map(i => `${i.productName}${i.selectedColor ? ` [${i.selectedColor}]` : ''}${i.selectedSize ? ` [${i.selectedSize}]` : ''} (${i.unitName || 'Cái'} x${i.unitQuantity || i.quantity})`).join(', ')}
                   </p>
 
                   {o.note && (
@@ -1114,9 +1114,22 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
                         />
                         <div className="min-w-0">
                           <p className="font-bold text-white truncate">{item.productName}</p>
-                          <div className="flex items-center gap-1.5 mt-0.5">
+                          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                            <span className="text-[11px] text-zinc-300 font-bold bg-zinc-800 px-1.5 py-0.5 rounded">
+                              📦 {item.unitName || 'Cái'} x{item.unitQuantity !== undefined ? item.unitQuantity : item.quantity}
+                            </span>
+                            {item.selectedColor && (
+                              <span className="text-[10px] text-rose-300 bg-rose-950/60 border border-rose-800 px-1.5 py-0.5 rounded">
+                                {item.selectedColor}
+                              </span>
+                            )}
+                            {item.selectedSize && (
+                              <span className="text-[10px] text-blue-300 bg-blue-950/60 border border-blue-800 px-1.5 py-0.5 rounded">
+                                {item.selectedSize}
+                              </span>
+                            )}
                             <span className="text-[11px] text-zinc-400 font-mono">
-                              SL: x{item.quantity} • Đơn giá: {formatPrice(item.price)}
+                              (tổng {item.quantity} cái) • {formatPrice(item.price)}
                             </span>
                             {item.isWholesale && (
                               <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1 py-0.2 rounded font-black">
@@ -1128,7 +1141,7 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
                       </div>
 
                       <span className="font-bold text-emerald-400 font-mono flex-shrink-0">
-                        {formatPrice(item.price * item.quantity)}
+                        {formatPrice(item.price * (item.unitQuantity !== undefined ? item.unitQuantity : item.quantity))}
                       </span>
                     </div>
                   ))}

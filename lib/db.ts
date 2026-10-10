@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
-import { User, Category, SubCategory, Product, Order, OrderItem, OrderStatus, ProductStatus, SiteSettings } from './types';
+import { User, Category, SubCategory, Product, Order, OrderItem, OrderStatus, ProductStatus, SiteSettings, PackagingUnit } from './types';
 
 interface DatabaseSchema {
   users: User[];
@@ -683,7 +683,14 @@ export const db = {
       customerType?: 'RETAIL' | 'WHOLESALE';
       shippingAddress: string;
       note?: string;
-      items: { productId: string; quantity: number }[];
+      items: { 
+        productId: string; 
+        quantity: number; 
+        unit?: PackagingUnit; 
+        unitQuantity?: number; 
+        selectedColor?: string; 
+        selectedSize?: string; 
+      }[];
     }): { order: Order | null; error?: string } => {
       const data = readData();
 
@@ -704,23 +711,44 @@ export const db = {
         if (product.status !== 'ACTIVE') {
           return { order: null, error: `Sản phẩm "${product.name}" hiện đang ngừng kinh doanh.` };
         }
-        if (item.quantity <= 0) {
+
+        const unit = item.unit || 'PIECE';
+        const packQty = product.packQty || 6;
+        const boxQty = product.boxQty || 10;
+        const cartonQty = product.cartonQty || 50;
+        const multiplier = unit === 'CARTON' ? cartonQty : unit === 'BOX' ? boxQty : unit === 'PACK' ? packQty : 1;
+        const unitQuantity = item.unitQuantity !== undefined ? item.unitQuantity : item.quantity;
+        const totalPieceQty = unitQuantity * multiplier;
+
+        if (unitQuantity <= 0) {
           return { order: null, error: `Số lượng đặt mua phải lớn hơn 0.` };
         }
-        if (product.stock < item.quantity) {
+        if (product.stock < totalPieceQty) {
+          const unitLabelVi = unit === 'CARTON' ? 'thùng' : unit === 'BOX' ? 'hộp' : unit === 'PACK' ? 'lốc' : 'chiếc';
           return {
             order: null,
-            error: `Sản phẩm "${product.name}" chỉ còn ${product.stock} chiếc trong kho (bạn đặt ${item.quantity}).`,
+            error: `Sản phẩm "${product.name}" chỉ còn ${product.stock} chiếc trong kho (bạn đặt ${unitQuantity} ${unitLabelVi} tương đương ${totalPieceQty} chiếc).`,
           };
         }
 
         const isWholesale = orderInput.customerType === 'WHOLESALE';
-        const itemPrice = isWholesale
+        const basePrice = isWholesale
           ? (product.wholesalePrice !== undefined && product.wholesalePrice > 0 ? product.wholesalePrice : Math.round(product.price * 0.8))
           : product.price;
 
-        const itemSubtotal = itemPrice * item.quantity;
+        let itemPrice = basePrice;
+        if (unit === 'PACK') {
+          itemPrice = product.packPrice && product.packPrice > 0 ? product.packPrice : basePrice * packQty;
+        } else if (unit === 'BOX') {
+          itemPrice = product.boxPrice && product.boxPrice > 0 ? product.boxPrice : basePrice * boxQty;
+        } else if (unit === 'CARTON') {
+          itemPrice = product.cartonPrice && product.cartonPrice > 0 ? product.cartonPrice : basePrice * cartonQty;
+        }
+
+        const itemSubtotal = itemPrice * unitQuantity;
         calculatedTotalPrice += itemSubtotal;
+
+        const unitName = unit === 'CARTON' ? 'Thùng' : unit === 'BOX' ? 'Hộp' : unit === 'PACK' ? 'Lốc' : 'Cái';
 
         orderItems.push({
           id: `item-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
@@ -729,9 +757,14 @@ export const db = {
           productName: product.name,
           productNameLao: product.nameLao,
           productImage: product.images[0] || '',
-          quantity: item.quantity,
+          quantity: totalPieceQty,
           price: itemPrice,
           isWholesale,
+          unit,
+          unitName,
+          unitQuantity,
+          selectedColor: item.selectedColor,
+          selectedSize: item.selectedSize,
         });
       }
 
@@ -739,7 +772,15 @@ export const db = {
       for (const item of orderInput.items) {
         const prod = data.products.find(p => p.id === item.productId);
         if (prod) {
-          prod.stock -= item.quantity;
+          const unit = item.unit || 'PIECE';
+          const packQty = prod.packQty || 6;
+          const boxQty = prod.boxQty || 10;
+          const cartonQty = prod.cartonQty || 50;
+          const multiplier = unit === 'CARTON' ? cartonQty : unit === 'BOX' ? boxQty : unit === 'PACK' ? packQty : 1;
+          const unitQuantity = item.unitQuantity !== undefined ? item.unitQuantity : item.quantity;
+          const totalPieceQty = unitQuantity * multiplier;
+
+          prod.stock = Math.max(0, prod.stock - totalPieceQty);
           prod.updatedAt = new Date().toISOString();
         }
       }

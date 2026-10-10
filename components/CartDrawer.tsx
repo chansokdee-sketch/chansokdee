@@ -89,12 +89,22 @@ export default function CartDrawer() {
               </div>
             ) : (
               cart.map((item) => {
+                const itemKey = item.id || item.product.id;
+                const unit = item.unit || 'PIECE';
+                const unitQty = item.unitQuantity !== undefined ? item.unitQuantity : item.quantity;
                 const isWholesale = isItemWholesalePrice(item.product, item.quantity);
-                const unitPrice = getItemPrice(item.product, item.quantity);
+                const unitPrice = getItemPrice(item.product, unit);
+                const packQty = item.product.packQty || 6;
+                const boxQty = item.product.boxQty || 10;
+                const cartonQty = item.product.cartonQty || 50;
+                const unitLabel = unit === 'CARTON' ? (isLao ? `ລັງ (${cartonQty} ອັນ)` : `Thùng (${cartonQty} cái)`)
+                  : unit === 'BOX' ? (isLao ? `ກ່ອງ (${boxQty} ອັນ)` : `Hộp (${boxQty} cái)`)
+                  : unit === 'PACK' ? (isLao ? `ແພັກ (${packQty} ອັນ)` : `Lốc (${packQty} cái)`)
+                  : (isLao ? 'ອັນ' : 'Cái');
 
                 return (
                   <div 
-                    key={item.product.id}
+                    key={itemKey}
                     className="flex gap-3 sm:gap-4 p-3 bg-zinc-50/70 hover:bg-zinc-50 rounded-2xl border border-zinc-100 transition"
                   >
                     <img
@@ -107,19 +117,41 @@ export default function CartDrawer() {
                         <h4 className="text-xs font-semibold text-zinc-900 line-clamp-2 leading-snug">
                           {isLao && item.product.nameLao ? item.product.nameLao : item.product.name}
                         </h4>
-                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+
+                        {/* Variants Badges (Unit, Color, Size) */}
+                        <div className="flex flex-wrap items-center gap-1 mt-1">
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+                            unit === 'CARTON' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
+                            unit === 'BOX' ? 'bg-purple-100 text-purple-800 border border-purple-200' :
+                            unit === 'PACK' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                            'bg-zinc-100 text-zinc-700'
+                          }`}>
+                            📦 {unitLabel}
+                          </span>
+                          {item.selectedColor && (
+                            <span className="text-[10px] font-semibold bg-rose-50 text-rose-700 px-1.5 py-0.5 rounded-md border border-rose-200 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span>
+                              {item.selectedColor}
+                            </span>
+                          )}
+                          {item.selectedSize && (
+                            <span className="text-[10px] font-semibold bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-md border border-blue-200">
+                              {item.selectedSize}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                           <span className={`text-xs font-bold font-mono ${isWholesale ? 'text-amber-600' : 'text-blue-600'}`}>
                             {formatPrice(unitPrice)}
                           </span>
+                          <span className="text-[10px] text-zinc-400">
+                            /{unit === 'CARTON' ? (isLao ? 'ລັງ' : 'thùng') : unit === 'BOX' ? (isLao ? 'ກ່ອງ' : 'hộp') : unit === 'PACK' ? (isLao ? 'ແພັກ' : 'lốc') : (isLao ? 'ອັນ' : 'cái')}
+                          </span>
                           {isWholesale && (
-                            <>
-                              <span className="text-[9px] bg-amber-500/15 text-amber-700 px-1.5 py-0.2 rounded font-black border border-amber-500/20">
-                                Giá sỉ ⚡
-                              </span>
-                              <span className="text-[10px] text-zinc-400 line-through">
-                                Lẻ: {formatPrice(item.product.price)}
-                              </span>
-                            </>
+                            <span className="text-[9px] bg-amber-500/15 text-amber-700 px-1.5 py-0.2 rounded font-black border border-amber-500/20">
+                              Giá sỉ ⚡
+                            </span>
                           )}
                         </div>
                       </div>
@@ -128,17 +160,17 @@ export default function CartDrawer() {
                         {/* Stepper */}
                         <div className="flex items-center border border-zinc-200 bg-white rounded-lg overflow-hidden">
                           <button
-                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                            onClick={() => updateQuantity(itemKey, unitQty - 1)}
                             className="p-1 hover:bg-zinc-100 text-zinc-600 transition"
                             title="Giảm"
                           >
                             <Minus className="w-3.5 h-3.5" />
                           </button>
                           <span className="w-8 text-center text-xs font-bold text-zinc-800">
-                            {item.quantity}
+                            {unitQty}
                           </span>
                           <button
-                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                            onClick={() => updateQuantity(itemKey, unitQty + 1)}
                             disabled={item.quantity >= item.product.stock}
                             className="p-1 hover:bg-zinc-100 text-zinc-600 disabled:opacity-40 transition"
                             title="Tăng"
@@ -149,7 +181,7 @@ export default function CartDrawer() {
 
                         {/* Remove Button */}
                         <button
-                          onClick={() => removeFromCart(item.product.id)}
+                          onClick={() => removeFromCart(itemKey)}
                           className="text-zinc-400 hover:text-red-500 p-1 transition"
                           title="Xóa khỏi giỏ"
                         >

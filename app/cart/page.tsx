@@ -33,6 +33,7 @@ export default function CartPage() {
     removeFromCart, 
     clearCart, 
     totalPrice,
+    totalItems,
     customerMode,
     setCustomerMode,
     getItemPrice,
@@ -132,6 +133,10 @@ export default function CartPage() {
           items: cart.map(item => ({
             productId: item.product.id,
             quantity: item.quantity,
+            unit: item.unit || 'PIECE',
+            unitQuantity: item.unitQuantity !== undefined ? item.unitQuantity : item.quantity,
+            selectedColor: item.selectedColor,
+            selectedSize: item.selectedSize,
           })),
           customerName,
           customerPhone,
@@ -256,11 +261,21 @@ export default function CartPage() {
 
                 <div className="divide-y divide-zinc-100 space-y-4">
                   {cart.map((item) => {
+                    const itemKey = item.id || item.product.id;
+                    const unit = item.unit || 'PIECE';
+                    const unitQty = item.unitQuantity !== undefined ? item.unitQuantity : item.quantity;
                     const isWholesale = isItemWholesalePrice(item.product, item.quantity);
-                    const unitPrice = getItemPrice(item.product, item.quantity);
+                    const unitPrice = getItemPrice(item.product, unit);
+                    const packQty = item.product.packQty || 6;
+                    const boxQty = item.product.boxQty || 10;
+                    const cartonQty = item.product.cartonQty || 50;
+                    const unitLabel = unit === 'CARTON' ? (isLao ? `ລັງ (${cartonQty} ອັນ)` : `Thùng (${cartonQty} cái)`)
+                      : unit === 'BOX' ? (isLao ? `ກ່ອງ (${boxQty} ອັນ)` : `Hộp (${boxQty} cái)`)
+                      : unit === 'PACK' ? (isLao ? `ແພັກ (${packQty} ອັນ)` : `Lốc (${packQty} cái)`)
+                      : (isLao ? 'ອັນ' : 'Cái');
 
                     return (
-                      <div key={item.product.id} className="pt-4 first:pt-0 flex gap-3 sm:gap-4 items-center">
+                      <div key={itemKey} className="pt-4 first:pt-0 flex gap-3 sm:gap-4 items-center">
                         <img
                           src={item.product.images[0] || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=300&auto=format&fit=crop'}
                           alt={item.product.name}
@@ -273,58 +288,80 @@ export default function CartPage() {
                             </h3>
                           </Link>
                           <p className="text-[11px] sm:text-xs text-zinc-400 mt-0.5">{t('cart_item_code')} {item.product.sku}</p>
-                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+
+                          {/* Variants Badges (Unit, Color, Size) */}
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                              unit === 'CARTON' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
+                              unit === 'BOX' ? 'bg-purple-100 text-purple-800 border border-purple-200' :
+                              unit === 'PACK' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                              'bg-zinc-100 text-zinc-700'
+                            }`}>
+                              📦 {unitLabel}
+                            </span>
+                            {item.selectedColor && (
+                              <span className="text-[10px] font-semibold bg-rose-50 text-rose-700 px-2 py-0.5 rounded-md border border-rose-200 flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span>
+                                {item.selectedColor}
+                              </span>
+                            )}
+                            {item.selectedSize && (
+                              <span className="text-[10px] font-semibold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md border border-blue-200">
+                                {item.selectedSize}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                             <span className={`text-xs sm:text-sm font-black font-mono ${isWholesale ? 'text-amber-600' : 'text-blue-600'}`}>
                               {formatPrice(unitPrice)}
                             </span>
+                            <span className="text-[10px] text-zinc-400">
+                              /{unit === 'CARTON' ? (isLao ? 'ລັງ' : 'thùng') : unit === 'BOX' ? (isLao ? 'ກ່ອງ' : 'hộp') : unit === 'PACK' ? (isLao ? 'ແພັກ' : 'lốc') : (isLao ? 'ອັນ' : 'cái')}
+                            </span>
                             {isWholesale && (
-                              <>
-                                <span className="text-[10px] bg-amber-500/15 text-amber-700 px-1.5 py-0.2 rounded font-black border border-amber-500/20">
-                                  Giá sỉ ⚡
-                                </span>
-                                <span className="text-[11px] text-zinc-400 line-through">
-                                  Lẻ: {formatPrice(item.product.price)}
-                                </span>
-                              </>
+                              <span className="text-[10px] bg-amber-500/15 text-amber-700 px-1.5 py-0.2 rounded font-black border border-amber-500/20">
+                                Giá sỉ ⚡
+                              </span>
                             )}
                           </div>
                         </div>
 
-                      {/* Stepper & Delete */}
-                      <div className="flex flex-col items-end gap-1.5 sm:gap-2">
-                        <div className="flex items-center border border-zinc-200 bg-white rounded-xl overflow-hidden">
+                        {/* Stepper & Delete */}
+                        <div className="flex flex-col items-end gap-1.5 sm:gap-2">
+                          <div className="flex items-center border border-zinc-200 bg-white rounded-xl overflow-hidden">
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(itemKey, unitQty - 1)}
+                              className="p-1 sm:p-1.5 hover:bg-zinc-100 text-zinc-600 transition"
+                            >
+                              <Minus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                            </button>
+                            <span className="w-7 sm:w-8 text-center text-xs font-bold text-zinc-900">
+                              {unitQty}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(itemKey, unitQty + 1)}
+                              disabled={item.quantity >= item.product.stock}
+                              className="p-1 sm:p-1.5 hover:bg-zinc-100 text-zinc-600 disabled:opacity-40 transition"
+                            >
+                              <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                            </button>
+                          </div>
+
                           <button
                             type="button"
-                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                            className="p-1 sm:p-1.5 hover:bg-zinc-100 text-zinc-600 transition"
+                            onClick={() => removeFromCart(itemKey)}
+                            className="text-zinc-400 hover:text-red-500 text-[11px] sm:text-xs flex items-center gap-1 transition"
                           >
-                            <Minus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                          </button>
-                          <span className="w-7 sm:w-8 text-center text-xs font-bold text-zinc-900">
-                            {item.quantity}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                            disabled={item.quantity >= item.product.stock}
-                            className="p-1 sm:p-1.5 hover:bg-zinc-100 text-zinc-600 disabled:opacity-40 transition"
-                          >
-                            <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                            <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                            {t('cart_delete')}
                           </button>
                         </div>
-
-                        <button
-                          type="button"
-                          onClick={() => removeFromCart(item.product.id)}
-                          className="text-zinc-400 hover:text-red-500 text-[11px] sm:text-xs flex items-center gap-1 transition"
-                        >
-                          <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                          {t('cart_delete')}
-                        </button>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
                 </div>
               </div>
 

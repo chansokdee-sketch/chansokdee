@@ -24,8 +24,11 @@ import {
   Sparkles,
   Phone,
   ShoppingCart,
-  Edit3
+  Edit3,
+  Palette,
+  Maximize2
 } from 'lucide-react';
+import { PackagingUnit } from '@/lib/types';
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -37,6 +40,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [product, setProduct] = useState<Product | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
   const [selectedImage, setSelectedImage] = useState<string>('');
+  const [selectedUnit, setSelectedUnit] = useState<PackagingUnit>('PIECE');
+  const [selectedColor, setSelectedColor] = useState<string>('');
+  const [selectedSize, setSelectedSize] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -51,6 +57,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           setProduct(data.product);
           setCategory(data.category);
           setSelectedImage(data.product.images[0] || '');
+          if (data.product.colors && data.product.colors.length > 0) {
+            setSelectedColor(data.product.colors[0]);
+          }
+          if (data.product.sizes && data.product.sizes.length > 0) {
+            setSelectedSize(data.product.sizes[0]);
+          }
         } else {
           setError(data.error || 'Không tìm thấy sản phẩm');
         }
@@ -66,14 +78,24 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
   const handleAddToCart = () => {
     if (!product) return;
-    const res = addToCart(product, quantity);
+    const res = addToCart(product, quantity, {
+      unit: selectedUnit,
+      unitQuantity: quantity,
+      selectedColor: selectedColor || undefined,
+      selectedSize: selectedSize || undefined,
+    });
     setNotification(res.message);
     setTimeout(() => setNotification(null), 3000);
   };
 
   const handleBuyNow = () => {
     if (!product) return;
-    addToCart(product, quantity);
+    addToCart(product, quantity, {
+      unit: selectedUnit,
+      unitQuantity: quantity,
+      selectedColor: selectedColor || undefined,
+      selectedSize: selectedSize || undefined,
+    });
     router.push('/cart');
   };
 
@@ -344,35 +366,261 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                 ) : (
                   <>
-                    {/* Quantity selector */}
-                    {!isOutOfStock && (
+                    {/* Mục Chọn Màu Sắc (Color Picker) */}
+                    {product.colors && product.colors.length > 0 && (
                       <div className="space-y-2 pt-2">
-                        <label className="text-xs font-bold text-zinc-700 block">{t('pd_quantity')}</label>
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center border border-zinc-200 rounded-xl bg-white overflow-hidden">
-                            <button
-                              type="button"
-                              onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                              className="p-2.5 hover:bg-zinc-100 text-zinc-600 transition"
-                            >
-                              <Minus className="w-4 h-4" />
-                            </button>
-                            <span className="w-12 text-center text-sm font-bold text-zinc-900">{quantity}</span>
-                            <button
-                              type="button"
-                              onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                              disabled={quantity >= product.stock}
-                              className="p-2.5 hover:bg-zinc-100 text-zinc-600 disabled:opacity-40 transition"
-                            >
-                              <Plus className="w-4 h-4" />
-                            </button>
-                          </div>
-                          <span className="text-xs text-zinc-500">
-                            ({t('pd_remaining', { stock: product.stock })})
+                        <div className="flex items-center justify-between text-xs font-bold text-zinc-700">
+                          <span className="flex items-center gap-1.5">
+                            <Palette className="w-4 h-4 text-rose-500" />
+                            <span>{isLao ? 'ເລືອກສີສັນ:' : 'Chọn màu sắc:'}</span>
                           </span>
+                          {selectedColor && (
+                            <span className="text-rose-600 font-extrabold text-[11px] bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                              {selectedColor}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {product.colors.map(color => {
+                            const isSelected = selectedColor === color;
+                            return (
+                              <button
+                                key={color}
+                                type="button"
+                                onClick={() => setSelectedColor(color)}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border ${
+                                  isSelected
+                                    ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs ring-2 ring-zinc-400'
+                                    : 'bg-white text-zinc-700 hover:bg-zinc-100 border-zinc-200'
+                                }`}
+                              >
+                                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
+                                <span>{color}</span>
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
+
+                    {/* Mục Chọn Kích Cỡ / Dung Tích (Size Picker) */}
+                    {product.sizes && product.sizes.length > 0 && (
+                      <div className="space-y-2 pt-2">
+                        <div className="flex items-center justify-between text-xs font-bold text-zinc-700">
+                          <span className="flex items-center gap-1.5">
+                            <Maximize2 className="w-4 h-4 text-blue-500" />
+                            <span>{isLao ? 'ເລືອກຂະໜາດ / ປະລິມານ:' : 'Chọn kích cỡ / dung tích:'}</span>
+                          </span>
+                          {selectedSize && (
+                            <span className="text-blue-600 font-extrabold text-[11px] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                              {selectedSize}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {product.sizes.map(size => {
+                            const isSelected = selectedSize === size;
+                            return (
+                              <button
+                                key={size}
+                                type="button"
+                                onClick={() => setSelectedSize(size)}
+                                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition border ${
+                                  isSelected
+                                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs ring-2 ring-blue-300 font-extrabold'
+                                    : 'bg-white text-zinc-700 hover:bg-zinc-100 border-zinc-200'
+                                }`}
+                              >
+                                {size}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Mục Chọn Quy Cách Đóng Gói (Cái / Lốc / Hộp / Thùng) */}
+                    {(() => {
+                      const packQty = product.packQty || 6;
+                      const boxQty = product.boxQty || 10;
+                      const cartonQty = product.cartonQty || 50;
+                      const baseUnitPrice = customerMode === 'WHOLESALE' 
+                        ? (product.wholesalePrice !== undefined && product.wholesalePrice > 0 ? product.wholesalePrice : Math.round(product.price * 0.8))
+                        : product.price;
+                      const packPrice = product.packPrice && product.packPrice > 0 ? product.packPrice : baseUnitPrice * packQty;
+                      const boxPrice = product.boxPrice && product.boxPrice > 0 ? product.boxPrice : baseUnitPrice * boxQty;
+                      const cartonPrice = product.cartonPrice && product.cartonPrice > 0 ? product.cartonPrice : baseUnitPrice * cartonQty;
+
+                      return (
+                        <div className="space-y-2 pt-3">
+                          <label className="text-xs font-bold text-zinc-700 flex items-center justify-between">
+                            <span className="flex items-center gap-1.5">
+                              <Boxes className="w-4 h-4 text-amber-600" />
+                              <span>{isLao ? 'ຮູບແບບການຊື້ (ອັນ / ແພັກ / ກ່ອງ / ລັງ):' : 'Quy cách đóng gói (Cái / Lốc / Hộp / Thùng):'}</span>
+                            </span>
+                            <span className="text-[11px] text-zinc-400 font-normal">
+                              {isLao ? 'ເລືອກງ່າຍຂຶ້ນ' : 'Dễ chọn mua số lượng lớn'}
+                            </span>
+                          </label>
+
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            {/* Cái */}
+                            <button
+                              type="button"
+                              onClick={() => { setSelectedUnit('PIECE'); setQuantity(1); }}
+                              className={`p-2.5 rounded-2xl border text-left transition flex flex-col justify-between ${
+                                selectedUnit === 'PIECE'
+                                  ? 'bg-blue-50/80 border-blue-600 ring-2 ring-blue-500/20 text-blue-950 font-bold shadow-xs'
+                                  : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-xs font-black">{isLao ? 'ອັນ (Cái)' : 'Cái'}</span>
+                                <span className="text-[10px] text-zinc-400">x1</span>
+                              </div>
+                              <p className="text-[11px] font-mono font-bold text-blue-600 mt-1">
+                                {formatPrice(baseUnitPrice)}
+                              </p>
+                              <span className="text-[9px] text-zinc-500 mt-0.5">
+                                {isLao ? 'ຊື້ຍ່ອຍ 1 ອັນ' : 'Mua lẻ 1 chiếc'}
+                              </span>
+                            </button>
+
+                            {/* Lốc */}
+                            <button
+                              type="button"
+                              onClick={() => { setSelectedUnit('PACK'); setQuantity(1); }}
+                              className={`p-2.5 rounded-2xl border text-left transition flex flex-col justify-between ${
+                                selectedUnit === 'PACK'
+                                  ? 'bg-emerald-50/80 border-emerald-600 ring-2 ring-emerald-500/20 text-emerald-950 font-bold shadow-xs'
+                                  : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-xs font-black">{isLao ? 'ແພັກ (Lốc)' : 'Lốc'}</span>
+                                <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1 py-0.2 rounded font-bold">x{packQty}</span>
+                              </div>
+                              <p className="text-[11px] font-mono font-bold text-emerald-700 mt-1">
+                                {formatPrice(packPrice)}
+                              </p>
+                              <span className="text-[9px] text-emerald-800 mt-0.5">
+                                {packQty} {isLao ? 'ອັນ/ແພັກ' : 'cái / lốc'}
+                              </span>
+                            </button>
+
+                            {/* Hộp */}
+                            <button
+                              type="button"
+                              onClick={() => { setSelectedUnit('BOX'); setQuantity(1); }}
+                              className={`p-2.5 rounded-2xl border text-left transition flex flex-col justify-between ${
+                                selectedUnit === 'BOX'
+                                  ? 'bg-purple-50/80 border-purple-600 ring-2 ring-purple-500/20 text-purple-950 font-bold shadow-xs'
+                                  : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-xs font-black">{isLao ? 'ກ່ອງ (Hộp)' : 'Hộp'}</span>
+                                <span className="text-[9px] bg-purple-100 text-purple-700 px-1 py-0.2 rounded font-bold">x{boxQty}</span>
+                              </div>
+                              <p className="text-[11px] font-mono font-bold text-purple-700 mt-1">
+                                {formatPrice(boxPrice)}
+                              </p>
+                              <span className="text-[9px] text-purple-800 mt-0.5">
+                                {boxQty} {isLao ? 'ອັນ/ກ່ອງ' : 'cái / hộp'}
+                              </span>
+                            </button>
+
+                            {/* Thùng */}
+                            <button
+                              type="button"
+                              onClick={() => { setSelectedUnit('CARTON'); setQuantity(1); }}
+                              className={`p-2.5 rounded-2xl border text-left transition flex flex-col justify-between ${
+                                selectedUnit === 'CARTON'
+                                  ? 'bg-amber-500/20 border-amber-600 ring-2 ring-amber-500/30 text-amber-950 font-black shadow-xs'
+                                  : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-xs font-black">{isLao ? 'ລັງ (Thùng)' : 'Thùng ⚡'}</span>
+                                <span className="text-[9px] bg-amber-400 text-amber-950 px-1 py-0.2 rounded font-black">x{cartonQty}</span>
+                              </div>
+                              <p className="text-[11px] font-mono font-black text-amber-700 mt-1">
+                                {formatPrice(cartonPrice)}
+                              </p>
+                              <span className="text-[9px] text-amber-800 mt-0.5">
+                                {cartonQty} {isLao ? 'ອັນ/ລັງ' : 'cái / thùng'}
+                              </span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Quantity & Subtotal Stepper */}
+                    {!isOutOfStock && (() => {
+                      const packQty = product.packQty || 6;
+                      const boxQty = product.boxQty || 10;
+                      const cartonQty = product.cartonQty || 50;
+                      const multiplier = selectedUnit === 'CARTON' ? cartonQty : selectedUnit === 'BOX' ? boxQty : selectedUnit === 'PACK' ? packQty : 1;
+                      const maxUnitAllowed = Math.max(1, Math.floor(product.stock / multiplier));
+                      const baseUnitPrice = customerMode === 'WHOLESALE' 
+                        ? (product.wholesalePrice !== undefined && product.wholesalePrice > 0 ? product.wholesalePrice : Math.round(product.price * 0.8))
+                        : product.price;
+                      let currentPricePerUnit = baseUnitPrice;
+                      if (selectedUnit === 'PACK') {
+                        currentPricePerUnit = product.packPrice && product.packPrice > 0 ? product.packPrice : baseUnitPrice * packQty;
+                      } else if (selectedUnit === 'BOX') {
+                        currentPricePerUnit = product.boxPrice && product.boxPrice > 0 ? product.boxPrice : baseUnitPrice * boxQty;
+                      } else if (selectedUnit === 'CARTON') {
+                        currentPricePerUnit = product.cartonPrice && product.cartonPrice > 0 ? product.cartonPrice : baseUnitPrice * cartonQty;
+                      }
+
+                      const subtotal = currentPricePerUnit * quantity;
+                      const currentUnitLabel = selectedUnit === 'CARTON' ? (isLao ? 'ລັງ' : 'Thùng')
+                        : selectedUnit === 'BOX' ? (isLao ? 'ກ່ອງ' : 'Hộp')
+                        : selectedUnit === 'PACK' ? (isLao ? 'ແພັກ' : 'Lốc')
+                        : (isLao ? 'ອັນ' : 'Cái');
+
+                      return (
+                        <div className="space-y-3 pt-3">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-bold text-zinc-700 block">
+                              {isLao ? 'ຈຳນວນສັ່ງຊື້:' : 'Số lượng đặt mua:'} ({currentUnitLabel})
+                            </label>
+                            <span className="text-xs text-zinc-500 font-semibold">
+                              {isLao ? `ທັງໝົດ ${quantity * multiplier} ອັນ` : `Tương đương ${quantity * multiplier} cái`}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-4 p-3 bg-zinc-50 rounded-2xl border border-zinc-200/80">
+                            <div className="flex items-center border border-zinc-200 rounded-xl bg-white overflow-hidden shadow-2xs">
+                              <button
+                                type="button"
+                                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                className="p-2 sm:p-2.5 hover:bg-zinc-100 text-zinc-600 transition"
+                              >
+                                <Minus className="w-4 h-4" />
+                              </button>
+                              <span className="w-10 sm:w-12 text-center text-sm font-black text-zinc-900">{quantity}</span>
+                              <button
+                                type="button"
+                                onClick={() => setQuantity(Math.min(maxUnitAllowed, quantity + 1))}
+                                disabled={quantity >= maxUnitAllowed}
+                                className="p-2 sm:p-2.5 hover:bg-zinc-100 text-zinc-600 disabled:opacity-40 transition"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </button>
+                            </div>
+                            
+                            <div className="text-right">
+                              <span className="text-[10px] text-zinc-400 block font-medium">{isLao ? 'ລວມມູນຄ່າ:' : 'Tạm tính:'}</span>
+                              <span className="text-base sm:text-lg font-black text-blue-700 font-mono">
+                                {formatPrice(subtotal)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Action Buttons */}
                     <div className="pt-4 flex flex-col sm:flex-row gap-3">

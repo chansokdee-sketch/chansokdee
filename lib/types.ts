@@ -48,6 +48,8 @@ export interface ProductImage {
   createdAt: string;
 }
 
+export type PackagingUnit = 'PIECE' | 'PACK' | 'BOX' | 'CARTON'; // 'PIECE' = Cái (ອັນ), 'PACK' = Lốc (ແພັກ), 'BOX' = Hộp (ກ່ອງ), 'CARTON' = Thùng (ລັງ)
+
 export interface Product {
   id: string;
   sku: string;
@@ -56,9 +58,17 @@ export interface Product {
   slug: string;
   description: string;
   descriptionLao?: string;
-  price: number;              // Giá bán lẻ (Retail Price)
-  wholesalePrice?: number;    // Giá bán sỉ (Wholesale Price)
+  price: number;              // Giá bán lẻ theo cái (Retail Price)
+  wholesalePrice?: number;    // Giá bán sỉ theo cái (Wholesale Price)
   minWholesaleQty?: number;   // Số lượng tối thiểu để tính giá sỉ (mặc định 3 hoặc 5)
+  packQty?: number;           // Số lượng cái trong 1 Lốc (mặc định 6)
+  boxQty?: number;            // Số lượng cái trong 1 Hộp (mặc định 10)
+  cartonQty?: number;         // Số lượng cái trong 1 Thùng (mặc định 50)
+  packPrice?: number;         // Giá bán theo Lốc (tùy chọn)
+  boxPrice?: number;          // Giá bán theo Hộp (tùy chọn)
+  cartonPrice?: number;       // Giá bán theo Thùng (tùy chọn)
+  colors?: string[];          // Danh sách màu sắc (ví dụ: ['Đỏ Ruby', 'Cam Cháy', 'Hồng Đào'])
+  sizes?: string[];           // Danh sách kích cỡ / dung tích (ví dụ: ['30ml', '50ml', '100ml'] hoặc ['S', 'M', 'L'])
   stock: number;
   categoryId: string;
   subCategoryId?: string;
@@ -81,6 +91,11 @@ export interface OrderItem {
   quantity: number;
   price: number;
   isWholesale?: boolean;
+  unit?: PackagingUnit;
+  unitName?: string;
+  unitQuantity?: number;
+  selectedColor?: string;
+  selectedSize?: string;
 }
 
 export interface Order {
@@ -105,8 +120,13 @@ export interface Order {
 }
 
 export interface CartItem {
+  id?: string;                // Khóa duy nhất trong giỏ hàng (hỗ trợ phân loại màu, size, cái/hộp/thùng)
   product: Product;
-  quantity: number;
+  quantity: number;           // Tổng số lượng cái thực tế
+  unit?: PackagingUnit;       // Đơn vị đóng gói: PIECE (Cái), BOX (Hộp), CARTON (Thùng)
+  unitQuantity?: number;      // Số lượng theo đơn vị (ví dụ: 2 Hộp, 1 Thùng, 3 Cái)
+  selectedColor?: string;     // Màu sắc đã chọn
+  selectedSize?: string;      // Kích cỡ/dung tích đã chọn
 }
 
 export interface SiteSettings {
