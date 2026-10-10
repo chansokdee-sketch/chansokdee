@@ -93,7 +93,7 @@ export default function CartDrawer() {
                 const unit = item.unit || 'PIECE';
                 const unitQty = item.unitQuantity !== undefined ? item.unitQuantity : item.quantity;
                 const isWholesale = isItemWholesalePrice(item.product, item.quantity);
-                const unitPrice = getItemPrice(item.product, unit);
+                const unitPrice = getItemPrice(item.product, unit, item.variantId);
                 const packQty = item.product.packQty || 6;
                 const boxQty = item.product.boxQty || 10;
                 const cartonQty = item.product.cartonQty || 50;
@@ -108,7 +108,7 @@ export default function CartDrawer() {
                     className="flex gap-3 sm:gap-4 p-3 bg-zinc-50/70 hover:bg-zinc-50 rounded-2xl border border-zinc-100 transition"
                   >
                     <img
-                      src={item.product.images[0] || 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=150&auto=format&fit=crop'}
+                      src={item.variantImage || item.product.images[0] || 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=150&auto=format&fit=crop'}
                       alt={item.product.name}
                       className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-xl bg-white border border-zinc-200/60 flex-shrink-0"
                     />
@@ -118,7 +118,7 @@ export default function CartDrawer() {
                           {isLao && item.product.nameLao ? item.product.nameLao : item.product.name}
                         </h4>
 
-                        {/* Variants Badges (Unit, Color, Size) */}
+                        {/* Variants Badges (Unit, Variant Name, Color, Size) */}
                         <div className="flex flex-wrap items-center gap-1 mt-1">
                           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
                             unit === 'CARTON' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
@@ -128,6 +128,11 @@ export default function CartDrawer() {
                           }`}>
                             📦 {unitLabel}
                           </span>
+                          {item.variantName && (
+                            <span className="text-[10px] font-bold bg-pink-50 text-pink-700 px-1.5 py-0.5 rounded-md border border-pink-200">
+                              🏷️ {item.variantName}
+                            </span>
+                          )}
                           {item.selectedColor && (
                             <span className="text-[10px] font-semibold bg-rose-50 text-rose-700 px-1.5 py-0.5 rounded-md border border-rose-200 flex items-center gap-1">
                               <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span>

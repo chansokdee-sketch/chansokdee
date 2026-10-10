@@ -705,6 +705,9 @@ export const db = {
         quantity: number; 
         unit?: PackagingUnit; 
         unitQuantity?: number; 
+        variantId?: string;
+        variantName?: string;
+        variantImage?: string;
         selectedColor?: string; 
         selectedSize?: string; 
       }[];
@@ -718,6 +721,8 @@ export const db = {
 
       const orderItems: OrderItem[] = [];
       let calculatedTotalPrice = 0;
+      let calculatedTotalPriceTHB = 0;
+      const isTHBOrder = orderInput.currency === 'THB';
 
       // Lock/check inventory
       for (const item of orderInput.items) {
@@ -749,9 +754,13 @@ export const db = {
         }
 
         const isWholesale = orderInput.customerType === 'WHOLESALE';
-        const basePrice = isWholesale
-          ? (product.wholesalePrice !== undefined && product.wholesalePrice > 0 ? product.wholesalePrice : Math.round(product.price * 0.8))
-          : product.price;
+        const variant = item.variantId && product.variants ? product.variants.find(v => v.id === item.variantId) : undefined;
+        const baseRetail = (variant && variant.price !== undefined && variant.price > 0) ? variant.price : product.price;
+        const baseWholesale = (variant && variant.wholesalePrice !== undefined && variant.wholesalePrice > 0)
+          ? variant.wholesalePrice
+          : (product.wholesalePrice !== undefined && product.wholesalePrice > 0 ? product.wholesalePrice : Math.round(baseRetail * 0.8));
+
+        const basePrice = isWholesale ? baseWholesale : baseRetail;
 
         let itemPrice = basePrice;
         if (unit === 'PACK') {
@@ -760,6 +769,37 @@ export const db = {
           itemPrice = product.boxPrice && product.boxPrice > 0 ? product.boxPrice : basePrice * boxQty;
         } else if (unit === 'CARTON') {
           itemPrice = product.cartonPrice && product.cartonPrice > 0 ? product.cartonPrice : basePrice * cartonQty;
+        }
+
+        // THB price calculation
+        let itemPriceTHB: number | null = null;
+        if (unit === 'PACK' && product.packPriceTHB && product.packPriceTHB > 0) {
+          itemPriceTHB = product.packPriceTHB;
+        } else if (unit === 'BOX' && product.boxPriceTHB && product.boxPriceTHB > 0) {
+          itemPriceTHB = product.boxPriceTHB;
+        } else if (unit === 'CARTON' && product.cartonPriceTHB && product.cartonPriceTHB > 0) {
+          itemPriceTHB = product.cartonPriceTHB;
+        } else {
+          // PIECE
+          if (isWholesale) {
+            if (variant && variant.wholesalePriceTHB && variant.wholesalePriceTHB > 0) itemPriceTHB = variant.wholesalePriceTHB;
+            else if (product.wholesalePriceTHB && product.wholesalePriceTHB > 0) itemPriceTHB = product.wholesalePriceTHB;
+          }
+          if (itemPriceTHB === null) {
+            if (variant && variant.priceTHB && variant.priceTHB > 0) itemPriceTHB = variant.priceTHB;
+            else if (product.priceTHB && product.priceTHB > 0) itemPriceTHB = product.priceTHB;
+          }
+        }
+
+        if (isTHBOrder && (!itemPriceTHB || itemPriceTHB <= 0)) {
+          return {
+            order: null,
+            error: `Sản phẩm "${product.name}" không có giá tiền Baht. Đơn hàng này không thể thanh toán bằng tiền Baht, vui lòng chọn thanh toán bằng tiền Kíp.`,
+          };
+        }
+
+        if (itemPriceTHB && itemPriceTHB > 0) {
+          calculatedTotalPriceTHB += itemPriceTHB * unitQuantity;
         }
 
         const itemSubtotal = itemPrice * unitQuantity;
@@ -773,13 +813,16 @@ export const db = {
           productId: product.id,
           productName: product.name,
           productNameLao: product.nameLao,
-          productImage: product.images[0] || '',
+          productImage: (variant && variant.image) || product.images[0] || '',
           quantity: totalPieceQty,
           price: itemPrice,
           isWholesale,
           unit,
           unitName,
           unitQuantity,
+          variantId: item.variantId || variant?.id,
+          variantName: item.variantName || variant?.name,
+          variantImage: item.variantImage || variant?.image,
           selectedColor: item.selectedColor,
           selectedSize: item.selectedSize,
         });
@@ -814,9 +857,9 @@ export const db = {
       });
 
       const thbRate = orderInput.exchangeRate || data.siteSettings?.thbRate || 650;
-      const selectedCurrency: Currency = orderInput.currency === 'THB' ? 'THB' : 'LAK';
+      const selectedCurrency: Currency = isTHBOrder ? 'THB' : 'LAK';
       const totalPriceLAK = calculatedTotalPrice;
-      const totalPriceTHB = Math.round(calculatedTotalPrice / thbRate);
+      const totalPriceTHB = calculatedTotalPriceTHB > 0 ? calculatedTotalPriceTHB : Math.round(calculatedTotalPrice / thbRate);
       const finalTotalPrice = selectedCurrency === 'THB' ? totalPriceTHB : totalPriceLAK;
 
       const newOrder: Order = {

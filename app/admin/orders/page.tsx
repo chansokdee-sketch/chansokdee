@@ -1326,6 +1326,11 @@ ${o.items.map(i => `- ${i.productName}${i.unitName ? ` (${i.unitName} x${i.unitQ
                             <span className="text-[11px] text-zinc-300 font-bold bg-zinc-800 px-1.5 py-0.5 rounded">
                               📦 {item.unitName || 'Cái'} x{item.unitQuantity !== undefined ? item.unitQuantity : item.quantity}
                             </span>
+                            {item.variantName && (
+                              <span className="text-[10px] text-pink-300 bg-pink-950/60 border border-pink-800 px-1.5 py-0.5 rounded font-bold">
+                                🏷️ {item.variantName}
+                              </span>
+                            )}
                             {item.selectedColor && (
                               <span className="text-[10px] text-rose-300 bg-rose-950/60 border border-rose-800 px-1.5 py-0.5 rounded">
                                 {item.selectedColor}

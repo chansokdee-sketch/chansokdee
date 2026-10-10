@@ -9,6 +9,9 @@ export type CustomerPriceMode = 'RETAIL' | 'WHOLESALE';
 export interface AddToCartExtraOptions {
   unit?: PackagingUnit;
   unitQuantity?: number;
+  variantId?: string;
+  variantName?: string;
+  variantImage?: string;
   selectedColor?: string;
   selectedSize?: string;
 }
@@ -24,12 +27,15 @@ interface CartContextType {
   removeFromCart: (cartItemIdOrProductId: string) => void;
   clearCart: () => void;
   totalPrice: number;
+  totalPriceTHB: number;
+  canPayWithTHB: boolean;
   totalItems: number;
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
   customerMode: CustomerPriceMode;
   setCustomerMode: (mode: CustomerPriceMode) => void;
-  getItemPrice: (product: Product, unitOrQuantity?: PackagingUnit | number) => number;
+  getItemPrice: (product: Product, unitOrQuantity?: PackagingUnit | number, variantId?: string) => number;
+  getItemPriceTHB: (product: Product, unit?: PackagingUnit, variantId?: string) => number | null;
   isItemWholesalePrice: (product: Product, quantity?: number) => boolean;
   hasFullPriceAccess: boolean;
 }
@@ -85,13 +91,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const getItemPrice = (product: Product, unitOrQuantity?: PackagingUnit | number): number => {
+  const getItemPrice = (
+    product: Product, 
+    unitOrQuantity?: PackagingUnit | number,
+    variantId?: string
+  ): number => {
     const unit: PackagingUnit = typeof unitOrQuantity === 'string' ? unitOrQuantity : 'PIECE';
-    const wholesale = product.wholesalePrice !== undefined && product.wholesalePrice > 0
-      ? product.wholesalePrice
-      : Math.round(product.price * 0.8);
+    const variant = variantId && product.variants ? product.variants.find(v => v.id === variantId) : undefined;
 
-    const basePrice = customerMode === 'WHOLESALE' ? wholesale : product.price;
+    // Giá lẻ và sỉ cơ sở: Ưu tiên giá riêng của biến thể nếu có
+    const baseRetail = (variant && variant.price !== undefined && variant.price > 0) ? variant.price : product.price;
+    const baseWholesale = (variant && variant.wholesalePrice !== undefined && variant.wholesalePrice > 0)
+      ? variant.wholesalePrice
+      : (product.wholesalePrice !== undefined && product.wholesalePrice > 0 ? product.wholesalePrice : Math.round(baseRetail * 0.8));
+
+    const basePrice = customerMode === 'WHOLESALE' ? baseWholesale : baseRetail;
 
     if (unit === 'PACK') {
       const packQty = product.packQty || 6;
@@ -109,6 +123,32 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
 
     return basePrice;
+  };
+
+  const getItemPriceTHB = (
+    product: Product,
+    unit?: PackagingUnit,
+    variantId?: string
+  ): number | null => {
+    const targetUnit = unit || 'PIECE';
+    const variant = variantId && product.variants ? product.variants.find(v => v.id === variantId) : undefined;
+
+    if (targetUnit === 'PACK') {
+      if (product.packPriceTHB && product.packPriceTHB > 0) return product.packPriceTHB;
+    } else if (targetUnit === 'BOX') {
+      if (product.boxPriceTHB && product.boxPriceTHB > 0) return product.boxPriceTHB;
+    } else if (targetUnit === 'CARTON') {
+      if (product.cartonPriceTHB && product.cartonPriceTHB > 0) return product.cartonPriceTHB;
+    } else {
+      // PIECE
+      if (customerMode === 'WHOLESALE') {
+        if (variant && variant.wholesalePriceTHB && variant.wholesalePriceTHB > 0) return variant.wholesalePriceTHB;
+        if (product.wholesalePriceTHB && product.wholesalePriceTHB > 0) return product.wholesalePriceTHB;
+      }
+      if (variant && variant.priceTHB && variant.priceTHB > 0) return variant.priceTHB;
+      if (product.priceTHB && product.priceTHB > 0) return product.priceTHB;
+    }
+    return null;
   };
 
   const isItemWholesalePrice = (_product: Product, _quantity?: number): boolean => {
@@ -143,12 +183,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     const selectedColor = options?.selectedColor;
     const selectedSize = options?.selectedSize;
-    const itemId = `${product.id}_${unit}_${selectedColor || 'def'}_${selectedSize || 'def'}`;
+    const variantId = options?.variantId;
+    const variantName = options?.variantName;
+    const variantImage = options?.variantImage;
+    const itemId = `${product.id}_${unit}_${variantId || 'def'}_${selectedColor || 'def'}_${selectedSize || 'def'}`;
 
     const existingIndex = cart.findIndex(
       item => item.id === itemId || 
       (item.product.id === product.id && 
        (item.unit || 'PIECE') === unit && 
+       (item.variantId || '') === (variantId || '') &&
        (item.selectedColor || '') === (selectedColor || '') && 
        (item.selectedSize || '') === (selectedSize || ''))
     );
@@ -173,6 +217,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         unit,
         unitQuantity: nextUnitQty,
         quantity: nextPieceQty,
+        variantId,
+        variantName,
+        variantImage,
         selectedColor,
         selectedSize,
       };
@@ -188,6 +235,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         unit,
         unitQuantity,
         quantity: targetPieceQty,
+        variantId,
+        variantName,
+        variantImage,
         selectedColor,
         selectedSize,
       });
@@ -243,15 +293,29 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setCart([]);
   };
 
-  // Tổng số đơn vị (cái, hộp, thùng)
+  // Tổng số đơn vị (cái, lốc, hộp, thùng)
   const totalItems = cart.reduce((sum, item) => sum + (item.unitQuantity !== undefined ? item.unitQuantity : item.quantity), 0);
   
-  // Tính tổng tiền dựa trên đơn vị đã chọn của từng món
+  // Tính tổng tiền Kíp dựa trên đơn vị và phân loại của từng món
   const totalPrice = cart.reduce((sum, item) => {
     const unit = item.unit || 'PIECE';
-    const unitPrice = getItemPrice(item.product, unit);
+    const unitPrice = getItemPrice(item.product, unit, item.variantId);
     const unitQty = item.unitQuantity !== undefined ? item.unitQuantity : item.quantity;
     return sum + unitPrice * unitQty;
+  }, 0);
+
+  // Kiểm tra giỏ hàng có đủ điều kiện thanh toán bằng Tiền Baht không:
+  // "nếu có thì bỏ, còn không thì sẽ không được thanh toán bằng bat"
+  const canPayWithTHB = cart.length > 0 && cart.every(item => {
+    const thb = getItemPriceTHB(item.product, item.unit, item.variantId);
+    return thb !== null && thb > 0;
+  });
+
+  // Tổng tiền Baht thực tế theo giá cài sẵn của từng món
+  const totalPriceTHB = cart.reduce((sum, item) => {
+    const thb = getItemPriceTHB(item.product, item.unit, item.variantId) || 0;
+    const unitQty = item.unitQuantity !== undefined ? item.unitQuantity : item.quantity;
+    return sum + thb * unitQty;
   }, 0);
 
   return (
@@ -263,12 +327,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         removeFromCart,
         clearCart,
         totalPrice,
+        totalPriceTHB,
+        canPayWithTHB,
         totalItems,
         isCartOpen,
         setIsCartOpen,
         customerMode,
         setCustomerMode,
         getItemPrice,
+        getItemPriceTHB,
         isItemWholesalePrice,
         hasFullPriceAccess,
       }}

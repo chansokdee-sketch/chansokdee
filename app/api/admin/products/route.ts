@@ -37,14 +37,23 @@ export async function POST(req: NextRequest) {
       description, 
       descriptionLao, 
       price, 
+      priceTHB,
       wholesalePrice,
+      wholesalePriceTHB,
       minWholesaleQty,
+      hasPack,
       packQty,
-      boxQty,
-      cartonQty,
       packPrice,
+      packPriceTHB,
+      hasBox,
+      boxQty,
       boxPrice,
+      boxPriceTHB,
+      hasCarton,
+      cartonQty,
       cartonPrice,
+      cartonPriceTHB,
+      variants,
       colors,
       sizes,
       stock, 
@@ -71,9 +80,18 @@ export async function POST(req: NextRequest) {
     }
 
     const numPrice = Math.max(0, Number(price));
+    const numPriceTHB = priceTHB !== undefined && !isNaN(Number(priceTHB)) && Number(priceTHB) > 0
+      ? Number(priceTHB)
+      : undefined;
+
     const numWholesale = wholesalePrice !== undefined && !isNaN(Number(wholesalePrice))
       ? Math.max(0, Number(wholesalePrice))
       : Math.round(numPrice * 0.8);
+
+    const numWholesaleTHB = wholesalePriceTHB !== undefined && !isNaN(Number(wholesalePriceTHB)) && Number(wholesalePriceTHB) > 0
+      ? Number(wholesalePriceTHB)
+      : undefined;
+
     const numMinQty = Math.max(1, Number(minWholesaleQty) || 3);
 
     const newProduct = db.products.create({
@@ -84,14 +102,23 @@ export async function POST(req: NextRequest) {
       description: description?.trim() || '',
       descriptionLao: descriptionLao?.trim() || undefined,
       price: numPrice,
+      priceTHB: numPriceTHB,
       wholesalePrice: numWholesale,
+      wholesalePriceTHB: numWholesaleTHB,
       minWholesaleQty: numMinQty,
+      hasPack: Boolean(hasPack),
       packQty: packQty ? Math.max(1, Number(packQty)) : 6,
-      boxQty: boxQty ? Math.max(1, Number(boxQty)) : 10,
-      cartonQty: cartonQty ? Math.max(1, Number(cartonQty)) : 50,
       packPrice: packPrice && Number(packPrice) > 0 ? Number(packPrice) : undefined,
+      packPriceTHB: packPriceTHB && Number(packPriceTHB) > 0 ? Number(packPriceTHB) : undefined,
+      hasBox: Boolean(hasBox),
+      boxQty: boxQty ? Math.max(1, Number(boxQty)) : 10,
       boxPrice: boxPrice && Number(boxPrice) > 0 ? Number(boxPrice) : undefined,
+      boxPriceTHB: boxPriceTHB && Number(boxPriceTHB) > 0 ? Number(boxPriceTHB) : undefined,
+      hasCarton: Boolean(hasCarton),
+      cartonQty: cartonQty ? Math.max(1, Number(cartonQty)) : 50,
       cartonPrice: cartonPrice && Number(cartonPrice) > 0 ? Number(cartonPrice) : undefined,
+      cartonPriceTHB: cartonPriceTHB && Number(cartonPriceTHB) > 0 ? Number(cartonPriceTHB) : undefined,
+      variants: Array.isArray(variants) ? variants : undefined,
       colors: Array.isArray(colors) ? colors : undefined,
       sizes: Array.isArray(sizes) ? sizes : undefined,
       stock: Math.max(0, Number(stock) || 0),
