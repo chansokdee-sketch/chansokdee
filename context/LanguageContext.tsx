@@ -8,15 +8,11 @@ interface LanguageContextType {
   setLanguage: (lang: Language) => void;
   toggleLanguage: () => void;
   t: (key: keyof TranslationDictionary, params?: Record<string, string | number>) => string;
-  formatPrice: (priceInVND: number, options?: { showDual?: boolean }) => string;
+  formatPrice: (price: number, options?: { showDual?: boolean }) => string;
   isLao: boolean;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
-
-// Tỷ giá quy đổi ước tính mặc định: 1 VND = ~0.87 LAK (Kíp Lào)
-// Hoặc có thể hiển thị song song hoặc theo Kíp
-const VND_TO_LAK_RATE = 0.87;
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>('lo');
@@ -63,18 +59,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     return text;
   };
 
-  const formatPrice = (priceInVND: number, options?: { showDual?: boolean }): string => {
-    if (language === 'lo') {
-      const kipPrice = Math.round(priceInVND * VND_TO_LAK_RATE);
-      const formattedKip = new Intl.NumberFormat('de-DE').format(kipPrice) + ' ₭';
-      if (options?.showDual) {
-        const formattedVnd = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(priceInVND);
-        return `${formattedKip} (${formattedVnd})`;
-      }
-      return formattedKip;
-    }
-
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(priceInVND);
+  // Giữ nguyên 100% đúng giá như cài sẵn trong hệ thống, không giảm trừ / bớt tỷ giá
+  const formatPrice = (price: number, _options?: { showDual?: boolean }): string => {
+    const safePrice = typeof price === 'number' && !isNaN(price) ? Math.round(price) : 0;
+    return new Intl.NumberFormat('de-DE').format(safePrice) + ' ₭';
   };
 
   return (
