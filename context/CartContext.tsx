@@ -30,9 +30,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Chỉ khi đăng nhập bằng tài khoản Khách Sỉ (customerType === 'WHOLESALE') mới áp dụng giá sỉ
+  // Chỉ khi đăng nhập bằng tài khoản Khách Sỉ (customerType === 'WHOLESALE') mới có thể kích hoạt giá sỉ
   // Khách lẻ và người chưa đăng nhập 100% luôn luôn chỉ thấy và mua bằng Giá Lẻ
-  const customerMode: CustomerPriceMode = user?.customerType === 'WHOLESALE' ? 'WHOLESALE' : 'RETAIL';
+  const isWholesaleUser = Boolean(user && user.customerType === 'WHOLESALE');
+  const [wholesaleToggle, setWholesaleToggle] = useState<CustomerPriceMode>('WHOLESALE');
+
+  const customerMode: CustomerPriceMode = isWholesaleUser ? wholesaleToggle : 'RETAIL';
 
   useEffect(() => {
     try {
@@ -53,8 +56,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [cart, isInitialized]);
 
-  const setCustomerMode = (_mode: CustomerPriceMode) => {
-    // Khóa chế độ giá: phụ thuộc hoàn toàn vào quyền tài khoản người dùng
+  const setCustomerMode = (mode: CustomerPriceMode) => {
+    // Chỉ tài khoản khách sỉ mới được chuyển đổi chế độ xem
+    if (isWholesaleUser) {
+      setWholesaleToggle(mode);
+    }
   };
 
   const getItemPrice = (product: Product, _quantity?: number): number => {

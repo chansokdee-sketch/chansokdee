@@ -186,13 +186,20 @@ export default function Navbar() {
               </button>
               <button
                 type="button"
-                onClick={() => setCustomerMode('WHOLESALE')}
+                onClick={() => {
+                  if (user?.customerType === 'WHOLESALE') {
+                    setCustomerMode('WHOLESALE');
+                  } else {
+                    setAuthModalMode('login');
+                    setIsAuthModalOpen(true);
+                  }
+                }}
                 className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full transition flex items-center gap-1 ${
                   customerMode === 'WHOLESALE'
-                    ? 'bg-amber-400 text-amber-950 font-black shadow-xs'
-                    : 'text-zinc-500 hover:text-zinc-800'
+                    ? 'bg-amber-400 text-amber-950 font-black shadow-xs ring-2 ring-amber-300'
+                    : 'text-zinc-600 hover:text-amber-800 hover:bg-amber-50'
                 }`}
-                title="Chế độ giá bán sỉ / buôn (ລາຄາຂາຍສົ່ງ)"
+                title={user?.customerType === 'WHOLESALE' ? "Chế độ Khách Sỉ (Đang xem toàn bộ giá)" : "Đăng nhập Khách Sỉ để xem Bảng Giá Buôn"}
               >
                 <Boxes className="w-3 h-3 text-amber-900 flex-shrink-0" />
                 <span className="hidden sm:inline text-[11px] font-black">Khách sỉ ⚡</span>

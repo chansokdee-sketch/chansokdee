@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (phone: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (phone: string, password: string, name?: string, address?: string) => Promise<{ success: boolean; error?: string }>;
+  register: (phone: string, password: string, name?: string, address?: string, customerType?: 'RETAIL' | 'WHOLESALE') => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   isAuthModalOpen: boolean;
   setIsAuthModalOpen: (open: boolean) => void;
@@ -70,12 +70,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (phone: string, password: string, name?: string, address?: string) => {
+  const register = async (phone: string, password: string, name?: string, address?: string, customerType: 'RETAIL' | 'WHOLESALE' = 'RETAIL') => {
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, password, name, address }),
+        body: JSON.stringify({ phone, password, name, address, customerType }),
       });
       const data = await res.json();
       if (!res.ok) {

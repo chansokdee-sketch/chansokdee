@@ -112,9 +112,14 @@ export default function CartDrawer() {
                             {formatPrice(unitPrice)}
                           </span>
                           {isWholesale && (
-                            <span className="text-[9px] bg-amber-500/15 text-amber-700 px-1.5 py-0.2 rounded font-black border border-amber-500/20">
-                              Giá sỉ ⚡
-                            </span>
+                            <>
+                              <span className="text-[9px] bg-amber-500/15 text-amber-700 px-1.5 py-0.2 rounded font-black border border-amber-500/20">
+                                Giá sỉ ⚡
+                              </span>
+                              <span className="text-[10px] text-zinc-400 line-through">
+                                Lẻ: {formatPrice(item.product.price)}
+                              </span>
+                            </>
                           )}
                         </div>
                       </div>

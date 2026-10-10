@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { X, Lock, Phone, User as UserIcon, Shield, Sparkles, AlertCircle } from 'lucide-react';
+import { X, Lock, Phone, User as UserIcon, Shield, Sparkles, AlertCircle, Boxes } from 'lucide-react';
 
 export default function AuthModal() {
   const { isAuthModalOpen, setIsAuthModalOpen, authModalMode, setAuthModalMode, login, register } = useAuth();
@@ -15,6 +15,8 @@ export default function AuthModal() {
   const [address, setAddress] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [loginCategory, setLoginCategory] = useState<'RETAIL' | 'WHOLESALE'>('RETAIL');
+  const [regCustomerType, setRegCustomerType] = useState<'RETAIL' | 'WHOLESALE'>('RETAIL');
 
   if (!isAuthModalOpen) return null;
 
@@ -29,7 +31,7 @@ export default function AuthModal() {
         setError(res.error || 'Đăng nhập không thành công');
       }
     } else {
-      const res = await register(phone, password, name, address);
+      const res = await register(phone, password, name, address, regCustomerType);
       if (!res.success) {
         setError(res.error || 'Đăng ký không thành công');
       }
@@ -151,7 +153,7 @@ export default function AuthModal() {
             <Sparkles className="w-4 h-4 text-blue-600" />
             {t('auth_demo_title')}
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mb-2">
             <button
               type="button"
               onClick={handleQuickAdmin}
@@ -186,9 +188,20 @@ export default function AuthModal() {
               title="Khách Hàng (Giá lẻ - 0912345678)"
             >
               <span>👤</span>
-              <span className="truncate">Khách Hàng</span>
+              <span className="truncate">Khách Lẻ</span>
             </button>
           </div>
+
+          {/* Quick Wholesale Login Button */}
+          <button
+            type="button"
+            onClick={handleQuickWholesale}
+            className="w-full py-2 px-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-xl border border-amber-500 transition shadow-xs text-[11px] flex items-center justify-center gap-2 active:scale-95"
+            title="Đăng nhập tài khoản Khách Sỉ (0911223344 - Xem toàn bộ giá sỉ & giá lẻ)"
+          >
+            <Boxes className="w-4 h-4 text-white" />
+            <span>⚡ Đăng nhập Khách Sỉ (0911223344 - Xem toàn bộ Giá Sỉ & Lẻ)</span>
+          </button>
         </div>
 
         {/* Error Alert */}
@@ -201,6 +214,96 @@ export default function AuthModal() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
+          
+          {/* Lựa chọn loại tài khoản khi ĐĂNG KÝ */}
+          {authModalMode === 'register' && (
+            <div>
+              <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
+                Loại tài khoản đăng ký *
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRegCustomerType('RETAIL')}
+                  className={`p-2.5 rounded-2xl border text-left transition ${
+                    regCustomerType === 'RETAIL'
+                      ? 'bg-blue-50/80 border-blue-600 ring-2 ring-blue-500/20 text-blue-900 font-bold'
+                      : 'bg-zinc-50 border-zinc-200 text-zinc-600 hover:bg-zinc-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 text-xs font-bold">
+                    <UserIcon className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Khách Mua Lẻ</span>
+                  </div>
+                  <p className="text-[10px] text-zinc-500 mt-0.5">Xem & mua giá bán lẻ</p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setRegCustomerType('WHOLESALE')}
+                  className={`p-2.5 rounded-2xl border text-left transition ${
+                    regCustomerType === 'WHOLESALE'
+                      ? 'bg-amber-50 border-amber-500 ring-2 ring-amber-500/30 text-amber-950 font-black'
+                      : 'bg-zinc-50 border-zinc-200 text-zinc-600 hover:bg-zinc-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 text-xs font-black text-amber-900">
+                    <Boxes className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Khách Sỉ / Đại Lý ⚡</span>
+                  </div>
+                  <p className="text-[10px] text-amber-800/80 mt-0.5">Xem toàn bộ Giá sỉ & lẻ</p>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Lựa chọn loại tài khoản khi ĐĂNG NHẬP */}
+          {authModalMode === 'login' && (
+            <div className="flex items-center bg-zinc-100 p-1 rounded-2xl text-xs font-bold border border-zinc-200/80">
+              <button
+                type="button"
+                onClick={() => {
+                  setLoginCategory('RETAIL');
+                  if (phone === '0911223344') {
+                    setPhone('');
+                    setPassword('');
+                  }
+                }}
+                className={`flex-1 py-2 rounded-xl transition flex items-center justify-center gap-1.5 ${
+                  loginCategory === 'RETAIL'
+                    ? 'bg-white text-zinc-900 shadow-xs'
+                    : 'text-zinc-500 hover:text-zinc-800'
+                }`}
+              >
+                <UserIcon className="w-3.5 h-3.5 text-blue-600" />
+                <span>Khách Mua Lẻ</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setLoginCategory('WHOLESALE');
+                  setPhone('0911223344');
+                  setPassword('WholesalePassword@123');
+                }}
+                className={`flex-1 py-2 rounded-xl transition flex items-center justify-center gap-1.5 ${
+                  loginCategory === 'WHOLESALE'
+                    ? 'bg-amber-400 text-amber-950 font-black shadow-xs'
+                    : 'text-zinc-500 hover:text-amber-800'
+                }`}
+              >
+                <Boxes className="w-3.5 h-3.5 text-amber-900" />
+                <span>Khách Sỉ / Đại Lý ⚡</span>
+              </button>
+            </div>
+          )}
+
+          {authModalMode === 'login' && loginCategory === 'WHOLESALE' && (
+            <div className="p-2.5 bg-amber-50 border border-amber-200/80 rounded-xl text-[11px] text-amber-900 flex items-center gap-2">
+              <Boxes className="w-4 h-4 text-amber-600 flex-shrink-0" />
+              <span>Đăng nhập tài khoản Khách Sỉ để xem <strong>Bảng Giá Sỉ</strong> và toàn bộ <strong>Giá Lẻ</strong>.</span>
+            </div>
+          )}
+
           {authModalMode === 'register' && (
             <div>
               <label className="block text-xs font-semibold text-zinc-700 mb-1">
@@ -212,7 +315,7 @@ export default function AuthModal() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Minh Nam"
+                  placeholder="Minh Nam / Đại Lý Sơn Trà"
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-2.5 pl-10 text-base sm:text-sm focus:outline-none focus:border-blue-600 focus:bg-white transition"
                 />
                 <UserIcon className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -275,9 +378,18 @@ export default function AuthModal() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-xl font-bold text-sm shadow-md shadow-blue-500/20 transition mt-2"
+            className={`w-full py-3 text-white rounded-xl font-bold text-sm shadow-md transition mt-2 ${
+              loginCategory === 'WHOLESALE' && authModalMode === 'login'
+                ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-500/20'
+                : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
+            }`}
           >
-            {submitting ? t('auth_processing') : authModalMode === 'login' ? t('auth_login_btn') : t('auth_register_btn')}
+            {submitting 
+              ? t('auth_processing') 
+              : authModalMode === 'login' 
+                ? (loginCategory === 'WHOLESALE' ? '⚡ Đăng Nhập Khách Sỉ' : t('auth_login_btn'))
+                : (regCustomerType === 'WHOLESALE' ? '⚡ Đăng Ký Tài Khoản Khách Sỉ' : t('auth_register_btn'))
+            }
           </button>
         </form>
 

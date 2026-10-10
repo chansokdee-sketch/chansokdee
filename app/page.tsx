@@ -79,7 +79,7 @@ function HomeContent() {
   const initialSearch = searchParams.get('search') || '';
 
   const { addToCart, setIsCartOpen, customerMode } = useCart();
-  const { user } = useAuth();
+  const { user, setIsAuthModalOpen, setAuthModalMode } = useAuth();
   const { t, formatPrice, isLao } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -510,6 +510,47 @@ function HomeContent() {
               </select>
             </div>
           </div>
+
+          {/* Wholesale Mode Active Banner */}
+          {customerMode === 'WHOLESALE' && (
+            <div className="p-3 sm:p-3.5 bg-gradient-to-r from-amber-500/15 via-amber-400/20 to-orange-500/10 border border-amber-300 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-xs">
+              <div className="flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-xl bg-amber-500 text-amber-950 font-black flex items-center justify-center flex-shrink-0 text-sm shadow-xs">
+                  ⚡
+                </span>
+                <div>
+                  <p className="font-extrabold text-amber-950 text-xs sm:text-sm">
+                    Tài khoản Khách Sỉ (ລາຄາຂາຍສົ່ງ) - Đang hiển thị toàn bộ Giá Sỉ & Giá Lẻ
+                  </p>
+                  <p className="text-[11px] text-amber-800">
+                    Bạn được xem cả <strong>Giá Sỉ</strong> (đang áp dụng mua) và <strong>Giá Bán Lẻ</strong> (niêm yết) trên từng sản phẩm.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Wholesale Prompt for Retail Visitors */}
+          {customerMode !== 'WHOLESALE' && (
+            <div className="p-2.5 sm:p-3 bg-amber-50/80 border border-amber-200/90 rounded-2xl flex items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2 text-amber-950">
+                <span className="text-base flex-shrink-0">⚡</span>
+                <span className="text-[11px] sm:text-xs font-semibold">
+                  Bạn là đại lý hoặc mua buôn số lượng lớn?
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthModalMode('login');
+                  setIsAuthModalOpen(true);
+                }}
+                className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-xl text-[11px] transition shadow-xs flex-shrink-0 active:scale-95"
+              >
+                Đăng nhập Khách Sỉ ⚡
+              </button>
+            </div>
+          )}
 
           {/* Main Category Pills */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">

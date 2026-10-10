@@ -5,7 +5,7 @@ import { hashPassword, signAuthToken, TOKEN_COOKIE_NAME } from '@/lib/auth';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { phone, password, name, address } = body;
+    const { phone, password, name, address, customerType } = body;
 
     if (!phone || !password) {
       return NextResponse.json(
@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
       passwordHash,
       name: name?.trim() || `Khách hàng ${cleanPhone.slice(-4)}`,
       role: 'USER', // Always regular USER on signup
+      customerType: customerType === 'WHOLESALE' ? 'WHOLESALE' : 'RETAIL',
       address: address?.trim() || '',
     });
 
@@ -67,6 +68,7 @@ export async function POST(req: NextRequest) {
         phone: newUser.phone,
         name: newUser.name,
         role: newUser.role,
+        customerType: newUser.customerType || 'RETAIL',
         address: newUser.address,
       },
       token,
