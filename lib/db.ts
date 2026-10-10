@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
-import { User, Category, Product, Order, OrderItem, OrderStatus, ProductStatus, SiteSettings } from './types';
+import { User, Category, SubCategory, Product, Order, OrderItem, OrderStatus, ProductStatus, SiteSettings } from './types';
 
 interface DatabaseSchema {
   users: User[];
@@ -529,17 +529,31 @@ export const db = {
       const data = readData();
       return data.categories.find(c => c.id === id);
     },
-    create: (category: { name: string; slug: string }): Category => {
+    create: (category: { name: string; slug: string; nameLao?: string; icon?: string; subCategories?: SubCategory[] }): Category => {
       const data = readData();
       const newCat: Category = {
         id: `cat-${Date.now()}`,
         name: category.name,
+        nameLao: category.nameLao || '',
         slug: category.slug,
+        icon: category.icon || 'Sparkles',
+        subCategories: category.subCategories || [],
         createdAt: new Date().toISOString(),
       };
       data.categories.push(newCat);
       writeData(data);
       return newCat;
+    },
+    update: (id: string, updates: Partial<Category>): Category | null => {
+      const data = readData();
+      const index = data.categories.findIndex(c => c.id === id);
+      if (index === -1) return null;
+      data.categories[index] = {
+        ...data.categories[index],
+        ...updates,
+      };
+      writeData(data);
+      return data.categories[index];
     },
     delete: (id: string): boolean => {
       const data = readData();

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Product, Category } from '@/lib/types';
 import { 
   Package, 
@@ -21,7 +22,8 @@ import {
   Sparkles,
   DollarSign,
   Tag,
-  Boxes
+  Boxes,
+  FolderTree
 } from 'lucide-react';
 
 // Kho ảnh mẫu mỹ phẩm cao cấp có sẵn (1 chạm để thêm ảnh nhanh)
@@ -115,6 +117,63 @@ export default function AdminProductsPage() {
   const [modalError, setModalError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showPresets, setShowPresets] = useState(false);
+
+  // Quick inline category creator
+  const [showInlineCatModal, setShowInlineCatModal] = useState(false);
+  const [inlineCatName, setInlineCatName] = useState('');
+  const [inlineCatNameLao, setInlineCatNameLao] = useState('');
+  const [inlineCatSubStr, setInlineCatSubStr] = useState('');
+  const [inlineCatLoading, setInlineCatLoading] = useState(false);
+  const [inlineCatError, setInlineCatError] = useState('');
+
+  const handleCreateInlineCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inlineCatName.trim()) return;
+    setInlineCatLoading(true);
+    setInlineCatError('');
+    try {
+      const subs = inlineCatSubStr
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean)
+        .map((subName, idx) => ({
+          id: `sub-${Date.now()}-${idx}`,
+          name: subName,
+          slug: subName.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-'),
+          categoryId: '',
+        }));
+
+      const res = await fetch('/api/admin/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: inlineCatName.trim(),
+          nameLao: inlineCatNameLao.trim(),
+          icon: '🌸',
+          subCategories: subs,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setInlineCatError(data.error || 'Lỗi khi tạo danh mục');
+      } else {
+        setCategories(prev => [...prev, data.category]);
+        setFormData(prev => ({
+          ...prev,
+          categoryId: data.category.id,
+          subCategoryId: data.category.subCategories?.[0]?.id || '',
+        }));
+        setInlineCatName('');
+        setInlineCatNameLao('');
+        setInlineCatSubStr('');
+        setShowInlineCatModal(false);
+      }
+    } catch {
+      setInlineCatError('Lỗi kết nối máy chủ');
+    } finally {
+      setInlineCatLoading(false);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -415,13 +474,22 @@ export default function AdminProductsPage() {
             Bán hàng tại Lào: Quản lý <strong>Giá bán lẻ (ລາຄາຂາຍຍ່ອຍ)</strong> và <strong>Giá bán sỉ (ລາຄາຂາຍສົ່ງ)</strong>, chụp ảnh camera và quản lý tồn kho.
           </p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="px-5 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-blue-600/25 active:scale-95"
-        >
-          <Plus className="w-4 h-4 stroke-[3]" />
-          <span>+ Thêm món mới (ເພີ່ມສິນຄ້າ)</span>
-        </button>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <Link
+            href="/admin/categories"
+            className="px-4 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-2 border border-zinc-700 active:scale-95 shadow-sm"
+          >
+            <FolderTree className="w-4 h-4 text-blue-400" />
+            <span>Danh mục ({categories.length})</span>
+          </Link>
+          <button
+            onClick={openCreateModal}
+            className="px-5 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-blue-600/25 active:scale-95"
+          >
+            <Plus className="w-4 h-4 stroke-[3]" />
+            <span>+ Thêm món mới (ເພີ່ມສິນຄ້າ)</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
@@ -890,7 +958,23 @@ export default function AdminProductsPage() {
               {/* Danh mục & Thương hiệu */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-zinc-400 font-semibold mb-1">Danh mục sản phẩm *</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-zinc-400 font-semibold">Danh mục sản phẩm *</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setInlineCatName('');
+                        setInlineCatNameLao('');
+                        setInlineCatSubStr('');
+                        setInlineCatError('');
+                        setShowInlineCatModal(true);
+                      }}
+                      className="text-[10px] text-blue-400 hover:text-blue-300 font-bold hover:underline flex items-center gap-0.5"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>+ Tạo mới</span>
+                    </button>
+                  </div>
                   <select
                     value={formData.categoryId}
                     onChange={(e) => {
@@ -1160,6 +1244,89 @@ export default function AdminProductsPage() {
                       <span>{editingProduct ? 'Lưu thay đổi 2 bảng giá' : 'Thêm sản phẩm & 2 bảng giá'}</span>
                     </>
                   )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL TẠO NHANH DANH MỤC TRỰC TIẾP */}
+      {showInlineCatModal && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/85 backdrop-blur-xs" onClick={() => setShowInlineCatModal(false)} />
+          <div className="relative bg-zinc-900 border border-zinc-700 rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl z-10 animate-in zoom-in-95">
+            <button
+              type="button"
+              onClick={() => setShowInlineCatModal(false)}
+              className="absolute right-4 top-4 text-zinc-400 hover:text-white p-1 rounded-full hover:bg-zinc-800 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-sm sm:text-base font-bold text-white mb-1 flex items-center gap-2">
+              <FolderTree className="w-4 h-4 text-blue-400" />
+              <span>Tạo Nhanh Danh Mục Mới</span>
+            </h3>
+            <p className="text-[11px] text-zinc-400 mb-4">
+              Danh mục tạo xong sẽ tự động chọn cho sản phẩm hiện tại
+            </p>
+
+            {inlineCatError && (
+              <div className="mb-3 p-2.5 bg-red-500/20 border border-red-500/30 text-red-300 rounded-xl text-xs flex items-center gap-2">
+                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>{inlineCatError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleCreateInlineCategory} className="space-y-3 text-xs">
+              <div>
+                <label className="block text-zinc-300 font-semibold mb-1">Tên danh mục (Tiếng Việt) *</label>
+                <input
+                  type="text"
+                  required
+                  value={inlineCatName}
+                  onChange={(e) => setInlineCatName(e.target.value)}
+                  placeholder="Ví dụ: Chăm Sóc Tóc, Nước Hoa..."
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-zinc-300 font-semibold mb-1">Tên tiếng Lào (ຊື່ໝວດໝູ່)</label>
+                <input
+                  type="text"
+                  value={inlineCatNameLao}
+                  onChange={(e) => setInlineCatNameLao(e.target.value)}
+                  placeholder="Ví dụ: ບຳລຸງເສັ້ນຜົມ..."
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-zinc-300 font-semibold mb-1">Mục con (cách nhau bằng dấu phẩy)</label>
+                <input
+                  type="text"
+                  value={inlineCatSubStr}
+                  onChange={(e) => setInlineCatSubStr(e.target.value)}
+                  placeholder="Ví dụ: Dầu gội, Dầu xả, Dưỡng tóc"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500 font-medium"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setShowInlineCatModal(false)}
+                  className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl font-bold transition"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={inlineCatLoading || !inlineCatName.trim()}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-md shadow-blue-500/25 transition active:scale-95 disabled:opacity-50"
+                >
+                  {inlineCatLoading ? 'Đang tạo...' : 'Tạo & Chọn Luôn'}
                 </button>
               </div>
             </form>

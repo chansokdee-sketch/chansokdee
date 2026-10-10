@@ -189,18 +189,6 @@ export default function AuthModal() {
               <span className="truncate">Khách Hàng</span>
             </button>
           </div>
-          <div className="mt-2 pt-2 border-t border-blue-100 flex items-center justify-between text-[11px]">
-            <span className="text-zinc-500 font-medium">{t('auth_demo_wholesale_btn')}</span>
-            <button
-              type="button"
-              onClick={handleQuickWholesale}
-              className="py-1 px-2.5 bg-amber-50 text-amber-800 font-bold rounded-lg border border-amber-300 hover:bg-amber-500 hover:text-white transition shadow-2xs text-[10px] flex items-center gap-1"
-              title="Khách Sỉ (Mua hàng theo Bảng Giá Sỉ - 0911223344)"
-            >
-              <span>⚡</span>
-              <span>{t('auth_demo_wholesale')}</span>
-            </button>
-          </div>
         </div>
 
         {/* Error Alert */}

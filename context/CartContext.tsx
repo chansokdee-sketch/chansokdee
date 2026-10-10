@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Product, CartItem } from '@/lib/types';
+import { useAuth } from '@/context/AuthContext';
 
 export type CustomerPriceMode = 'RETAIL' | 'WHOLESALE';
 
@@ -24,20 +25,20 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [customerMode, setCustomerModeState] = useState<CustomerPriceMode>('RETAIL');
+
+  // Chỉ khi đăng nhập bằng tài khoản Khách Sỉ (customerType === 'WHOLESALE') mới áp dụng giá sỉ
+  // Khách lẻ và người chưa đăng nhập 100% luôn luôn chỉ thấy và mua bằng Giá Lẻ
+  const customerMode: CustomerPriceMode = user?.customerType === 'WHOLESALE' ? 'WHOLESALE' : 'RETAIL';
 
   useEffect(() => {
     try {
       const savedCart = localStorage.getItem('novastore_cart');
       if (savedCart) {
         setCart(JSON.parse(savedCart));
-      }
-      const savedMode = localStorage.getItem('novastore_customer_mode') as CustomerPriceMode;
-      if (savedMode === 'RETAIL' || savedMode === 'WHOLESALE') {
-        setCustomerModeState(savedMode);
       }
     } catch {
       // ignore
@@ -52,13 +53,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [cart, isInitialized]);
 
-  const setCustomerMode = (mode: CustomerPriceMode) => {
-    setCustomerModeState(mode);
-    try {
-      localStorage.setItem('novastore_customer_mode', mode);
-    } catch {
-      // ignore
-    }
+  const setCustomerMode = (_mode: CustomerPriceMode) => {
+    // Khóa chế độ giá: phụ thuộc hoàn toàn vào quyền tài khoản người dùng
   };
 
   const getItemPrice = (product: Product, _quantity?: number): number => {

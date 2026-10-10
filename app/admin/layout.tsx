@@ -42,6 +42,7 @@ const MANAGER_NAV_ITEMS = [
 const STAFF_NAV_ITEMS = [
   { href: '/admin/orders', label: 'Nhận & Hoàn thành order', icon: ShoppingCart },
   { href: '/admin/products', label: 'Thêm sản phẩm mới (Món ăn)', icon: Package },
+  { href: '/admin/categories', label: 'Danh mục (Categories)', icon: FolderTree },
   { href: '/admin/inventory', label: 'Kiểm tra tồn kho', icon: Boxes },
   { href: '/admin', label: 'Tổng quan (Dashboard)', icon: LayoutDashboard },
 ];

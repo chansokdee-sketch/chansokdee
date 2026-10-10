@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { requireAdmin } from '@/lib/auth';
+import { requireStaffOrAdmin } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
   try {
-    const authRes = await requireAdmin(req);
+    const authRes = await requireStaffOrAdmin(req);
     if ('error' in authRes) {
       return NextResponse.json({ error: authRes.error }, { status: authRes.status });
     }
@@ -19,13 +19,13 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const authRes = await requireAdmin(req);
+    const authRes = await requireStaffOrAdmin(req);
     if ('error' in authRes) {
       return NextResponse.json({ error: authRes.error }, { status: authRes.status });
     }
 
     const body = await req.json();
-    const { name } = body;
+    const { name, nameLao, icon, subCategories } = body;
 
     if (!name?.trim()) {
       return NextResponse.json({ error: 'Vui lòng nhập tên danh mục' }, { status: 400 });
@@ -37,9 +37,28 @@ export async function POST(req: NextRequest) {
       .replace(/[^\w\s-]/g, '')
       .replace(/\s+/g, '-');
 
+    const formattedSubCategories = Array.isArray(subCategories)
+      ? subCategories.map((sub: any, idx: number) => {
+          if (typeof sub === 'string') {
+            const subName = sub.trim();
+            const subSlug = subName.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+            return {
+              id: `sub-${Date.now()}-${idx}`,
+              name: subName,
+              slug: subSlug || `sub-${idx}`,
+              categoryId: '',
+            };
+          }
+          return sub;
+        })
+      : [];
+
     const newCategory = db.categories.create({
       name: name.trim(),
+      nameLao: nameLao?.trim() || '',
+      icon: icon || 'Sparkles',
       slug: slug || `cat-${Date.now()}`,
+      subCategories: formattedSubCategories,
     });
 
     return NextResponse.json({ message: 'Tạo danh mục thành công!', category: newCategory }, { status: 201 });

@@ -246,35 +246,12 @@ export default function CartPage() {
                   <h2 className="text-sm sm:text-base font-bold text-zinc-900">
                     {t('cart_items_count')} ({cart.length})
                   </h2>
-                  <div className="flex items-center gap-1.5 text-xs">
-                    <span className="text-zinc-500 font-medium">Bảng giá:</span>
-                    <div className="flex items-center bg-zinc-100 p-0.5 rounded-full border border-zinc-200 font-bold">
-                      <button
-                        type="button"
-                        onClick={() => setCustomerMode('RETAIL')}
-                        className={`px-2.5 sm:px-3 py-1 rounded-full transition flex items-center gap-1 ${
-                          customerMode === 'RETAIL'
-                            ? 'bg-white text-zinc-900 shadow-2xs'
-                            : 'text-zinc-500 hover:text-zinc-800'
-                        }`}
-                      >
-                        <Tag className="w-3 h-3 text-blue-600" />
-                        <span>Khách lẻ</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCustomerMode('WHOLESALE')}
-                        className={`px-2.5 sm:px-3 py-1 rounded-full transition flex items-center gap-1 ${
-                          customerMode === 'WHOLESALE'
-                            ? 'bg-amber-400 text-amber-950 font-black shadow-2xs'
-                            : 'text-zinc-500 hover:text-zinc-800'
-                        }`}
-                      >
-                        <Boxes className="w-3 h-3 text-amber-900" />
-                        <span>Khách sỉ ⚡</span>
-                      </button>
+                  {customerMode === 'WHOLESALE' && (
+                    <div className="flex items-center gap-1.5 text-xs bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
+                      <Boxes className="w-3.5 h-3.5 text-amber-600" />
+                      <span className="text-amber-900 font-bold">Khách sỉ: Áp dụng bảng giá buôn ⚡</span>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="divide-y divide-zinc-100 space-y-4">

@@ -225,56 +225,38 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                     : Math.round(product.price * 0.8);
                   const isWholesaleActive = customerMode === 'WHOLESALE';
 
-                  return (
-                    <div className="space-y-2.5">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {/* Bảng giá lẻ */}
-                        <div className={`p-3.5 rounded-2xl border transition ${
-                          !isWholesaleActive 
-                            ? 'bg-blue-50/60 border-blue-200 ring-2 ring-blue-500/20' 
-                            : 'bg-zinc-50 border-zinc-200/80 opacity-80'
-                        }`}>
-                          <div className="flex items-center justify-between text-xs font-semibold text-zinc-500 mb-1">
-                            <span className="flex items-center gap-1 text-zinc-700">
-                              <Tag className="w-3.5 h-3.5 text-blue-600" />
-                              <span>Giá bán lẻ (ຍ່ອຍ)</span>
-                            </span>
-                            {!isWholesaleActive && (
-                              <span className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">
-                                Đang áp dụng
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-xl sm:text-2xl font-black text-blue-700 font-mono">
-                            {formatPrice(product.price)}
-                          </div>
-                          <span className="text-[10px] text-zinc-400">Dành cho Khách mua lẻ</span>
-                        </div>
-
-                        {/* Bảng giá sỉ */}
-                        <div className={`p-3.5 rounded-2xl border transition ${
-                          isWholesaleActive 
-                            ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-500/30' 
-                            : 'bg-zinc-50 border-zinc-200/80'
-                        }`}>
-                          <div className="flex items-center justify-between text-xs font-semibold text-zinc-500 mb-1">
-                            <span className="flex items-center gap-1 text-amber-900 font-bold">
-                              <Boxes className="w-3.5 h-3.5 text-amber-600" />
-                              <span>Giá bán sỉ (ສົ່ງ) ⚡</span>
-                            </span>
-                            {isWholesaleActive && (
-                              <span className="text-[10px] bg-amber-500 text-amber-950 px-2 py-0.5 rounded-full font-black">
-                                Đang áp dụng
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-xl sm:text-2xl font-black text-amber-600 font-mono">
-                            {formatPrice(wholesalePrice)}
-                          </div>
-                          <span className="text-[10px] text-amber-700/80 font-medium">
-                            Dành cho Khách sỉ & Đại lý buôn
+                  if (isWholesaleActive) {
+                    return (
+                      <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 ring-2 ring-amber-500/30">
+                        <div className="flex items-center justify-between text-xs font-semibold text-zinc-500 mb-1">
+                          <span className="flex items-center gap-1.5 text-amber-900 font-bold">
+                            <Boxes className="w-4 h-4 text-amber-600" />
+                            <span>Giá bán sỉ (ສົ່ງ) ⚡</span>
+                          </span>
+                          <span className="text-[10px] bg-amber-500 text-amber-950 px-2 py-0.5 rounded-full font-black">
+                            Tài khoản Sỉ
                           </span>
                         </div>
+                        <div className="text-2xl sm:text-3xl font-black text-amber-600 font-mono">
+                          {formatPrice(wholesalePrice)}
+                        </div>
+                        <span className="text-xs text-zinc-400 line-through block font-mono">
+                          Giá niêm yết: {formatPrice(product.price)}
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-200">
+                      <div className="flex items-center justify-between text-xs font-semibold text-zinc-500 mb-1">
+                        <span className="flex items-center gap-1.5 text-zinc-700 font-medium">
+                          <Tag className="w-4 h-4 text-blue-600" />
+                          <span>Giá bán</span>
+                        </span>
+                      </div>
+                      <div className="text-2xl sm:text-3xl font-black text-blue-700 font-mono">
+                        {formatPrice(product.price)}
                       </div>
                     </div>
                   );
