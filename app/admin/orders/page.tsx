@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { Order, OrderStatus } from '@/lib/types';
 import { 
@@ -79,11 +80,23 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [currencyFilter, setCurrencyFilter] = useState<'all' | 'LAK' | 'THB'>('all');
+  const [thbRate, setThbRate] = useState<number>(650);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [newOrderAlert, setNewOrderAlert] = useState<Order | null>(null);
   const [copiedToast, setCopiedToast] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Fetch exchange rate from site settings
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data.settings?.thbRate) setThbRate(data.settings.thbRate);
+      })
+      .catch(() => {});
+  }, []);
 
   // Manager & Staff Assignment State
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
@@ -313,8 +326,23 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const formatPriceLAK = (price: number) => {
+    return new Intl.NumberFormat('de-DE').format(Math.round(price || 0)) + ' ₭';
+  };
+
+  const formatPriceTHB = (price: number) => {
+    return new Intl.NumberFormat('de-DE').format(Math.round(price || 0)) + ' ฿';
+  };
+
+  const formatOrderPrice = (o: Order) => {
+    if (o.currency === 'THB') {
+      return formatPriceTHB(o.totalPrice);
+    }
+    return formatPriceLAK(o.totalPrice);
+  };
+
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('lo-LA').format(price) + ' ₭';
+    return formatPriceLAK(price);
   };
 
   const formatDate = (iso: string) => {
@@ -323,13 +351,20 @@ export default function AdminOrdersPage() {
   };
 
   const handleCopyShipperInfo = (o: Order) => {
+    const isThb = o.currency === 'THB';
+    const mainPriceStr = isThb ? formatPriceTHB(o.totalPrice) : formatPriceLAK(o.totalPrice);
+    const altPriceStr = isThb 
+      ? formatPriceLAK(o.totalPriceLAK || o.totalPrice * (o.exchangeRate || thbRate))
+      : formatPriceTHB(o.totalPriceTHB || Math.round(o.totalPrice / (o.exchangeRate || thbRate)));
+
     const text = `📦 ĐƠN HÀNG: ${o.orderCode}
 👤 Khách hàng: ${o.customerName}
 📞 Số điện thoại: ${o.customerPhone}
 📍 Địa chỉ giao: ${o.shippingAddress}
 ${o.note ? `📝 Ghi chú: ${o.note}\n` : ''}🛍️ Sản phẩm:
-${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price * i.quantity)}`).join('\n')}
-💰 TỔNG TIỀN THU (COD): ${formatPrice(o.totalPrice)}`;
+${o.items.map(i => `- ${i.productName}${i.unitName ? ` (${i.unitName} x${i.unitQuantity || i.quantity})` : ` (x${i.quantity})`} = ${formatPriceLAK(i.price * (i.unitQuantity !== undefined ? i.unitQuantity : i.quantity))}`).join('\n')}
+💰 TỔNG TIỀN THU (COD): ${mainPriceStr} [${isThb ? 'TIỀN BAHT THÁI (THB)' : 'TIỀN KÍP LÀO (LAK)'}]
+🔄 Quy đổi tương đương: ${altPriceStr}`;
 
     navigator.clipboard.writeText(text);
     setCopiedToast(true);
@@ -340,6 +375,17 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
     window.print();
   };
 
+  // Doanh thu tách riêng 2 nhánh tiền tệ
+  const activeOrders = orders.filter(o => o.status !== 'CANCELLED');
+  const totalRevenueLAK = activeOrders
+    .filter(o => o.currency !== 'THB')
+    .reduce((sum, o) => sum + (o.totalPriceLAK || o.totalPrice), 0);
+  const totalRevenueTHB = activeOrders
+    .filter(o => o.currency === 'THB')
+    .reduce((sum, o) => sum + (o.totalPriceTHB || o.totalPrice), 0);
+  const lakOrdersCount = activeOrders.filter(o => o.currency !== 'THB').length;
+  const thbOrdersCount = activeOrders.filter(o => o.currency === 'THB').length;
+
   // Order Counts for Quick Tabs
   const pendingCount = orders.filter(o => o.status === 'PENDING').length;
   const processingCount = orders.filter(o => o.status === 'PROCESSING' || o.status === 'CONFIRMED').length;
@@ -349,6 +395,20 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
   const unassignedCount = orders.filter(o => !o.assignedStaffId && o.status !== 'COMPLETED' && o.status !== 'CANCELLED').length;
 
   const displayedOrders = orders.filter(o => {
+    // 1. Tìm kiếm (mã đơn, tên khách, số điện thoại)
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      const matchCode = o.orderCode?.toLowerCase().includes(q);
+      const matchName = o.customerName?.toLowerCase().includes(q);
+      const matchPhone = o.customerPhone?.toLowerCase().includes(q);
+      if (!matchCode && !matchName && !matchPhone) return false;
+    }
+
+    // 2. Lọc theo nhánh tiền tệ
+    if (currencyFilter === 'LAK' && o.currency === 'THB') return false;
+    if (currencyFilter === 'THB' && o.currency !== 'THB') return false;
+
+    // 3. Lọc theo trạng thái
     if (statusFilter === 'my_assigned') {
       return o.assignedStaffId === user?.id;
     }
@@ -382,7 +442,7 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
                 </span>
               </div>
               <p className="text-xs text-white/90 mt-0.5">
-                Khách: <strong>{newOrderAlert.customerName}</strong> ({newOrderAlert.customerPhone}) • Tổng: <strong>{formatPrice(newOrderAlert.totalPrice)}</strong>
+                Khách: <strong>{newOrderAlert.customerName}</strong> ({newOrderAlert.customerPhone}) • Tổng: <strong>{formatOrderPrice(newOrderAlert)}</strong> <span className="text-[11px] font-mono opacity-90">[{newOrderAlert.currency === 'THB' ? 'Tiền Baht Thái' : 'Tiền Kíp Lào'}]</span>
               </p>
             </div>
           </div>
@@ -476,6 +536,111 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-blue-400' : ''}`} />
           </button>
         </div>
+      </div>
+
+      {/* 2 NHÁNH TIỀN TỆ: THỐNG KÊ DOANH THU KÍP (LAK) & BAHT (THB) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {/* Nhánh 1: Doanh thu Tiền Kíp */}
+        <div className="p-4 rounded-3xl bg-zinc-900 border border-blue-500/30 flex items-center justify-between shadow-lg relative overflow-hidden">
+          <div className="space-y-1">
+            <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+              <span>Doanh Thu Tiền Kíp (LAK)</span>
+            </span>
+            <div className="text-xl sm:text-2xl font-black text-white font-mono">
+              {formatPriceLAK(totalRevenueLAK)}
+            </div>
+            <p className="text-[10px] text-zinc-400">
+              Tổng <strong>{lakOrdersCount}</strong> đơn thanh toán bằng Kíp Lào
+            </p>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-black text-2xl font-mono border border-blue-500/20">
+            ₭
+          </div>
+        </div>
+
+        {/* Nhánh 2: Doanh thu Tiền Baht */}
+        <div className="p-4 rounded-3xl bg-zinc-900 border border-amber-500/30 flex items-center justify-between shadow-lg relative overflow-hidden">
+          <div className="space-y-1">
+            <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+              <span>Doanh Thu Tiền Baht (THB)</span>
+            </span>
+            <div className="text-xl sm:text-2xl font-black text-amber-300 font-mono">
+              {formatPriceTHB(totalRevenueTHB)}
+            </div>
+            <p className="text-[10px] text-zinc-400">
+              Tổng <strong>{thbOrdersCount}</strong> đơn thanh toán bằng Baht Thái
+            </p>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-black text-2xl font-mono border border-amber-500/20">
+            ฿
+          </div>
+        </div>
+
+        {/* Tỷ giá quy đổi thị trường */}
+        <div className="p-4 rounded-3xl bg-zinc-900 border border-zinc-800 flex items-center justify-between shadow-lg sm:col-span-2 lg:col-span-1">
+          <div className="space-y-1">
+            <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+              <span>⚡</span>
+              <span>Tỷ Giá Quy Đổi</span>
+            </span>
+            <div className="text-base sm:text-lg font-black text-emerald-400 font-mono">
+              1 THB = {new Intl.NumberFormat('de-DE').format(thbRate)} LAK
+            </div>
+            <p className="text-[10px] text-zinc-500">
+              Tự động quy đổi cho khách khi đặt đơn
+            </p>
+          </div>
+          {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+            <Link
+              href="/admin/settings"
+              className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold transition flex items-center gap-1"
+            >
+              <span>Sửa tỷ giá</span>
+            </Link>
+          )}
+        </div>
+      </div>
+
+      {/* FILTER NHÁNH TIỀN TỆ (LAK / THB / TẤT CẢ) */}
+      <div className="flex flex-wrap items-center gap-2 pt-1 pb-1">
+        <span className="text-xs font-bold text-zinc-400 mr-1 flex items-center gap-1">
+          <span>💰 Lọc tiền tệ:</span>
+        </span>
+        <button
+          onClick={() => setCurrencyFilter('all')}
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+            currencyFilter === 'all'
+              ? 'bg-zinc-200 text-zinc-950 font-black shadow-xs'
+              : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'
+          }`}
+        >
+          <span>Tất cả đơn</span>
+          <span className="text-[10px] bg-black/20 px-1.5 py-0.2 rounded-full">{orders.length}</span>
+        </button>
+        <button
+          onClick={() => setCurrencyFilter('LAK')}
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+            currencyFilter === 'LAK'
+              ? 'bg-blue-600 text-white font-black shadow-md'
+              : 'bg-zinc-900 text-blue-400 hover:text-blue-300 border border-blue-500/30'
+          }`}
+        >
+          <span>₭ Đơn Tiền Kíp</span>
+          <span className="text-[10px] bg-blue-950 px-1.5 py-0.2 rounded-full font-mono">{lakOrdersCount}</span>
+        </button>
+        <button
+          onClick={() => setCurrencyFilter('THB')}
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+            currencyFilter === 'THB'
+              ? 'bg-amber-500 text-amber-950 font-black shadow-md'
+              : 'bg-zinc-900 text-amber-400 hover:text-amber-300 border border-amber-500/30'
+          }`}
+        >
+          <span>฿ Đơn Tiền Baht</span>
+          <span className="text-[10px] bg-amber-950 text-amber-200 px-1.5 py-0.2 rounded-full font-mono">{thbOrdersCount}</span>
+        </button>
       </div>
 
       {/* QUICK STATUS TABS */}
@@ -639,14 +804,26 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
                     : 'bg-zinc-900 border-zinc-800'
                 }`}
               >
-                {/* Header: Mã đơn + Thời gian + Badge Trạng thái */}
+                {/* Header: Mã đơn + Thời gian + Badge Nhánh Tiền + Badge Trạng thái */}
                 <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-zinc-800">
-                  <div>
-                    <span className="font-mono font-black text-blue-400 text-sm">
-                      {o.orderCode}
-                    </span>
-                    <span className="block text-[10px] text-zinc-500 font-sans mt-0.5">
-                      {formatDate(o.createdAt)}
+                  <div className="flex items-center gap-2">
+                    <div>
+                      <span className="font-mono font-black text-blue-400 text-sm">
+                        {o.orderCode}
+                      </span>
+                      <span className="block text-[10px] text-zinc-500 font-sans mt-0.5">
+                        {formatDate(o.createdAt)}
+                      </span>
+                    </div>
+
+                    {/* Badge Nhánh Tiền Kíp vs Baht */}
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border flex items-center gap-1 ${
+                      o.currency === 'THB'
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                        : 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+                    }`}>
+                      <span className="font-mono text-xs">{o.currency === 'THB' ? '฿' : '₭'}</span>
+                      <span>{o.currency === 'THB' ? 'BAHT THÁI' : 'KÍP LÀO'}</span>
                     </span>
                   </div>
                   
@@ -690,11 +867,18 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
 
                 {/* Danh sách món & Ghi chú */}
                 <div className="p-2.5 bg-zinc-950/70 rounded-2xl text-xs space-y-1.5 border border-zinc-800/80">
-                  <div className="flex justify-between items-center text-[11px] text-zinc-400">
+                  <div className="flex justify-between items-baseline text-[11px] text-zinc-400">
                     <span>{o.items.length} món trong đơn:</span>
-                    <span className="font-black text-emerald-400 text-xs font-mono">
-                      {formatPrice(o.totalPrice)}
-                    </span>
+                    <div className="text-right">
+                      <span className={`font-black text-sm font-mono block ${o.currency === 'THB' ? 'text-amber-400' : 'text-emerald-400'}`}>
+                        {formatOrderPrice(o)}
+                      </span>
+                      <span className="text-[10px] text-zinc-500 font-mono block">
+                        ≈ {o.currency === 'THB'
+                          ? formatPriceLAK(o.totalPriceLAK || o.totalPrice * (o.exchangeRate || thbRate))
+                          : formatPriceTHB(o.totalPriceTHB || Math.round(o.totalPrice / (o.exchangeRate || thbRate)))}
+                      </span>
+                    </div>
                   </div>
 
                   <p className="text-[11px] text-zinc-300 line-clamp-2">
@@ -837,7 +1021,16 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
               {displayedOrders.map((o) => (
                 <tr key={o.id} className="hover:bg-zinc-800/40 transition">
                   <td className="py-4 px-6 font-mono font-bold text-blue-400">
-                    {o.orderCode}
+                    <div className="flex items-center gap-1.5">
+                      <span>{o.orderCode}</span>
+                      <span className={`text-[9px] font-black px-1.5 py-0.2 rounded border ${
+                        o.currency === 'THB'
+                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                          : 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+                      }`}>
+                        {o.currency === 'THB' ? '฿ THB' : '₭ LAK'}
+                      </span>
+                    </div>
                     <span className="block text-[10px] text-zinc-500 font-sans mt-0.5">
                       {formatDate(o.createdAt)}
                     </span>
@@ -873,8 +1066,15 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
                     </span>
                   </td>
 
-                  <td className="py-4 px-4 font-bold text-emerald-400 font-mono">
-                    {formatPrice(o.totalPrice)}
+                  <td className="py-4 px-4 font-mono">
+                    <span className={`font-black text-sm block ${o.currency === 'THB' ? 'text-amber-400' : 'text-emerald-400'}`}>
+                      {formatOrderPrice(o)}
+                    </span>
+                    <span className="text-[10px] text-zinc-500 font-medium block">
+                      ≈ {o.currency === 'THB'
+                        ? formatPriceLAK(o.totalPriceLAK || o.totalPrice * (o.exchangeRate || thbRate))
+                        : formatPriceTHB(o.totalPriceTHB || Math.round(o.totalPrice / (o.exchangeRate || thbRate)))}
+                    </span>
                   </td>
 
                   {/* Cột Phụ trách / Điều phối */}
@@ -999,10 +1199,18 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
 
             {/* Header */}
             <div className="pb-3 border-b border-zinc-800 flex-shrink-0">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-base sm:text-lg font-black text-white">
                   Đơn Hàng: <span className="font-mono text-blue-400">{selectedOrder.orderCode}</span>
                 </h2>
+                <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border flex items-center gap-1 ${
+                  selectedOrder.currency === 'THB'
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                    : 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+                }`}>
+                  <span className="font-mono">{selectedOrder.currency === 'THB' ? '฿' : '₭'}</span>
+                  <span>{selectedOrder.currency === 'THB' ? 'TIỀN BAHT THÁI (THB)' : 'TIỀN KÍP LÀO (LAK)'}</span>
+                </span>
                 <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold border ${
                   STATUS_CONFIG[selectedOrder.status]?.color
                 }`}>
@@ -1149,11 +1357,31 @@ ${o.items.map(i => `- ${i.productName} (x${i.quantity}) = ${formatPrice(i.price 
               </div>
 
               {/* Total Summary */}
-              <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800 flex items-center justify-between">
-                <span className="text-xs text-zinc-400 font-semibold">Tổng tiền thanh toán (COD):</span>
-                <span className="text-xl font-black text-emerald-400 font-mono">
-                  {formatPrice(selectedOrder.totalPrice)}
-                </span>
+              <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs text-zinc-300 font-bold block">Tổng tiền thu từ khách:</span>
+                    <span className="text-[11px] text-zinc-500">
+                      {selectedOrder.currency === 'THB' ? 'Khách chọn thanh toán bằng Tiền Baht Thái' : 'Khách chọn thanh toán bằng Tiền Kíp Lào'}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className={`text-xl font-black font-mono block ${selectedOrder.currency === 'THB' ? 'text-amber-400' : 'text-emerald-400'}`}>
+                      {formatOrderPrice(selectedOrder)}
+                    </span>
+                    <span className="text-xs text-zinc-400 font-medium font-mono block">
+                      ≈ {selectedOrder.currency === 'THB'
+                        ? formatPriceLAK(selectedOrder.totalPriceLAK || selectedOrder.totalPrice * (selectedOrder.exchangeRate || thbRate))
+                        : formatPriceTHB(selectedOrder.totalPriceTHB || Math.round(selectedOrder.totalPrice / (selectedOrder.exchangeRate || thbRate)))}
+                    </span>
+                  </div>
+                </div>
+                {selectedOrder.currency === 'THB' && (
+                  <div className="text-[10px] text-zinc-500 pt-1.5 border-t border-zinc-900 flex justify-between">
+                    <span>Tỷ giá quy đổi đơn hàng:</span>
+                    <span className="font-mono text-zinc-400">1 THB = {selectedOrder.exchangeRate || thbRate} LAK</span>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import CurrencySwitcher from '@/components/CurrencySwitcher';
 import { 
   ShoppingBag, 
   Search, 
@@ -120,6 +121,7 @@ export default function Navbar() {
             ) : (
               <span className="hidden md:inline text-zinc-400">{t('nav_guarantee')}</span>
             )}
+            <CurrencySwitcher variant="compact" />
             <LanguageSwitcher variant="compact" />
           </div>
         </div>
@@ -373,10 +375,16 @@ export default function Navbar() {
         {/* Mobile Menu Dropdown */}
         {isMobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-zinc-100 space-y-3 animate-in slide-in-from-top-2">
-            {/* Language switcher inside mobile menu */}
-            <div className="flex items-center justify-between p-3 bg-zinc-50 rounded-2xl border border-zinc-100">
-              <span className="text-xs font-bold text-zinc-700">Ngôn ngữ / ພາສາ:</span>
-              <LanguageSwitcher variant="full" />
+            {/* Currency & Language switcher inside mobile menu */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-1 p-2.5 bg-zinc-50 rounded-2xl border border-zinc-100">
+                <span className="text-[10px] font-bold text-zinc-500">Tiền tệ / ສະກຸນ:</span>
+                <CurrencySwitcher variant="compact" className="w-full" />
+              </div>
+              <div className="flex flex-col gap-1 p-2.5 bg-zinc-50 rounded-2xl border border-zinc-100">
+                <span className="text-[10px] font-bold text-zinc-500">Ngôn ngữ / ພາສາ:</span>
+                <LanguageSwitcher variant="compact" className="w-full" />
+              </div>
             </div>
 
             {user ? (

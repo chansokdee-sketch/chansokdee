@@ -35,7 +35,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const { id } = use(params);
   const { addToCart, setIsCartOpen, customerMode, hasFullPriceAccess } = useCart();
   const { user, setIsAuthModalOpen, setAuthModalMode } = useAuth();
-  const { t, formatPrice, isLao } = useLanguage();
+  const { t, formatPrice, formatDualPrice, currency, isLao, thbRate } = useLanguage();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
@@ -275,7 +275,11 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                             <div className="text-2xl font-black text-amber-600 font-mono">
                               {formatPrice(wholesalePrice)}
                             </div>
-                            <span className="text-[11px] text-amber-700/80 font-medium block">
+                            <span className="text-[11px] text-amber-700/90 font-bold flex items-center gap-1">
+                              <span>≈ {currency === 'LAK' ? formatDualPrice(wholesalePrice).thbFormatted : formatDualPrice(wholesalePrice).lakFormatted}</span>
+                              <span className="text-[10px] text-zinc-400 font-normal">({isLao ? `1฿ = ${thbRate}₭` : `1 Baht = ${thbRate} Kíp`})</span>
+                            </span>
+                            <span className="text-[10px] text-zinc-400 font-medium block">
                               {isLao ? 'ລາຄາພິເສດສຳລັບຍົກໂຫຼ / ຕົວແທນ' : 'Dành cho đơn mua buôn / đại lý'}
                             </span>
                           </div>
@@ -291,6 +295,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                             <div className="text-2xl font-black text-zinc-700 font-mono">
                               {formatPrice(product.price)}
                             </div>
+                            <span className="text-[11px] text-zinc-500 font-semibold block">
+                              ≈ {currency === 'LAK' ? formatDualPrice(product.price).thbFormatted : formatDualPrice(product.price).lakFormatted}
+                            </span>
                             {profit > 0 && (
                               <span className="text-[11px] text-emerald-600 font-bold block">
                                 {isLao ? `ກຳໄລຂາຍຍ່ອຍ: +${formatPrice(profit)}` : `Lợi nhuận bán lẻ: +${formatPrice(profit)}`}
@@ -314,6 +321,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                         </div>
                         <div className="text-2xl sm:text-3xl font-black text-blue-700 font-mono">
                           {formatPrice(product.price)}
+                        </div>
+                        <div className="text-xs text-zinc-600 font-semibold mt-1 flex items-center gap-1.5">
+                          <span>≈ {currency === 'LAK' ? formatDualPrice(product.price).thbFormatted : formatDualPrice(product.price).lakFormatted}</span>
+                          <span className="text-[10px] text-zinc-400 font-normal">
+                            ({isLao ? `1 ບາດ = ${thbRate} ກີບ` : `1 Baht = ${thbRate} Kíp`})
+                          </span>
                         </div>
                       </div>
                       {!hasFullPriceAccess && (
@@ -481,6 +494,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                               <p className="text-[11px] font-mono font-bold text-blue-600 mt-1">
                                 {formatPrice(baseUnitPrice)}
                               </p>
+                              <span className="text-[9px] text-zinc-400 font-medium">
+                                ≈ {currency === 'LAK' ? formatDualPrice(baseUnitPrice).thbFormatted : formatDualPrice(baseUnitPrice).lakFormatted}
+                              </span>
                               <span className="text-[9px] text-zinc-500 mt-0.5">
                                 {isLao ? 'ຊື້ຍ່ອຍ 1 ອັນ' : 'Mua lẻ 1 chiếc'}
                               </span>
@@ -503,6 +519,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                               <p className="text-[11px] font-mono font-bold text-emerald-700 mt-1">
                                 {formatPrice(packPrice)}
                               </p>
+                              <span className="text-[9px] text-emerald-700/80 font-medium">
+                                ≈ {currency === 'LAK' ? formatDualPrice(packPrice).thbFormatted : formatDualPrice(packPrice).lakFormatted}
+                              </span>
                               <span className="text-[9px] text-emerald-800 mt-0.5">
                                 {packQty} {isLao ? 'ອັນ/ແພັກ' : 'cái / lốc'}
                               </span>
@@ -525,6 +544,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                               <p className="text-[11px] font-mono font-bold text-purple-700 mt-1">
                                 {formatPrice(boxPrice)}
                               </p>
+                              <span className="text-[9px] text-purple-700/80 font-medium">
+                                ≈ {currency === 'LAK' ? formatDualPrice(boxPrice).thbFormatted : formatDualPrice(boxPrice).lakFormatted}
+                              </span>
                               <span className="text-[9px] text-purple-800 mt-0.5">
                                 {boxQty} {isLao ? 'ອັນ/ກ່ອງ' : 'cái / hộp'}
                               </span>
@@ -547,6 +569,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                               <p className="text-[11px] font-mono font-black text-amber-700 mt-1">
                                 {formatPrice(cartonPrice)}
                               </p>
+                              <span className="text-[9px] text-amber-800 font-bold">
+                                ≈ {currency === 'LAK' ? formatDualPrice(cartonPrice).thbFormatted : formatDualPrice(cartonPrice).lakFormatted}
+                              </span>
                               <span className="text-[9px] text-amber-800 mt-0.5">
                                 {cartonQty} {isLao ? 'ອັນ/ລັງ' : 'cái / thùng'}
                               </span>

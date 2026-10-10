@@ -16,6 +16,10 @@ import {
 
 interface DashboardStats {
   totalRevenue: number;
+  totalRevenueLAK?: number;
+  totalRevenueTHB?: number;
+  lakOrdersCount?: number;
+  thbOrdersCount?: number;
   totalOrders: number;
   totalProducts: number;
   totalUsers: number;
@@ -47,8 +51,23 @@ export default function AdminDashboardPage() {
     fetchStats();
   }, []);
 
+  const formatPriceLAK = (price: number) => {
+    return new Intl.NumberFormat('de-DE').format(Math.round(price || 0)) + ' ₭';
+  };
+
+  const formatPriceTHB = (price: number) => {
+    return new Intl.NumberFormat('de-DE').format(Math.round(price || 0)) + ' ฿';
+  };
+
+  const formatOrderPrice = (o: any) => {
+    if (o?.currency === 'THB') {
+      return formatPriceTHB(o.totalPrice);
+    }
+    return formatPriceLAK(o?.totalPrice || 0);
+  };
+
   const formatPrice = (price: number) => {
-    return (price || 0).toLocaleString('lo-LA') + ' ₭';
+    return formatPriceLAK(price);
   };
 
   const formatDate = (iso: string) => {
@@ -125,35 +144,55 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* 4 Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* 5 Stat Cards: Tách biệt Doanh thu Kíp và Baht */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-5">
         
-        {/* Revenue */}
-        <div className="bg-zinc-900 border border-zinc-800/80 rounded-3xl p-6 relative overflow-hidden">
+        {/* Doanh thu Kíp LAK */}
+        <div className="bg-gradient-to-br from-emerald-950/40 to-zinc-900 border border-emerald-800/40 rounded-3xl p-5 relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-zinc-400">Doanh thu tích lũy</span>
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-              <DollarSign className="w-5 h-5" />
+            <span className="text-xs font-bold text-emerald-400">Doanh thu Tiền Kíp</span>
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 font-black text-sm flex items-center justify-center border border-emerald-500/30">
+              ₭
             </div>
           </div>
-          <div className="mt-4">
-            <h3 className="text-2xl font-black text-white">
-              {formatPrice(stats?.totalRevenue || 0)}
+          <div className="mt-3">
+            <h3 className="text-xl sm:text-2xl font-black text-white">
+              {formatPriceLAK(stats?.totalRevenueLAK ?? stats?.totalRevenue ?? 0)}
             </h3>
-            <p className="text-[11px] text-emerald-400 font-medium mt-1">Đơn hàng đã xác nhận & thành công</p>
+            <p className="text-[11px] text-emerald-400/80 font-medium mt-1">
+              {stats?.lakOrdersCount ?? 0} đơn thanh toán Kíp
+            </p>
+          </div>
+        </div>
+
+        {/* Doanh thu Baht THB */}
+        <div className="bg-gradient-to-br from-amber-950/40 to-zinc-900 border border-amber-800/40 rounded-3xl p-5 relative overflow-hidden">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-amber-400">Doanh thu Tiền Baht</span>
+            <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 font-black text-sm flex items-center justify-center border border-amber-500/30">
+              ฿
+            </div>
+          </div>
+          <div className="mt-3">
+            <h3 className="text-xl sm:text-2xl font-black text-amber-300">
+              {formatPriceTHB(stats?.totalRevenueTHB ?? 0)}
+            </h3>
+            <p className="text-[11px] text-amber-400/80 font-medium mt-1">
+              {stats?.thbOrdersCount ?? 0} đơn thanh toán Baht
+            </p>
           </div>
         </div>
 
         {/* Orders */}
-        <div className="bg-zinc-900 border border-zinc-800/80 rounded-3xl p-6 relative overflow-hidden">
+        <div className="bg-zinc-900 border border-zinc-800/80 rounded-3xl p-5 relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-zinc-400">Tổng số đơn hàng</span>
-            <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
               <ShoppingCart className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-4">
-            <h3 className="text-2xl font-black text-white">{stats?.totalOrders || 0}</h3>
+          <div className="mt-3">
+            <h3 className="text-xl sm:text-2xl font-black text-white">{stats?.totalOrders || 0}</h3>
             <p className="text-[11px] text-amber-400 font-medium mt-1">
               {stats?.pendingOrdersCount || 0} đơn đang chờ xử lý
             </p>
@@ -161,30 +200,30 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Products */}
-        <div className="bg-zinc-900 border border-zinc-800/80 rounded-3xl p-6 relative overflow-hidden">
+        <div className="bg-zinc-900 border border-zinc-800/80 rounded-3xl p-5 relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-zinc-400">Tổng sản phẩm</span>
-            <div className="w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
               <Package className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-4">
-            <h3 className="text-2xl font-black text-white">{stats?.totalProducts || 0}</h3>
+          <div className="mt-3">
+            <h3 className="text-xl sm:text-2xl font-black text-white">{stats?.totalProducts || 0}</h3>
             <p className="text-[11px] text-zinc-400 font-medium mt-1">Đang hoạt động trong kho</p>
           </div>
         </div>
 
         {/* Users */}
-        <div className="bg-zinc-900 border border-zinc-800/80 rounded-3xl p-6 relative overflow-hidden">
+        <div className="bg-zinc-900 border border-zinc-800/80 rounded-3xl p-5 relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-zinc-400">Khách hàng đăng ký</span>
-            <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
+            <span className="text-xs font-semibold text-zinc-400">Khách đăng ký</span>
+            <div className="w-9 h-9 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
               <Users className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-4">
-            <h3 className="text-2xl font-black text-white">{stats?.totalUsers || 0}</h3>
-            <p className="text-[11px] text-cyan-400 font-medium mt-1">Đăng ký bằng số điện thoại</p>
+          <div className="mt-3">
+            <h3 className="text-xl sm:text-2xl font-black text-white">{stats?.totalUsers || 0}</h3>
+            <p className="text-[11px] text-cyan-400 font-medium mt-1">Đăng ký bằng SĐT</p>
           </div>
         </div>
 
@@ -257,7 +296,16 @@ export default function AdminDashboardPage() {
               </div>
               <div className="flex items-center justify-between text-xs pt-1">
                 <span className="text-[11px] text-zinc-500">{formatDate(o.createdAt)}</span>
-                <span className="font-black text-amber-400">{formatPrice(o.totalPrice)}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${
+                    o.currency === 'THB'
+                      ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                      : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                  }`}>
+                    {o.currency === 'THB' ? '฿ THB' : '₭ LAK'}
+                  </span>
+                  <span className="font-black text-amber-400">{formatOrderPrice(o)}</span>
+                </div>
               </div>
             </div>
           ))}
@@ -271,6 +319,7 @@ export default function AdminDashboardPage() {
                 <th className="pb-3 font-semibold">Mã đơn hàng</th>
                 <th className="pb-3 font-semibold">Khách hàng</th>
                 <th className="pb-3 font-semibold">SĐT</th>
+                <th className="pb-3 font-semibold">Tiền tệ</th>
                 <th className="pb-3 font-semibold">Tổng tiền</th>
                 <th className="pb-3 font-semibold">Thời gian</th>
                 <th className="pb-3 font-semibold">Trạng thái</th>
@@ -282,7 +331,16 @@ export default function AdminDashboardPage() {
                   <td className="py-3.5 font-mono font-bold text-blue-400">{o.orderCode}</td>
                   <td className="py-3.5 font-medium text-white">{o.customerName}</td>
                   <td className="py-3.5 text-zinc-400 font-mono">{o.customerPhone}</td>
-                  <td className="py-3.5 font-bold text-amber-400">{formatPrice(o.totalPrice)}</td>
+                  <td className="py-3.5">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${
+                      o.currency === 'THB'
+                        ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                        : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                    }`}>
+                      {o.currency === 'THB' ? '฿ Baht Thái' : '₭ Kíp Lào'}
+                    </span>
+                  </td>
+                  <td className="py-3.5 font-black text-amber-400">{formatOrderPrice(o)}</td>
                   <td className="py-3.5 text-zinc-400">{formatDate(o.createdAt)}</td>
                   <td className="py-3.5">
                     <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">

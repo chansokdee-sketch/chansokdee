@@ -134,7 +134,14 @@ export default function MyOrdersPage() {
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black border ${
+                        order.currency === 'THB'
+                          ? 'bg-amber-100 text-amber-800 border-amber-300'
+                          : 'bg-blue-100 text-blue-800 border-blue-300'
+                      }`}>
+                        {order.currency === 'THB' ? '฿ Tiền Baht (THB)' : '₭ Tiền Kíp (LAK)'}
+                      </span>
                       <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${statusCfg.color}`}>
                         <StatusIcon className="w-3.5 h-3.5" />
                         {t(statusCfg.labelKey)}
@@ -195,9 +202,18 @@ export default function MyOrdersPage() {
 
                     <div className="flex items-center gap-2">
                       <span className="text-zinc-500">{t('orders_total')}</span>
-                      <strong className="text-base font-black text-blue-600">
-                        {formatPrice(order.totalPrice)}
-                      </strong>
+                      <div className="text-right">
+                        <strong className="text-base font-black text-blue-600 font-mono block">
+                          {order.currency === 'THB'
+                            ? `${new Intl.NumberFormat('de-DE').format(order.totalPrice)} ฿`
+                            : `${new Intl.NumberFormat('de-DE').format(order.totalPrice)} ₭`}
+                        </strong>
+                        <span className="text-[10px] text-zinc-400 font-medium font-mono block">
+                          ≈ {order.currency === 'THB'
+                            ? `${new Intl.NumberFormat('de-DE').format(order.totalPriceLAK || order.totalPrice * (order.exchangeRate || 650))} ₭`
+                            : `${new Intl.NumberFormat('de-DE').format(order.totalPriceTHB || Math.round(order.totalPrice / (order.exchangeRate || 650)))} ฿`}
+                        </span>
+                      </div>
                     </div>
                   </div>
 

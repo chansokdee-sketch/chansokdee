@@ -266,7 +266,11 @@
       "packQty": 6,
       "boxQty": 10,
       "cartonQty": 50,
-      "sizes": ["30ml", "50ml", "100ml"]
+      "sizes": [
+        "30ml",
+        "50ml",
+        "100ml"
+      ]
     },
     {
       "id": "prod-2",
@@ -295,7 +299,10 @@
       "packQty": 6,
       "boxQty": 10,
       "cartonQty": 50,
-      "sizes": ["50ml", "100ml"]
+      "sizes": [
+        "50ml",
+        "100ml"
+      ]
     },
     {
       "id": "prod-3",
@@ -324,7 +331,11 @@
       "packQty": 6,
       "boxQty": 12,
       "cartonQty": 60,
-      "colors": ["Đỏ 999 Velvet", "Cam Cháy 777", "Hồng Đào 525"]
+      "colors": [
+        "Đỏ 999 Velvet",
+        "Cam Cháy 777",
+        "Hồng Đào 525"
+      ]
     },
     {
       "id": "prod-4",
@@ -353,7 +364,10 @@
       "packQty": 4,
       "boxQty": 8,
       "cartonQty": 32,
-      "sizes": ["50ml", "100ml"]
+      "sizes": [
+        "50ml",
+        "100ml"
+      ]
     },
     {
       "id": "prod-5",
@@ -758,7 +772,7 @@
     {
       "name": "Babi mild 380ml",
       "nameLao": "Babi mild 380ml",
-      "sku": "NOVA-4251",
+      "sku": "NOVA-2736",
       "slug": "babi-mild-380ml",
       "description": "",
       "price": 59000,
@@ -775,7 +789,12 @@
       ],
       "id": "prod-1791616486979",
       "createdAt": "2026-10-10T07:14:46.979Z",
-      "updatedAt": "2026-10-10T07:14:46.979Z"
+      "updatedAt": "2026-10-10T08:06:32.124Z",
+      "packQty": 3,
+      "boxQty": 10,
+      "cartonQty": 12,
+      "packPrice": 15000,
+      "cartonPrice": 60000
     }
   ],
   "orders": [
@@ -810,7 +829,11 @@
         }
       ],
       "createdAt": "2026-10-06T06:47:17.649Z",
-      "updatedAt": "2026-10-09T09:25:26.345Z"
+      "updatedAt": "2026-10-09T09:25:26.345Z",
+      "currency": "LAK",
+      "totalPriceLAK": 3215000,
+      "totalPriceTHB": 4946,
+      "exchangeRate": 650
     },
     {
       "id": "ord-seed-2",
@@ -839,7 +862,11 @@
       "assignedStaffName": "Nh�n vi�n B�n h�ng & So?n don",
       "assignedStaffPhone": "0977777777",
       "assignedAt": "2026-10-09T09:25:25.869Z",
-      "assignedBy": "Quản Lý Cửa Hàng (Quản lý)"
+      "assignedBy": "Quản Lý Cửa Hàng (Quản lý)",
+      "currency": "LAK",
+      "totalPriceLAK": 1150000,
+      "totalPriceTHB": 1769,
+      "exchangeRate": 650
     },
     {
       "id": "ord-1791536170733",
@@ -888,10 +915,15 @@
         }
       ],
       "createdAt": "2026-10-09T08:56:10.732Z",
-      "updatedAt": "2026-10-09T08:57:26.991Z"
+      "updatedAt": "2026-10-09T08:57:26.991Z",
+      "currency": "LAK",
+      "totalPriceLAK": 7050000,
+      "totalPriceTHB": 10846,
+      "exchangeRate": 650
     }
   ],
   "siteSettings": {
+    "thbRate": 650,
     "storeName": "NovaBeauty",
     "slogan": "ຮ້ານຂາຍເຄື່ອງສຳອາງ & ຄວາມງາມແທ້ 100%",
     "primaryColor": "rose",

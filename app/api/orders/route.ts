@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
 
     const { user } = authRes;
     const body = await req.json();
-    const { items, customerName, customerPhone, customerType, shippingAddress, note } = body;
+    const { items, customerName, customerPhone, customerType, shippingAddress, note, currency, exchangeRate } = body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: 'Giỏ hàng của bạn đang trống.' }, { status: 400 });
@@ -31,9 +31,15 @@ export async function POST(req: NextRequest) {
       customerType: customerType === 'WHOLESALE' ? 'WHOLESALE' : 'RETAIL',
       shippingAddress: shippingAddress.trim(),
       note: note?.trim() || '',
+      currency: currency === 'THB' ? 'THB' : 'LAK',
+      exchangeRate: typeof exchangeRate === 'number' && exchangeRate > 0 ? exchangeRate : undefined,
       items: items.map(i => ({
         productId: i.productId,
-        quantity: Number(i.quantity),
+        quantity: Number(i.quantity || 1),
+        unit: i.unit,
+        unitQuantity: i.unitQuantity !== undefined ? Number(i.unitQuantity) : undefined,
+        selectedColor: i.selectedColor,
+        selectedSize: i.selectedSize,
       })),
     });
 

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
-import { User, Category, SubCategory, Product, Order, OrderItem, OrderStatus, ProductStatus, SiteSettings, PackagingUnit } from './types';
+import { User, Category, SubCategory, Product, Order, OrderItem, OrderStatus, ProductStatus, SiteSettings, PackagingUnit, Currency } from './types';
 
 interface DatabaseSchema {
   users: User[];
@@ -355,6 +355,7 @@ function getInitialData(): DatabaseSchema {
   ];
 
   const siteSettings: SiteSettings = {
+    thbRate: 650,
     storeName: 'NovaBeauty',
     slogan: 'Mỹ phẩm & Chăm sóc sắc đẹp chính hãng',
     primaryColor: 'rose',
@@ -445,6 +446,7 @@ function readData(): DatabaseSchema {
     parsed.siteSettings = {
       ...defaultSettings,
       ...(parsed.siteSettings || {}),
+      thbRate: parsed.siteSettings?.thbRate || 650,
     };
     parsed.products = (parsed.products || []).map(p => ({
       ...p,
@@ -455,6 +457,19 @@ function readData(): DatabaseSchema {
       ...u,
       customerType: u.customerType || 'RETAIL',
     }));
+    parsed.orders = (parsed.orders || []).map(o => {
+      const orderCurrency = o.currency || 'LAK';
+      const orderRate = o.exchangeRate || parsed.siteSettings?.thbRate || 650;
+      const orderLak = o.totalPriceLAK || (orderCurrency === 'THB' ? o.totalPrice * orderRate : o.totalPrice);
+      const orderThb = o.totalPriceTHB || (orderCurrency === 'THB' ? o.totalPrice : Math.round(orderLak / orderRate));
+      return {
+        ...o,
+        currency: orderCurrency,
+        totalPriceLAK: orderLak,
+        totalPriceTHB: orderThb,
+        exchangeRate: orderRate,
+      };
+    });
     return parsed;
   } catch (error) {
     console.error('Error reading db file, regenerating:', error);
@@ -683,6 +698,8 @@ export const db = {
       customerType?: 'RETAIL' | 'WHOLESALE';
       shippingAddress: string;
       note?: string;
+      currency?: Currency;
+      exchangeRate?: number;
       items: { 
         productId: string; 
         quantity: number; 
@@ -796,6 +813,12 @@ export const db = {
         item.orderId = orderId;
       });
 
+      const thbRate = orderInput.exchangeRate || data.siteSettings?.thbRate || 650;
+      const selectedCurrency: Currency = orderInput.currency === 'THB' ? 'THB' : 'LAK';
+      const totalPriceLAK = calculatedTotalPrice;
+      const totalPriceTHB = Math.round(calculatedTotalPrice / thbRate);
+      const finalTotalPrice = selectedCurrency === 'THB' ? totalPriceTHB : totalPriceLAK;
+
       const newOrder: Order = {
         id: orderId,
         orderCode,
@@ -805,7 +828,11 @@ export const db = {
         customerType: orderInput.customerType || 'RETAIL',
         shippingAddress: orderInput.shippingAddress,
         note: orderInput.note || '',
-        totalPrice: calculatedTotalPrice,
+        totalPrice: finalTotalPrice,
+        currency: selectedCurrency,
+        totalPriceLAK,
+        totalPriceTHB,
+        exchangeRate: thbRate,
         status: 'PENDING',
         items: orderItems,
         createdAt: now.toISOString(),
@@ -877,9 +904,27 @@ export const db = {
   dashboard: {
     getStats: () => {
       const data = readData();
-      const totalRevenue = data.orders
-        .filter(o => o.status !== 'CANCELLED')
-        .reduce((sum, o) => sum + o.totalPrice, 0);
+      const activeOrders = data.orders.filter(o => o.status !== 'CANCELLED');
+      const defaultRate = data.siteSettings?.thbRate || 650;
+
+      // Doanh thu nhánh Kíp: Tổng tất cả đơn thanh toán bằng LAK
+      const totalRevenueLAK = activeOrders
+        .filter(o => o.currency !== 'THB')
+        .reduce((sum, o) => sum + (o.totalPriceLAK || o.totalPrice), 0);
+
+      // Doanh thu nhánh Baht: Tổng tất cả đơn thanh toán bằng THB
+      const totalRevenueTHB = activeOrders
+        .filter(o => o.currency === 'THB')
+        .reduce((sum, o) => sum + (o.totalPriceTHB || o.totalPrice), 0);
+
+      // Tổng doanh thu quy chuẩn LAK để tham khảo
+      const totalRevenueCombinedLAK = activeOrders.reduce((sum, o) => {
+        const lak = o.totalPriceLAK || (o.currency === 'THB' ? o.totalPrice * (o.exchangeRate || defaultRate) : o.totalPrice);
+        return sum + lak;
+      }, 0);
+
+      const lakOrdersCount = activeOrders.filter(o => o.currency !== 'THB').length;
+      const thbOrdersCount = activeOrders.filter(o => o.currency === 'THB').length;
 
       const totalOrders = data.orders.length;
       const totalProducts = data.products.length;
@@ -888,7 +933,11 @@ export const db = {
       const pendingOrdersCount = data.orders.filter(o => o.status === 'PENDING').length;
 
       return {
-        totalRevenue,
+        totalRevenue: totalRevenueCombinedLAK,
+        totalRevenueLAK,
+        totalRevenueTHB,
+        lakOrdersCount,
+        thbOrdersCount,
         totalOrders,
         totalProducts,
         totalUsers,

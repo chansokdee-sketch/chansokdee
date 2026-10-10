@@ -22,7 +22,7 @@ export default function CartDrawer() {
     getItemPrice,
     isItemWholesalePrice
   } = useCart();
-  const { t, formatPrice, isLao } = useLanguage();
+  const { t, formatPrice, formatDualPrice, currency, isLao, thbRate } = useLanguage();
 
   // Nội bộ (Quản lý & Nhân viên & Admin) không sử dụng giỏ hàng
   if (!isCartOpen || (user && (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'STAFF'))) {
@@ -208,9 +208,16 @@ export default function CartDrawer() {
                 </div>
               )}
 
-              <div className="flex justify-between items-center text-sm">
+              <div className="flex justify-between items-baseline text-sm">
                 <span className="text-zinc-500">{t('cart_subtotal')}</span>
-                <span className="font-extrabold text-lg text-zinc-900 font-mono">{formatPrice(totalPrice)}</span>
+                <div className="text-right">
+                  <span className="font-extrabold text-lg text-zinc-900 font-mono block">
+                    {formatPrice(totalPrice)}
+                  </span>
+                  <span className="text-[11px] text-zinc-500 font-semibold font-mono block">
+                    ≈ {currency === 'LAK' ? formatDualPrice(totalPrice).thbFormatted : formatDualPrice(totalPrice).lakFormatted}
+                  </span>
+                </div>
               </div>
 
               <Link

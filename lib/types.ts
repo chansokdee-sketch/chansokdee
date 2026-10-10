@@ -98,6 +98,8 @@ export interface OrderItem {
   selectedSize?: string;
 }
 
+export type Currency = 'LAK' | 'THB'; // 'LAK' = Tiền Kíp Lào (₭), 'THB' = Tiền Baht Thái (฿)
+
 export interface Order {
   id: string;
   orderCode: string;
@@ -108,6 +110,10 @@ export interface Order {
   shippingAddress: string;
   note?: string;
   totalPrice: number;
+  currency?: Currency;        // Loại tiền khách chọn thanh toán ('LAK' hoặc 'THB')
+  totalPriceLAK?: number;    // Số tiền quy đổi sang Tiền Kíp (₭)
+  totalPriceTHB?: number;    // Số tiền quy đổi sang Tiền Baht (฿)
+  exchangeRate?: number;     // Tỷ giá quy đổi tại thời điểm đặt đơn (1 THB = ... LAK)
   status: OrderStatus;
   items: OrderItem[];
   assignedStaffId?: string;
@@ -130,6 +136,9 @@ export interface CartItem {
 }
 
 export interface SiteSettings {
+  // Tiền tệ & Tỷ giá quy đổi
+  thbRate?: number;           // Tỷ giá quy đổi: 1 THB = ... LAK (mặc định 650)
+
   // Thương hiệu & Màu sắc
   storeName: string;
   adminName?: string;

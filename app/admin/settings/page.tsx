@@ -45,6 +45,7 @@ export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<SiteSettings>({
     storeName: 'NovaBeauty',
     slogan: 'Mỹ phẩm & Chăm sóc sắc đẹp chính hãng',
+    thbRate: 650,
     primaryColor: 'rose',
     hotline: '1900 8888',
     email: 'cskh@novabeauty.vn',
@@ -724,6 +725,67 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setSettings({ ...settings, topAnnouncement: e.target.value })}
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-zinc-200 outline-none"
               />
+            </div>
+
+            {/* Currency & Exchange Rate Settings */}
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-950/30 via-zinc-950 to-zinc-900 border border-amber-800/40 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 font-black text-base flex items-center justify-center border border-amber-500/30 shrink-0">
+                    ฿
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-sm">Cài Đặt Tỷ Giá Tiền Tệ (Kíp Lào ⇄ Baht Thái)</h3>
+                    <p className="text-[11px] text-zinc-400 mt-0.5">Website hỗ trợ 2 nhánh thanh toán độc lập: ₭ LAK và ฿ THB</p>
+                  </div>
+                </div>
+                <span className="self-start sm:self-auto px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 font-black text-xs">
+                  1 ฿ = {Number(settings.thbRate || 650).toLocaleString('de-DE')} ₭
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                <div>
+                  <label className="block text-zinc-300 font-semibold mb-1.5">
+                    Tỷ giá Baht Thái (1 THB = bao nhiêu Kíp LAK?)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={settings.thbRate ?? 650}
+                      onChange={(e) => setSettings({ ...settings, thbRate: Number(e.target.value) || 650 })}
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-amber-400 font-black text-sm outline-none focus:border-amber-500"
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-500">
+                      LAK / THB
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-zinc-400 mt-1.5">
+                    Mặc định: <code className="text-amber-300 font-mono">650</code> (tức 1 THB = 650 Kíp). Tùy chỉnh bất kỳ lúc nào theo tỷ giá chợ hoặc ngân hàng.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-zinc-900/80 border border-zinc-800 text-xs space-y-2">
+                  <span className="font-bold text-zinc-300 block text-[11px]">💡 Xem trước quy đổi theo tỷ giá hiện tại:</span>
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div className="bg-zinc-950 p-2.5 rounded-lg border border-zinc-800">
+                      <span className="text-zinc-500 block">Ví dụ đơn hàng:</span>
+                      <span className="font-black text-emerald-400 text-xs">100.000 ₭</span>
+                    </div>
+                    <div className="bg-zinc-950 p-2.5 rounded-lg border border-zinc-800">
+                      <span className="text-zinc-500 block">Khách trả bằng Baht:</span>
+                      <span className="font-black text-amber-300 text-xs">
+                        {Math.round(100000 / (settings.thbRate || 650)).toLocaleString('de-DE')} ฿
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-zinc-500 leading-relaxed">
+                    * Giá gốc sản phẩm luôn lưu chuẩn theo Tiền Kíp (LAK). Tỷ giá này áp dụng khi khách xem giá THB và khi khách chọn thanh toán bằng Tiền Baht.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         )}
