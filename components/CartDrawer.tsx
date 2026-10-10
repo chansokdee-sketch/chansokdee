@@ -133,6 +133,16 @@ export default function CartDrawer() {
                               🏷️ {item.variantName}
                             </span>
                           )}
+                          {item.tier1Value && !item.variantName?.includes(item.tier1Value) && (
+                            <span className="text-[10px] font-bold bg-rose-50 text-rose-700 px-1.5 py-0.5 rounded-md border border-rose-200">
+                              🎨 {item.tier1Value}
+                            </span>
+                          )}
+                          {item.tier2Value && !item.variantName?.includes(item.tier2Value) && (
+                            <span className="text-[10px] font-bold bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded-md border border-purple-200">
+                              ⚖️ {item.tier2Value}
+                            </span>
+                          )}
                           {item.selectedColor && (
                             <span className="text-[10px] font-semibold bg-rose-50 text-rose-700 px-1.5 py-0.5 rounded-md border border-rose-200 flex items-center gap-1">
                               <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span>

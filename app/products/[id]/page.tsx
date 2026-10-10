@@ -25,7 +25,8 @@ import {
   Phone,
   ShoppingCart,
   Edit3,
-  Layers
+  Layers,
+  Palette
 } from 'lucide-react';
 import { PackagingUnit, ProductVariant } from '@/lib/types';
 
@@ -40,6 +41,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [category, setCategory] = useState<Category | null>(null);
   const [selectedImage, setSelectedImage] = useState<string>('');
   const [selectedVariantId, setSelectedVariantId] = useState<string>('');
+  const [selectedTier1, setSelectedTier1] = useState<string>('');
+  const [selectedTier2, setSelectedTier2] = useState<string>('');
   const [selectedUnit, setSelectedUnit] = useState<PackagingUnit>('PIECE');
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -55,9 +58,21 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           setProduct(data.product);
           setCategory(data.category);
           setSelectedImage(data.product.images[0] || '');
+          
+          if (data.product.tier1Options && data.product.tier1Options.length > 0) {
+            setSelectedTier1(data.product.tier1Options[0].id);
+            if (data.product.tier1Options[0].image) {
+              setSelectedImage(data.product.tier1Options[0].image);
+            }
+          }
+
+          if (data.product.tier2Options && data.product.tier2Options.length > 0) {
+            setSelectedTier2(data.product.tier2Options[0].id);
+          }
+
           if (data.product.variants && data.product.variants.length > 0) {
             setSelectedVariantId(data.product.variants[0].id);
-            if (data.product.variants[0].image) {
+            if (!data.product.tier1Options?.length && data.product.variants[0].image) {
               setSelectedImage(data.product.variants[0].image);
             }
           }
@@ -74,15 +89,40 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     fetchDetail();
   }, [id]);
 
+  const getSelectedVariationInfo = () => {
+    if (!product) return {};
+    const activeTier1 = product.tier1Options?.find(o => o.id === selectedTier1) 
+      || (product.tier1Options && product.tier1Options.length > 0 ? product.tier1Options[0] : undefined);
+    const activeTier2 = product.tier2Options?.find(o => o.id === selectedTier2)
+      || (product.tier2Options && product.tier2Options.length > 0 ? product.tier2Options[0] : undefined);
+    const legacyVariant = product.variants?.find(v => v.id === selectedVariantId);
+
+    const tier1Value = activeTier1?.name;
+    const tier2Value = activeTier2?.name;
+    const variantName = [tier1Value, tier2Value].filter(Boolean).join(' • ') 
+      || legacyVariant?.name 
+      || undefined;
+    const variantId = [activeTier1?.id, activeTier2?.id].filter(Boolean).join('_') 
+      || legacyVariant?.id 
+      || undefined;
+    const variantImage = activeTier1?.image || legacyVariant?.image || selectedImage || undefined;
+
+    return {
+      tier1Value,
+      tier2Value,
+      variantName,
+      variantId,
+      variantImage,
+    };
+  };
+
   const handleAddToCart = () => {
     if (!product) return;
-    const selectedVariant = product.variants?.find(v => v.id === selectedVariantId);
+    const varInfo = getSelectedVariationInfo();
     const res = addToCart(product, quantity, {
       unit: selectedUnit,
       unitQuantity: quantity,
-      variantId: selectedVariant?.id,
-      variantName: selectedVariant?.name,
-      variantImage: selectedVariant?.image,
+      ...varInfo,
     });
     setNotification(res.message);
     setTimeout(() => setNotification(null), 3000);
@@ -90,15 +130,76 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
   const handleBuyNow = () => {
     if (!product) return;
-    const selectedVariant = product.variants?.find(v => v.id === selectedVariantId);
+    const varInfo = getSelectedVariationInfo();
     addToCart(product, quantity, {
       unit: selectedUnit,
       unitQuantity: quantity,
-      variantId: selectedVariant?.id,
-      variantName: selectedVariant?.name,
-      variantImage: selectedVariant?.image,
+      ...varInfo,
     });
     router.push('/cart');
+  };
+
+  const getActiveBasePricing = () => {
+    if (!product) return { retail: 0, wholesale: 0, retailTHB: null as number | null, wholesaleTHB: null as number | null, activePrice: 0, activePriceTHB: null as number | null };
+    const activeTier1 = product.tier1Options?.find(o => o.id === selectedTier1) 
+      || (product.tier1Options && product.tier1Options.length > 0 ? product.tier1Options[0] : undefined);
+    const activeTier2 = product.tier2Options?.find(o => o.id === selectedTier2)
+      || (product.tier2Options && product.tier2Options.length > 0 ? product.tier2Options[0] : undefined);
+    const legacyVar = product.variants?.find(v => v.id === selectedVariantId) 
+      || (product.variants && product.variants.length > 0 ? product.variants[0] : undefined);
+
+    let retail = product.price;
+    if (activeTier1?.price && activeTier1.price > 0) {
+      retail = activeTier1.price;
+    } else if (legacyVar?.price && legacyVar.price > 0) {
+      retail = legacyVar.price;
+    }
+    if (activeTier2?.priceBonus && activeTier2.priceBonus > 0) {
+      retail += activeTier2.priceBonus;
+    }
+
+    let wholesale = product.wholesalePrice !== undefined && product.wholesalePrice > 0
+      ? product.wholesalePrice
+      : Math.round(retail * 0.8);
+    if (legacyVar?.wholesalePrice && legacyVar.wholesalePrice > 0) {
+      wholesale = legacyVar.wholesalePrice;
+    }
+    if (activeTier2?.priceBonus && activeTier2.priceBonus > 0) {
+      wholesale += activeTier2.priceBonus;
+    }
+
+    let retailTHB: number | null = null;
+    if (activeTier1?.priceTHB && activeTier1.priceTHB > 0) {
+      retailTHB = activeTier1.priceTHB;
+    } else if (legacyVar?.priceTHB && legacyVar.priceTHB > 0) {
+      retailTHB = legacyVar.priceTHB;
+    } else if (product.priceTHB && product.priceTHB > 0) {
+      retailTHB = product.priceTHB;
+    }
+    if (retailTHB && activeTier2?.priceBonusTHB && activeTier2.priceBonusTHB > 0) {
+      retailTHB += activeTier2.priceBonusTHB;
+    }
+
+    let wholesaleTHB: number | null = null;
+    if (legacyVar?.wholesalePriceTHB && legacyVar.wholesalePriceTHB > 0) {
+      wholesaleTHB = legacyVar.wholesalePriceTHB;
+    } else if (product.wholesalePriceTHB && product.wholesalePriceTHB > 0) {
+      wholesaleTHB = product.wholesalePriceTHB;
+    } else if (retailTHB) {
+      wholesaleTHB = Math.round(retailTHB * 0.8);
+    }
+    if (wholesaleTHB && activeTier2?.priceBonusTHB && activeTier2.priceBonusTHB > 0) {
+      wholesaleTHB += activeTier2.priceBonusTHB;
+    }
+
+    return {
+      retail,
+      wholesale,
+      retailTHB,
+      wholesaleTHB,
+      activePrice: customerMode === 'WHOLESALE' ? wholesale : retail,
+      activePriceTHB: customerMode === 'WHOLESALE' ? wholesaleTHB : retailTHB,
+    };
   };
 
   if (loading) {
@@ -244,22 +345,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
                 {/* 2 Bảng Giá: Giá Lẻ & Giá Sỉ */}
                 {(() => {
-                  const activeVariant = product.variants?.find(v => v.id === selectedVariantId) || (product.variants && product.variants.length > 0 ? product.variants[0] : undefined);
-                  
-                  const activeRetailPrice = activeVariant?.price && activeVariant.price > 0 
-                    ? activeVariant.price 
-                    : product.price;
-                  const activeWholesalePrice = activeVariant?.wholesalePrice && activeVariant.wholesalePrice > 0
-                    ? activeVariant.wholesalePrice
-                    : (product.wholesalePrice !== undefined && product.wholesalePrice > 0 ? product.wholesalePrice : Math.round(activeRetailPrice * 0.8));
-
-                  const activeRetailTHB = activeVariant?.priceTHB && activeVariant.priceTHB > 0
-                    ? activeVariant.priceTHB
-                    : (product.priceTHB && product.priceTHB > 0 ? product.priceTHB : null);
-                  const activeWholesaleTHB = activeVariant?.wholesalePriceTHB && activeVariant.wholesalePriceTHB > 0
-                    ? activeVariant.wholesalePriceTHB
-                    : (product.wholesalePriceTHB && product.wholesalePriceTHB > 0 ? product.wholesalePriceTHB : null);
-
+                  const { retail: activeRetailPrice, wholesale: activeWholesalePrice, retailTHB: activeRetailTHB, wholesaleTHB: activeWholesaleTHB } = getActiveBasePricing();
                   const isWholesaleActive = customerMode === 'WHOLESALE';
 
                   if (isWholesaleActive) {
@@ -420,85 +506,214 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                 ) : (
                   <>
-                    {/* Phân loại biến thể Shopee style */}
-                    {product.variants && product.variants.length > 0 && (
-                      <div className="space-y-2 pt-2">
-                        <div className="flex items-center justify-between text-xs font-bold text-zinc-700">
-                          <span className="flex items-center gap-1.5">
-                            <Layers className="w-4 h-4 text-rose-500" />
-                            <span>{isLao ? 'ເລືອກແບບ / ປະເພດ:' : 'Phân loại:'}</span>
-                          </span>
-                          {(() => {
-                            const activeVar = product.variants.find(v => v.id === selectedVariantId) || product.variants[0];
-                            return activeVar ? (
-                              <span className="text-rose-600 font-extrabold text-[11px] bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200">
-                                {activeVar.name}
-                              </span>
-                            ) : null;
-                          })()}
-                        </div>
-                        <div className="flex flex-wrap gap-2.5">
-                          {product.variants.map((v) => {
-                            const isSelected = (selectedVariantId || product.variants![0].id) === v.id;
-                            const thumb = v.image || product.images[0];
-                            const vPrice = customerMode === 'WHOLESALE' && v.wholesalePrice && v.wholesalePrice > 0
-                              ? v.wholesalePrice
-                              : (v.price && v.price > 0 ? v.price : product.price);
-                            const vPriceTHB = customerMode === 'WHOLESALE' && v.wholesalePriceTHB && v.wholesalePriceTHB > 0
-                              ? v.wholesalePriceTHB
-                              : (v.priceTHB && v.priceTHB > 0 ? v.priceTHB : null);
+                    {/* PHÂN LOẠI 2 TẦNG CHUẨN SHOPEE STYLE */}
+                    {(() => {
+                      const hasTier1 = Boolean(product.tier1Options && product.tier1Options.length > 0);
+                      const hasTier2 = Boolean(product.tier2Options && product.tier2Options.length > 0);
+                      const hasLegacyVariants = Boolean(product.variants && product.variants.length > 0);
 
-                            return (
-                              <button
-                                key={v.id}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedVariantId(v.id);
-                                  if (v.image) setSelectedImage(v.image);
-                                }}
-                                className={`group flex items-center gap-2.5 p-1.5 pr-3.5 rounded-2xl border text-left transition active:scale-95 ${
-                                  isSelected
-                                    ? 'border-rose-500 bg-rose-50/70 ring-2 ring-rose-500/25 text-rose-950 font-bold shadow-xs'
-                                    : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50/80 text-zinc-700'
-                                }`}
-                              >
-                                {thumb ? (
-                                  <img
-                                    src={thumb}
-                                    alt={v.name}
-                                    className="w-10 h-10 rounded-xl object-cover border border-zinc-200/80 flex-shrink-0 bg-white"
-                                  />
-                                ) : (
-                                  <div className="w-10 h-10 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-400 text-xs flex-shrink-0">
-                                    📦
-                                  </div>
-                                )}
-                                <div className="flex flex-col min-w-0">
-                                  <span className="text-xs font-bold truncate max-w-[150px] sm:max-w-[180px]">
-                                    {v.name}
+                      if (!hasTier1 && !hasTier2 && !hasLegacyVariants) {
+                        return null;
+                      }
+
+                      // Giao diện Shopee 2-tier: Nhóm 1 (ảnh + text) và Nhóm 2 (text pills)
+                      if (hasTier1 || hasTier2) {
+                        const activeTier1Obj = product.tier1Options?.find(o => o.id === selectedTier1) || product.tier1Options?.[0];
+                        const activeTier2Obj = product.tier2Options?.find(o => o.id === selectedTier2) || product.tier2Options?.[0];
+
+                        return (
+                          <div className="space-y-4 pt-2">
+                            {/* Hàng 1: Nhóm 1 - Màu Sắc / Mẫu Mã (Nút bấm kèm ảnh thumbnail) */}
+                            {hasTier1 && (
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between text-xs font-bold text-zinc-700">
+                                  <span className="flex items-center gap-1.5">
+                                    <Palette className="w-4 h-4 text-rose-500" />
+                                    <span>{product.tier1Name || (isLao ? 'ສີສັນ / ຮູບແບບ:' : 'Màu sắc:')}</span>
                                   </span>
-                                  <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-mono">
-                                    <span className={isSelected ? 'text-rose-600 font-black' : 'text-zinc-600 font-semibold'}>
-                                      {formatPrice(vPrice)}
+                                  {activeTier1Obj && (
+                                    <span className="text-[#ee4d2d] font-extrabold text-[11px] bg-[#fff5f3] px-2.5 py-0.5 rounded-full border border-[#ee4d2d]/30">
+                                      {activeTier1Obj.name}
                                     </span>
-                                    {vPriceTHB ? (
-                                      <span className="text-amber-600 font-bold">
-                                        ({vPriceTHB}฿)
-                                      </span>
-                                    ) : null}
-                                  </div>
+                                  )}
                                 </div>
-                                {isSelected && (
-                                  <div className="w-4 h-4 rounded-full bg-rose-500 text-white flex items-center justify-center text-[10px] flex-shrink-0 ml-1">
-                                    ✓
+
+                                <div className="flex flex-wrap gap-2.5">
+                                  {product.tier1Options!.map((opt) => {
+                                    const isSelected = (selectedTier1 || product.tier1Options![0].id) === opt.id;
+                                    const thumb = opt.image || product.images[0];
+                                    return (
+                                      <button
+                                        key={opt.id}
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedTier1(opt.id);
+                                          if (opt.image) setSelectedImage(opt.image);
+                                        }}
+                                        className={`group flex items-center gap-2 p-1.5 pr-3.5 rounded-xl border text-left transition active:scale-95 ${
+                                          isSelected
+                                            ? 'border-[#ee4d2d] bg-[#fff5f3] ring-2 ring-[#ee4d2d]/25 text-[#ee4d2d] font-bold shadow-xs'
+                                            : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50 text-zinc-700'
+                                        }`}
+                                      >
+                                        {thumb ? (
+                                          <img
+                                            src={thumb}
+                                            alt={opt.name}
+                                            className="w-10 h-10 rounded-lg object-cover border border-zinc-200/80 flex-shrink-0 bg-white"
+                                          />
+                                        ) : (
+                                          <div className="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-400 text-xs flex-shrink-0">
+                                            📦
+                                          </div>
+                                        )}
+                                        <div className="flex flex-col min-w-0">
+                                          <span className="text-xs font-bold truncate max-w-[150px] sm:max-w-[180px]">
+                                            {opt.name}
+                                          </span>
+                                          {opt.price ? (
+                                            <span className="text-[10px] text-zinc-500 font-mono">
+                                              {formatPrice(opt.price)}
+                                            </span>
+                                          ) : null}
+                                        </div>
+                                        {isSelected && (
+                                          <div className="w-4 h-4 rounded-full bg-[#ee4d2d] text-white flex items-center justify-center text-[10px] flex-shrink-0 ml-1">
+                                            ✓
+                                          </div>
+                                        )}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Hàng 2: Nhóm 2 - Trọng Lượng (ml, g) / Dòng Sản Phẩm / Kích Cỡ (Nút bấm text) */}
+                            {hasTier2 && (
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between text-xs font-bold text-zinc-700">
+                                  <span className="flex items-center gap-1.5">
+                                    <Layers className="w-4 h-4 text-purple-500" />
+                                    <span>{product.tier2Name || (isLao ? 'ຂະໜາດ / ນ້ຳໜັກ:' : 'Dòng sản phẩm / Trọng lượng:')}</span>
+                                  </span>
+                                  {activeTier2Obj && (
+                                    <span className="text-purple-700 font-extrabold text-[11px] bg-purple-50 px-2.5 py-0.5 rounded-full border border-purple-200">
+                                      {activeTier2Obj.name}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="flex flex-wrap gap-2">
+                                  {product.tier2Options!.map((opt) => {
+                                    const isSelected = (selectedTier2 || product.tier2Options![0].id) === opt.id;
+                                    return (
+                                      <button
+                                        key={opt.id}
+                                        type="button"
+                                        onClick={() => setSelectedTier2(opt.id)}
+                                        className={`px-3.5 py-2 rounded-xl border text-xs text-center transition active:scale-95 ${
+                                          isSelected
+                                            ? 'border-[#ee4d2d] bg-[#fff5f3] ring-2 ring-[#ee4d2d]/25 text-[#ee4d2d] font-bold shadow-xs'
+                                            : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50 text-zinc-700 font-medium'
+                                        }`}
+                                      >
+                                        <span>{opt.name}</span>
+                                        {opt.priceBonus ? (
+                                          <span className="ml-1 text-[10px] text-zinc-500 font-mono">
+                                            (+{formatPrice(opt.priceBonus)})
+                                          </span>
+                                        ) : null}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+
+                      // Tương thích ngược: Biến thể phẳng cũ
+                      return (
+                        <div className="space-y-2 pt-2">
+                          <div className="flex items-center justify-between text-xs font-bold text-zinc-700">
+                            <span className="flex items-center gap-1.5">
+                              <Layers className="w-4 h-4 text-rose-500" />
+                              <span>{isLao ? 'ເລືອກແບບ / ປະເພດ:' : 'Phân loại:'}</span>
+                            </span>
+                            {(() => {
+                              const activeVar = product.variants!.find(v => v.id === selectedVariantId) || product.variants![0];
+                              return activeVar ? (
+                                <span className="text-[#ee4d2d] font-extrabold text-[11px] bg-[#fff5f3] px-2.5 py-0.5 rounded-full border border-[#ee4d2d]/30">
+                                  {activeVar.name}
+                                </span>
+                              ) : null;
+                            })()}
+                          </div>
+                          <div className="flex flex-wrap gap-2.5">
+                            {product.variants!.map((v) => {
+                              const isSelected = (selectedVariantId || product.variants![0].id) === v.id;
+                              const thumb = v.image || product.images[0];
+                              const vPrice = customerMode === 'WHOLESALE' && v.wholesalePrice && v.wholesalePrice > 0
+                                ? v.wholesalePrice
+                                : (v.price && v.price > 0 ? v.price : product.price);
+                              const vPriceTHB = customerMode === 'WHOLESALE' && v.wholesalePriceTHB && v.wholesalePriceTHB > 0
+                                ? v.wholesalePriceTHB
+                                : (v.priceTHB && v.priceTHB > 0 ? v.priceTHB : null);
+
+                              return (
+                                <button
+                                  key={v.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedVariantId(v.id);
+                                    if (v.image) setSelectedImage(v.image);
+                                  }}
+                                  className={`group flex items-center gap-2.5 p-1.5 pr-3.5 rounded-2xl border text-left transition active:scale-95 ${
+                                    isSelected
+                                      ? 'border-[#ee4d2d] bg-[#fff5f3] ring-2 ring-[#ee4d2d]/25 text-[#ee4d2d] font-bold shadow-xs'
+                                      : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50/80 text-zinc-700'
+                                  }`}
+                                >
+                                  {thumb ? (
+                                    <img
+                                      src={thumb}
+                                      alt={v.name}
+                                      className="w-10 h-10 rounded-xl object-cover border border-zinc-200/80 flex-shrink-0 bg-white"
+                                    />
+                                  ) : (
+                                    <div className="w-10 h-10 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-400 text-xs flex-shrink-0">
+                                      📦
+                                    </div>
+                                  )}
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="text-xs font-bold truncate max-w-[150px] sm:max-w-[180px]">
+                                      {v.name}
+                                    </span>
+                                    <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-mono">
+                                      <span className={isSelected ? 'text-[#ee4d2d] font-black' : 'text-zinc-600 font-semibold'}>
+                                        {formatPrice(vPrice)}
+                                      </span>
+                                      {vPriceTHB ? (
+                                        <span className="text-amber-600 font-bold">
+                                          ({vPriceTHB}฿)
+                                        </span>
+                                      ) : null}
+                                    </div>
                                   </div>
-                                )}
-                              </button>
-                            );
-                          })}
+                                  {isSelected && (
+                                    <div className="w-4 h-4 rounded-full bg-[#ee4d2d] text-white flex items-center justify-center text-[10px] flex-shrink-0 ml-1">
+                                      ✓
+                                    </div>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
 
                     {/* Mục Chọn Quy Cách Đóng Gói (Cái / Lốc / Hộp / Thùng) - CHỈ HIỆN CÁC Ô ĐÃ ĐƯỢC TICK CHỌN */}
                     {(() => {
@@ -515,15 +730,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                       const boxQty = product.boxQty || 10;
                       const cartonQty = product.cartonQty || 50;
 
-                      const activeVar = product.variants?.find(v => v.id === selectedVariantId) || (product.variants && product.variants[0]);
-                      const baseRetail = (activeVar && activeVar.price && activeVar.price > 0) ? activeVar.price : product.price;
-                      const baseWholesale = (activeVar && activeVar.wholesalePrice && activeVar.wholesalePrice > 0)
-                        ? activeVar.wholesalePrice
-                        : (product.wholesalePrice !== undefined && product.wholesalePrice > 0 ? product.wholesalePrice : Math.round(baseRetail * 0.8));
-                      const baseUnitPrice = customerMode === 'WHOLESALE' ? baseWholesale : baseRetail;
-                      const baseUnitPriceTHB = customerMode === 'WHOLESALE'
-                        ? (activeVar?.wholesalePriceTHB || product.wholesalePriceTHB || null)
-                        : (activeVar?.priceTHB || product.priceTHB || null);
+                      const { activePrice: baseUnitPrice, activePriceTHB: baseUnitPriceTHB } = getActiveBasePricing();
 
                       const packPrice = product.packPrice && product.packPrice > 0 ? product.packPrice : baseUnitPrice * packQty;
                       const boxPrice = product.boxPrice && product.boxPrice > 0 ? product.boxPrice : baseUnitPrice * boxQty;
@@ -648,15 +855,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                       const multiplier = selectedUnit === 'CARTON' ? cartonQty : selectedUnit === 'BOX' ? boxQty : selectedUnit === 'PACK' ? packQty : 1;
                       const maxUnitAllowed = Math.max(1, Math.floor(product.stock / multiplier));
 
-                      const activeVar = product.variants?.find(v => v.id === selectedVariantId) || (product.variants && product.variants[0]);
-                      const baseRetail = (activeVar && activeVar.price && activeVar.price > 0) ? activeVar.price : product.price;
-                      const baseWholesale = (activeVar && activeVar.wholesalePrice && activeVar.wholesalePrice > 0)
-                        ? activeVar.wholesalePrice
-                        : (product.wholesalePrice !== undefined && product.wholesalePrice > 0 ? product.wholesalePrice : Math.round(baseRetail * 0.8));
-                      const baseUnitPrice = customerMode === 'WHOLESALE' ? baseWholesale : baseRetail;
-                      const baseUnitPriceTHB = customerMode === 'WHOLESALE'
-                        ? (activeVar?.wholesalePriceTHB || product.wholesalePriceTHB || null)
-                        : (activeVar?.priceTHB || product.priceTHB || null);
+                      const { activePrice: baseUnitPrice, activePriceTHB: baseUnitPriceTHB } = getActiveBasePricing();
 
                       let currentPricePerUnit = baseUnitPrice;
                       let currentPriceTHBPerUnit: number | null = baseUnitPriceTHB;
@@ -724,7 +923,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                             
                             <div className="text-right ml-auto">
                               <span className="text-[10px] text-zinc-400 block font-medium">{isLao ? 'ລວມມູນຄ່າ:' : 'Tạm tính:'}</span>
-                              <span className="text-base sm:text-lg font-black text-blue-700 font-mono block">
+                              <span className="text-base sm:text-lg font-black text-[#ee4d2d] font-mono block">
                                 {formatPrice(subtotal)}
                               </span>
                               {subtotalTHB && (
@@ -738,22 +937,35 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                       );
                     })()}
 
-                    {/* Action Buttons */}
+                    {/* Action Buttons Shopee Style */}
                     <div className="pt-4 flex flex-col sm:flex-row gap-3">
                       <button
                         onClick={handleAddToCart}
                         disabled={isOutOfStock}
-                        className="flex-1 py-3.5 px-6 rounded-2xl bg-zinc-100 hover:bg-blue-50 hover:text-blue-600 text-zinc-800 font-bold text-sm transition flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="flex-1 py-3.5 px-6 rounded-2xl border-2 border-[#ee4d2d] bg-[#fff5f3] hover:bg-[#ffe3db] text-[#ee4d2d] font-bold text-sm transition flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 shadow-xs"
                       >
-                        <ShoppingBag className="w-4 h-4" />
-                        {t('add_to_cart')}
+                        <ShoppingCart className="w-5 h-5 text-[#ee4d2d]" />
+                        <span>{isLao ? 'ເພີ່ມໃສ່ກະຕ່າ' : 'Thêm Vào Giỏ Hàng'}</span>
                       </button>
                       <button
                         onClick={handleBuyNow}
                         disabled={isOutOfStock}
-                        className="flex-1 py-3.5 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/20 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#ee4d2d] to-[#ff5722] hover:from-[#d73211] hover:to-[#e64a19] text-white font-bold text-sm shadow-md shadow-orange-500/25 transition flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95"
                       >
-                        {t('buy_now')}
+                        <span>{isLao ? 'ຊື້ເລີຍ' : 'Mua Ngay'}</span>
+                        <span className="opacity-95 font-mono text-xs">({formatPrice(
+                          (() => {
+                            const { activePrice: baseUnitPrice } = getActiveBasePricing();
+                            const packQty = product.packQty || 6;
+                            const boxQty = product.boxQty || 10;
+                            const cartonQty = product.cartonQty || 50;
+                            let pUnit = baseUnitPrice;
+                            if (selectedUnit === 'PACK') pUnit = product.packPrice && product.packPrice > 0 ? product.packPrice : baseUnitPrice * packQty;
+                            else if (selectedUnit === 'BOX') pUnit = product.boxPrice && product.boxPrice > 0 ? product.boxPrice : baseUnitPrice * boxQty;
+                            else if (selectedUnit === 'CARTON') pUnit = product.cartonPrice && product.cartonPrice > 0 ? product.cartonPrice : baseUnitPrice * cartonQty;
+                            return pUnit * quantity;
+                          })()
+                        )})</span>
                       </button>
                     </div>
                   </>
@@ -793,15 +1005,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
       {/* Mobile Sticky Bottom Action Bar (Fixed above bottom nav) */}
       {(() => {
-        const activeVar = product.variants?.find(v => v.id === selectedVariantId) || (product.variants && product.variants[0]);
-        const baseRetail = (activeVar && activeVar.price && activeVar.price > 0) ? activeVar.price : product.price;
-        const baseWholesale = (activeVar && activeVar.wholesalePrice && activeVar.wholesalePrice > 0)
-          ? activeVar.wholesalePrice
-          : (product.wholesalePrice !== undefined && product.wholesalePrice > 0 ? product.wholesalePrice : Math.round(baseRetail * 0.8));
-        const baseUnitPrice = customerMode === 'WHOLESALE' ? baseWholesale : baseRetail;
-        const baseUnitPriceTHB = customerMode === 'WHOLESALE'
-          ? (activeVar?.wholesalePriceTHB || product.wholesalePriceTHB || null)
-          : (activeVar?.priceTHB || product.priceTHB || null);
+        const { activePrice: baseUnitPrice, activePriceTHB: baseUnitPriceTHB } = getActiveBasePricing();
 
         let activePrice = baseUnitPrice;
         let activePriceTHB: number | null = baseUnitPriceTHB;
@@ -837,7 +1041,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             <div className="flex flex-col min-w-0 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className={`text-base font-black font-mono leading-tight truncate ${
-                  customerMode === 'WHOLESALE' ? 'text-amber-600' : 'text-blue-600'
+                  customerMode === 'WHOLESALE' ? 'text-amber-600' : 'text-[#ee4d2d]'
                 }`}>
                   {formatPrice(activePrice)}
                 </span>
@@ -857,20 +1061,20 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               </span>
             </div>
 
-            {/* Action Buttons */}
+            {/* Action Buttons Shopee Style */}
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={handleAddToCart}
                 disabled={isOutOfStock}
-                className="p-2.5 rounded-xl bg-zinc-100 active:bg-zinc-200 text-zinc-800 font-bold text-xs flex items-center justify-center active:scale-95 disabled:opacity-50 transition"
+                className="p-2.5 rounded-xl border border-[#ee4d2d] bg-[#fff5f3] active:bg-[#ffe3db] text-[#ee4d2d] font-bold text-xs flex items-center justify-center active:scale-95 disabled:opacity-50 transition"
                 title={t('add_to_cart')}
               >
-                <ShoppingBag className="w-5 h-5 text-zinc-700" />
+                <ShoppingCart className="w-5 h-5 text-[#ee4d2d]" />
               </button>
               <button
                 onClick={handleBuyNow}
                 disabled={isOutOfStock}
-                className="py-2.5 px-4.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 active:from-blue-700 active:to-indigo-700 text-white font-bold text-xs shadow-md shadow-blue-600/20 transition active:scale-95 disabled:opacity-50 whitespace-nowrap"
+                className="py-2.5 px-4.5 rounded-xl bg-gradient-to-r from-[#ee4d2d] to-[#ff5722] active:from-[#d73211] active:to-[#e64a19] text-white font-bold text-xs shadow-md shadow-orange-500/20 transition active:scale-95 disabled:opacity-50 whitespace-nowrap"
               >
                 {t('buy_now')}
               </button>

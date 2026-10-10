@@ -12,6 +12,8 @@ export interface AddToCartExtraOptions {
   variantId?: string;
   variantName?: string;
   variantImage?: string;
+  tier1Value?: string;
+  tier2Value?: string;
   selectedColor?: string;
   selectedSize?: string;
 }
@@ -186,13 +188,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const variantId = options?.variantId;
     const variantName = options?.variantName;
     const variantImage = options?.variantImage;
-    const itemId = `${product.id}_${unit}_${variantId || 'def'}_${selectedColor || 'def'}_${selectedSize || 'def'}`;
+    const tier1Value = options?.tier1Value;
+    const tier2Value = options?.tier2Value;
+    const itemId = `${product.id}_${unit}_${variantId || 'def'}_${tier1Value || 'def'}_${tier2Value || 'def'}_${selectedColor || 'def'}_${selectedSize || 'def'}`;
 
     const existingIndex = cart.findIndex(
       item => item.id === itemId || 
       (item.product.id === product.id && 
        (item.unit || 'PIECE') === unit && 
        (item.variantId || '') === (variantId || '') &&
+       (item.tier1Value || '') === (tier1Value || '') &&
+       (item.tier2Value || '') === (tier2Value || '') &&
        (item.selectedColor || '') === (selectedColor || '') && 
        (item.selectedSize || '') === (selectedSize || ''))
     );
@@ -220,6 +226,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         variantId,
         variantName,
         variantImage,
+        tier1Value,
+        tier2Value,
         selectedColor,
         selectedSize,
       };
@@ -238,6 +246,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         variantId,
         variantName,
         variantImage,
+        tier1Value,
+        tier2Value,
         selectedColor,
         selectedSize,
       });

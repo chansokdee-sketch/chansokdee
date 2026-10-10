@@ -708,6 +708,8 @@ export const db = {
         variantId?: string;
         variantName?: string;
         variantImage?: string;
+        tier1Value?: string;
+        tier2Value?: string;
         selectedColor?: string; 
         selectedSize?: string; 
       }[];
@@ -825,6 +827,8 @@ export const db = {
           variantImage: item.variantImage || variant?.image,
           selectedColor: item.selectedColor,
           selectedSize: item.selectedSize,
+          tier1Value: item.tier1Value,
+          tier2Value: item.tier2Value,
         });
       }
 

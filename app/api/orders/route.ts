@@ -43,6 +43,8 @@ export async function POST(req: NextRequest) {
         variantImage: i.variantImage,
         selectedColor: i.selectedColor,
         selectedSize: i.selectedSize,
+        tier1Value: i.tier1Value,
+        tier2Value: i.tier2Value,
       })),
     });
 

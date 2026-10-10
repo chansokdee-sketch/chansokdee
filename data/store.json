@@ -318,10 +318,55 @@
       "nameLao": "ລິບສະຕິກ Dior Rouge Dior Forever Matte 999 Velvet ແດງຄລາສສິກ",
       "descriptionLao": "ຕຳນານສີແດງສຸດຫຼູຫຼາຈາກແບຣນ Dior ຝຣັ່ງ. ສູດຕິດທົນບໍ່ເລິະຕະຫຼອດ 16 ຊົ່ວໂມງ, ສານສະກັດຈາກດອກໂບຕັນແດງບຳລຸງຮິມສົບນຸ່ມນຽນຕະຫຼອດມື້.",
       "wholesalePrice": 920000,
+      "priceTHB": 1770,
+      "wholesalePriceTHB": 1415,
       "minWholesaleQty": 3,
       "packQty": 6,
       "boxQty": 12,
-      "cartonQty": 60
+      "cartonQty": 60,
+      "tier1Name": "Màu Sắc",
+      "tier1Options": [
+        {
+          "id": "t1-dior-999",
+          "name": "[999] Đỏ Velvet",
+          "image": "https://images.unsplash.com/photo-1586495777744-4413f21062fa?q=80&w=1000&auto=format&fit=crop",
+          "price": 1150000,
+          "priceTHB": 1770
+        },
+        {
+          "id": "t1-dior-772",
+          "name": "[772] Hồng Đất",
+          "image": "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?q=80&w=1000&auto=format&fit=crop",
+          "price": 1150000,
+          "priceTHB": 1770
+        },
+        {
+          "id": "t1-dior-840",
+          "name": "[840] Đỏ Gạch",
+          "image": "https://images.unsplash.com/photo-1625093742435-6fa192b6fb10?q=80&w=1000&auto=format&fit=crop",
+          "price": 1150000,
+          "priceTHB": 1770
+        }
+      ],
+      "tier2Name": "Dòng Sản Phẩm",
+      "tier2Options": [
+        {
+          "id": "t2-matte",
+          "name": "Dòng Matte Lì"
+        },
+        {
+          "id": "t2-velvet",
+          "name": "Dòng Velvet Mịn",
+          "priceBonus": 50000,
+          "priceBonusTHB": 80
+        },
+        {
+          "id": "t2-satin",
+          "name": "Dòng Satin Bóng",
+          "priceBonus": 50000,
+          "priceBonusTHB": 80
+        }
+      ]
     },
     {
       "id": "prod-4",
@@ -772,7 +817,7 @@
       ],
       "id": "prod-1791616486979",
       "createdAt": "2026-10-10T07:14:46.979Z",
-      "updatedAt": "2026-10-10T09:22:08.130Z",
+      "updatedAt": "2026-10-10T09:45:38.854Z",
       "packQty": 3,
       "boxQty": 10,
       "cartonQty": 12,
@@ -789,7 +834,9 @@
           "price": 59000,
           "priceTHB": 90
         }
-      ]
+      ],
+      "priceTHB": 90,
+      "wholesalePriceTHB": 90
     }
   ],
   "orders": [

@@ -166,6 +166,8 @@ export default function CartPage() {
             variantId: item.variantId,
             variantName: item.variantName,
             variantImage: item.variantImage,
+            tier1Value: item.tier1Value,
+            tier2Value: item.tier2Value,
             selectedColor: item.selectedColor,
             selectedSize: item.selectedSize,
           })),
@@ -371,6 +373,16 @@ export default function CartPage() {
                             {item.variantName && (
                               <span className="text-[10px] font-bold bg-pink-50 text-pink-700 px-2 py-0.5 rounded-md border border-pink-200">
                                 🏷️ {item.variantName}
+                              </span>
+                            )}
+                            {item.tier1Value && !item.variantName?.includes(item.tier1Value) && (
+                              <span className="text-[10px] font-bold bg-rose-50 text-rose-700 px-2 py-0.5 rounded-md border border-rose-200">
+                                🎨 {item.tier1Value}
+                              </span>
+                            )}
+                            {item.tier2Value && !item.variantName?.includes(item.tier2Value) && (
+                              <span className="text-[10px] font-bold bg-purple-50 text-purple-700 px-2 py-0.5 rounded-md border border-purple-200">
+                                ⚖️ {item.tier2Value}
                               </span>
                             )}
                             {item.selectedColor && (

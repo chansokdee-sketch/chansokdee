@@ -60,6 +60,21 @@ export interface ProductVariant {
   stock?: number;           // Số lượng tồn kho riêng
 }
 
+export interface ProductTier1Option {
+  id: string;
+  name: string;             // Tên lựa chọn nhóm 1 (Ví dụ: "[2-1-1] Xám Nhung", "Đỏ", "Hương Hoa")
+  image?: string;           // Ảnh thumbnail gắn với lựa chọn
+  price?: number;           // Giá tiền Kíp riêng (nếu có)
+  priceTHB?: number;        // Giá tiền Baht riêng (nếu có)
+}
+
+export interface ProductTier2Option {
+  id: string;
+  name: string;             // Tên lựa chọn nhóm 2 (Ví dụ: "100ml", "500g", "15 Pro Max", "Dòng Trắng Da")
+  priceBonus?: number;      // Giá cộng thêm tiền Kíp (nếu có)
+  priceBonusTHB?: number;   // Giá cộng thêm tiền Baht (nếu có)
+}
+
 export type PackagingUnit = 'PIECE' | 'PACK' | 'BOX' | 'CARTON'; // 'PIECE' = Cái (ອັນ), 'PACK' = Lốc (ແພັກ), 'BOX' = Hộp (ກ່ອງ), 'CARTON' = Thùng (ລັງ)
 
 export interface Product {
@@ -95,7 +110,13 @@ export interface Product {
   cartonPriceTHB?: number;    // Giá bán 1 Thùng (฿ THB)
   cartonWholesalePrice?: number;
 
-  variants?: ProductVariant[];// Phân loại: ở mỗi ảnh có thể thêm tên hoặc giá riêng
+  // Phân loại đa cấp (Shopee 2-tier Style):
+  tier1Name?: string;         // Tên Nhóm 1 (Ví dụ: "Màu Sắc", "Mẫu Mã")
+  tier1Options?: ProductTier1Option[]; // Danh sách lựa chọn nhóm 1 (kèm ảnh)
+  tier2Name?: string;         // Tên Nhóm 2 (Ví dụ: "Trọng Lượng (ml, g)", "Dòng Sản Phẩm", "Dung Tích")
+  tier2Options?: ProductTier2Option[]; // Danh sách lựa chọn nhóm 2
+
+  variants?: ProductVariant[];// Phân loại biến thể phẳng tương thích
   colors?: string[];          // Danh sách màu sắc tương thích cũ
   sizes?: string[];           // Danh sách kích cỡ tương thích cũ
   stock: number;
@@ -127,6 +148,8 @@ export interface OrderItem {
   variantId?: string;
   variantName?: string;
   variantImage?: string;
+  tier1Value?: string;
+  tier2Value?: string;
   selectedColor?: string;
   selectedSize?: string;
 }
@@ -167,6 +190,8 @@ export interface CartItem {
   variantId?: string;         // Mã phân loại đã chọn (Shopee style)
   variantName?: string;       // Tên phân loại đã chọn
   variantImage?: string;      // Ảnh riêng của phân loại đã chọn
+  tier1Value?: string;        // Giá trị nhóm 1 đã chọn (Ví dụ: "Xám Nhung")
+  tier2Value?: string;        // Giá trị nhóm 2 đã chọn (Ví dụ: "100ml", "500g", "15 Pro Max")
   selectedColor?: string;     // Màu sắc đã chọn
   selectedSize?: string;      // Kích cỡ/dung tích đã chọn
 }
