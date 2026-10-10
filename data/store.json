@@ -265,12 +265,7 @@
       "minWholesaleQty": 3,
       "packQty": 6,
       "boxQty": 10,
-      "cartonQty": 50,
-      "sizes": [
-        "30ml",
-        "50ml",
-        "100ml"
-      ]
+      "cartonQty": 50
     },
     {
       "id": "prod-2",
@@ -298,11 +293,7 @@
       "minWholesaleQty": 3,
       "packQty": 6,
       "boxQty": 10,
-      "cartonQty": 50,
-      "sizes": [
-        "50ml",
-        "100ml"
-      ]
+      "cartonQty": 50
     },
     {
       "id": "prod-3",
@@ -330,12 +321,7 @@
       "minWholesaleQty": 3,
       "packQty": 6,
       "boxQty": 12,
-      "cartonQty": 60,
-      "colors": [
-        "Đỏ 999 Velvet",
-        "Cam Cháy 777",
-        "Hồng Đào 525"
-      ]
+      "cartonQty": 60
     },
     {
       "id": "prod-4",
@@ -363,11 +349,7 @@
       "minWholesaleQty": 3,
       "packQty": 4,
       "boxQty": 8,
-      "cartonQty": 32,
-      "sizes": [
-        "50ml",
-        "100ml"
-      ]
+      "cartonQty": 32
     },
     {
       "id": "prod-5",
@@ -785,16 +767,29 @@
       "subCategoryNameLao": "ເຊຣັ່ມ & ຫົວເຊື້ອ",
       "status": "ACTIVE",
       "images": [
-        "/uploads/phone-upload-1791616388650-iq9unf.jpg"
+        "/uploads/phone-upload-1791616388650-iq9unf.jpg",
+        "/uploads/phone-upload-1791624060922-fpu5o8.webp"
       ],
       "id": "prod-1791616486979",
       "createdAt": "2026-10-10T07:14:46.979Z",
-      "updatedAt": "2026-10-10T08:06:32.124Z",
+      "updatedAt": "2026-10-10T09:22:08.130Z",
       "packQty": 3,
       "boxQty": 10,
       "cartonQty": 12,
       "packPrice": 15000,
-      "cartonPrice": 60000
+      "cartonPrice": 60000,
+      "hasPack": true,
+      "hasBox": false,
+      "hasCarton": true,
+      "variants": [
+        {
+          "id": "var-1791624042688-z264",
+          "name": "đen",
+          "image": "/uploads/phone-upload-1791624060922-fpu5o8.webp",
+          "price": 59000,
+          "priceTHB": 90
+        }
+      ]
     }
   ],
   "orders": [

@@ -25,8 +25,6 @@ import {
   Phone,
   ShoppingCart,
   Edit3,
-  Palette,
-  Maximize2,
   Layers
 } from 'lucide-react';
 import { PackagingUnit, ProductVariant } from '@/lib/types';
@@ -43,8 +41,6 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [selectedImage, setSelectedImage] = useState<string>('');
   const [selectedVariantId, setSelectedVariantId] = useState<string>('');
   const [selectedUnit, setSelectedUnit] = useState<PackagingUnit>('PIECE');
-  const [selectedColor, setSelectedColor] = useState<string>('');
-  const [selectedSize, setSelectedSize] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -64,12 +60,6 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             if (data.product.variants[0].image) {
               setSelectedImage(data.product.variants[0].image);
             }
-          }
-          if (data.product.colors && data.product.colors.length > 0) {
-            setSelectedColor(data.product.colors[0]);
-          }
-          if (data.product.sizes && data.product.sizes.length > 0) {
-            setSelectedSize(data.product.sizes[0]);
           }
         } else {
           setError(data.error || 'Không tìm thấy sản phẩm');
@@ -93,8 +83,6 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       variantId: selectedVariant?.id,
       variantName: selectedVariant?.name,
       variantImage: selectedVariant?.image,
-      selectedColor: selectedColor || undefined,
-      selectedSize: selectedSize || undefined,
     });
     setNotification(res.message);
     setTimeout(() => setNotification(null), 3000);
@@ -109,8 +97,6 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       variantId: selectedVariant?.id,
       variantName: selectedVariant?.name,
       variantImage: selectedVariant?.image,
-      selectedColor: selectedColor || undefined,
-      selectedSize: selectedSize || undefined,
     });
     router.push('/cart');
   };
@@ -435,7 +421,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 ) : (
                   <>
                     {/* Phân loại biến thể Shopee style */}
-                    {product.variants && product.variants.length > 0 ? (
+                    {product.variants && product.variants.length > 0 && (
                       <div className="space-y-2 pt-2">
                         <div className="flex items-center justify-between text-xs font-bold text-zinc-700">
                           <span className="flex items-center gap-1.5">
@@ -512,80 +498,6 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                           })}
                         </div>
                       </div>
-                    ) : (
-                      <>
-                        {/* Fallback cho sản phẩm cũ không có biến thể: Màu sắc & Size */}
-                        {product.colors && product.colors.length > 0 && (
-                          <div className="space-y-2 pt-2">
-                            <div className="flex items-center justify-between text-xs font-bold text-zinc-700">
-                              <span className="flex items-center gap-1.5">
-                                <Palette className="w-4 h-4 text-rose-500" />
-                                <span>{isLao ? 'ເລືອກສີສັນ:' : 'Chọn màu sắc:'}</span>
-                              </span>
-                              {selectedColor && (
-                                <span className="text-rose-600 font-extrabold text-[11px] bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
-                                  {selectedColor}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {product.colors.map(color => {
-                                const isSelected = selectedColor === color;
-                                return (
-                                  <button
-                                    key={color}
-                                    type="button"
-                                    onClick={() => setSelectedColor(color)}
-                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border ${
-                                      isSelected
-                                        ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs ring-2 ring-zinc-400'
-                                        : 'bg-white text-zinc-700 hover:bg-zinc-100 border-zinc-200'
-                                    }`}
-                                  >
-                                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
-                                    <span>{color}</span>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-
-                        {product.sizes && product.sizes.length > 0 && (
-                          <div className="space-y-2 pt-2">
-                            <div className="flex items-center justify-between text-xs font-bold text-zinc-700">
-                              <span className="flex items-center gap-1.5">
-                                <Maximize2 className="w-4 h-4 text-blue-500" />
-                                <span>{isLao ? 'ເລືອກຂະໜາດ / ປະລິມານ:' : 'Chọn kích cỡ / dung tích:'}</span>
-                              </span>
-                              {selectedSize && (
-                                <span className="text-blue-600 font-extrabold text-[11px] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                                  {selectedSize}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {product.sizes.map(size => {
-                                const isSelected = selectedSize === size;
-                                return (
-                                  <button
-                                    key={size}
-                                    type="button"
-                                    onClick={() => setSelectedSize(size)}
-                                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition border ${
-                                      isSelected
-                                        ? 'bg-blue-600 text-white border-blue-600 shadow-xs ring-2 ring-blue-300 font-extrabold'
-                                        : 'bg-white text-zinc-700 hover:bg-zinc-100 border-zinc-200'
-                                    }`}
-                                  >
-                                    {size}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                      </>
                     )}
 
                     {/* Mục Chọn Quy Cách Đóng Gói (Cái / Lốc / Hộp / Thùng) - CHỈ HIỆN CÁC Ô ĐÃ ĐƯỢC TICK CHỌN */}
