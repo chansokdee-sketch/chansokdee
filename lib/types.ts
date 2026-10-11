@@ -86,10 +86,12 @@ export interface Product {
   slug: string;
   description: string;
   descriptionLao?: string;
-  price: number;              // Giá bán lẻ theo cái tiền Kíp (Retail Price LAK)
-  priceTHB?: number;          // Giá bán lẻ tiền Baht (Retail Price THB) - nếu có thì được thanh toán bằng Baht
-  wholesalePrice?: number;    // Giá bán sỉ theo cái tiền Kíp (Wholesale Price LAK)
-  wholesalePriceTHB?: number; // Giá bán sỉ tiền Baht (Wholesale Price THB)
+  price: number;              // Giá bán lẻ theo cái tiền Kíp (Retail Price LAK - Giá 1)
+  priceTHB?: number;          // Giá bán lẻ tiền Baht (Retail Price THB - Giá 4)
+  wholesalePrice?: number;    // Giá bán sỉ theo cái tiền Kíp (Wholesale Price LAK - Giá 3)
+  wholesalePriceTHB?: number; // Giá bán sỉ tiền Baht (Wholesale Price THB - Giá 5)
+  costPrice?: number;         // Giá vốn tiền Kíp (Cost Price LAK - Giá 6, chỉ Boss & Quản lý xem)
+  costPriceTHB?: number;      // Giá vốn tiền Baht (Cost Price THB - Giá 6, chỉ Boss & Quản lý xem)
   minWholesaleQty?: number;   // Số lượng tối thiểu để tính giá sỉ (mặc định 3 hoặc 5)
   
   // Tùy chọn bật/tắt (ô tick) quy cách đóng gói:

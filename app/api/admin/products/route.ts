@@ -13,9 +13,14 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get('search') || undefined;
     const categoryId = searchParams.get('category') || undefined;
 
-    // Staff & Admin see all products (ACTIVE and HIDDEN)
-    const products = db.products.findMany({ search, categoryId });
-    return NextResponse.json({ products });
+    const isBossOrManager = authRes.user.role === 'ADMIN' || authRes.user.role === 'MANAGER';
+
+    // Staff & Admin see all products (ACTIVE and HIDDEN), but costPrice is restricted
+    let products = db.products.findMany({ search, categoryId });
+    if (!isBossOrManager) {
+      products = products.map(({ costPrice, costPriceTHB, ...rest }) => rest as any);
+    }
+    return NextResponse.json({ products, canViewCost: isBossOrManager });
   } catch (error) {
     console.error('Admin get products error:', error);
     return NextResponse.json({ error: 'Không thể tải danh sách sản phẩm' }, { status: 500 });
@@ -29,6 +34,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: authRes.error }, { status: authRes.status });
     }
 
+    const isBossOrManager = authRes.user.role === 'ADMIN' || authRes.user.role === 'MANAGER';
+
     const body = await req.json();
     const { 
       name, 
@@ -40,6 +47,8 @@ export async function POST(req: NextRequest) {
       priceTHB,
       wholesalePrice,
       wholesalePriceTHB,
+      costPrice,
+      costPriceTHB,
       minWholesaleQty,
       baseUnitName,
       baseUnitNameLao,
@@ -112,6 +121,8 @@ export async function POST(req: NextRequest) {
       priceTHB: numPriceTHB,
       wholesalePrice: numWholesale,
       wholesalePriceTHB: numWholesaleTHB,
+      costPrice: isBossOrManager && costPrice && Number(costPrice) > 0 ? Number(costPrice) : undefined,
+      costPriceTHB: isBossOrManager && costPriceTHB && Number(costPriceTHB) > 0 ? Number(costPriceTHB) : undefined,
       minWholesaleQty: numMinQty,
       baseUnitName: baseUnitName?.trim() || undefined,
       baseUnitNameLao: baseUnitNameLao?.trim() || undefined,

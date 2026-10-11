@@ -10,14 +10,16 @@ export async function GET(req: NextRequest) {
     const subCategoryId = searchParams.get('subCategory') || undefined;
     const sort = searchParams.get('sort') || undefined;
 
-    // Public API only returns ACTIVE products
-    const products = db.products.findMany({
+    // Public API only returns ACTIVE products and NEVER exposes costPrice (giá vốn)
+    const rawProducts = db.products.findMany({
       status: 'ACTIVE',
       search,
       categoryId,
       subCategoryId,
       sort,
     });
+
+    const products = rawProducts.map(({ costPrice, costPriceTHB, ...rest }) => rest);
 
     return NextResponse.json({ products });
   } catch (error) {

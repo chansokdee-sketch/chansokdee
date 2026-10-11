@@ -30,8 +30,10 @@ import {
   Layers,
   Scale,
   Zap,
-  Copy
+  Copy,
+  Lock
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 // Kho ảnh mẫu mỹ phẩm cao cấp có sẵn (1 chạm để thêm ảnh nhanh)
 const PRESET_BEAUTY_IMAGES = [
@@ -104,6 +106,10 @@ export interface ShopeeItemVariant {
 }
 
 export default function AdminProductsPage() {
+  const { user } = useAuth();
+  const [canViewCost, setCanViewCost] = useState(false);
+  const isBossOrManager = user?.role === 'ADMIN' || user?.role === 'MANAGER' || canViewCost;
+
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,15 +120,17 @@ export default function AdminProductsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
-  // Form State (Hỗ trợ 2 bảng giá: Giá lẻ & Giá sỉ bằng Kíp Lào ₭ và Baht Thái ฿, cùng ô tick quy cách)
+  // Form State (Hỗ trợ các bảng giá: Giá lẻ 1 & 4, Giá sỉ 3 & 5, Giá vốn 6)
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
     description: '',
-    price: '',              // Giá bán lẻ Kíp (Khách lẻ)
-    priceTHB: '',           // Giá bán lẻ Baht (nếu có thì hỗ trợ thanh toán Baht)
-    wholesalePrice: '',     // Giá bán sỉ Kíp (Khách sỉ)
-    wholesalePriceTHB: '',  // Giá bán sỉ Baht
+    price: '',              // Giá bán lẻ Kíp (Giá thứ 1)
+    priceTHB: '',           // Giá bán lẻ Baht (Giá thứ 4)
+    wholesalePrice: '',     // Giá bán sỉ Kíp (Giá thứ 3)
+    wholesalePriceTHB: '',  // Giá bán sỉ Baht (Giá thứ 5)
+    costPrice: '',          // Giá vốn Kíp (Giá thứ 6 - chỉ Boss & Quản lý)
+    costPriceTHB: '',       // Giá vốn Baht (Giá thứ 6 - chỉ Boss & Quản lý)
     minWholesaleQty: '3',   // Số lượng tối thiểu tính giá sỉ
     
     // Đơn vị tính cơ sở (Cái, Gói, Tuýp, Chai, Hũ, Miếng, Lon...)
@@ -344,6 +352,8 @@ export default function AdminProductsPage() {
     priceTHB: '',
     wholesalePrice: '',
     wholesalePriceTHB: '',
+    costPrice: '',
+    costPriceTHB: '',
   });
   const [quickModalSaving, setQuickModalSaving] = useState(false);
 
@@ -413,6 +423,7 @@ export default function AdminProductsPage() {
       const [prodData, catData] = await Promise.all([prodRes.json(), catRes.json()]);
 
       if (prodData.products) setProducts(prodData.products);
+      if (prodData.canViewCost !== undefined) setCanViewCost(Boolean(prodData.canViewCost));
       if (catData.categories) {
         setCategories(catData.categories);
         if (catData.categories.length > 0 && !formData.categoryId) {
@@ -450,6 +461,8 @@ export default function AdminProductsPage() {
       priceTHB: '',
       wholesalePrice: '',
       wholesalePriceTHB: '',
+      costPrice: '',
+      costPriceTHB: '',
       minWholesaleQty: '3',
       baseUnitName: 'Cái',
       hasPack: false,
@@ -503,6 +516,8 @@ export default function AdminProductsPage() {
       priceTHB: p.priceTHB ? p.priceTHB.toString() : '',
       wholesalePrice: wholesale.toString(),
       wholesalePriceTHB: p.wholesalePriceTHB ? p.wholesalePriceTHB.toString() : '',
+      costPrice: p.costPrice ? p.costPrice.toString() : '',
+      costPriceTHB: p.costPriceTHB ? p.costPriceTHB.toString() : '',
       minWholesaleQty: minQty.toString(),
       baseUnitName: p.baseUnitName || 'Cái',
       hasPack: Boolean(p.hasPack || (p.packPrice && p.packPrice > 0)),
@@ -587,6 +602,8 @@ export default function AdminProductsPage() {
       priceTHB: p.priceTHB ? p.priceTHB.toString() : '',
       wholesalePrice: wholesale.toString(),
       wholesalePriceTHB: p.wholesalePriceTHB ? p.wholesalePriceTHB.toString() : '',
+      costPrice: p.costPrice ? p.costPrice.toString() : '',
+      costPriceTHB: p.costPriceTHB ? p.costPriceTHB.toString() : '',
       minWholesaleQty: minQty.toString(),
       baseUnitName: p.baseUnitName || 'Cái',
       hasPack: Boolean(p.hasPack || (p.packPrice && p.packPrice > 0)),
@@ -845,6 +862,8 @@ export default function AdminProductsPage() {
       priceTHB,
       wholesalePrice,
       wholesalePriceTHB,
+      costPrice: isBossOrManager && formData.costPrice && Number(formData.costPrice) > 0 ? Number(formData.costPrice) : undefined,
+      costPriceTHB: isBossOrManager && formData.costPriceTHB && Number(formData.costPriceTHB) > 0 ? Number(formData.costPriceTHB) : undefined,
       minWholesaleQty,
       baseUnitName: formData.baseUnitName?.trim() || 'Cái',
       hasPack: formData.hasPack,
@@ -1043,6 +1062,8 @@ export default function AdminProductsPage() {
       priceTHB: p.priceTHB ? p.priceTHB.toString() : '',
       wholesalePrice: wholesale.toString(),
       wholesalePriceTHB: p.wholesalePriceTHB ? p.wholesalePriceTHB.toString() : '',
+      costPrice: p.costPrice ? p.costPrice.toString() : '',
+      costPriceTHB: p.costPriceTHB ? p.costPriceTHB.toString() : '',
     });
   };
 
@@ -1065,6 +1086,10 @@ export default function AdminProductsPage() {
         wholesalePrice: !isNaN(wholesaleLAK) && wholesaleLAK > 0 ? wholesaleLAK : Math.round(retailLAK * 0.8),
         priceTHB: quickModalForm.priceTHB && Number(quickModalForm.priceTHB) > 0 ? Number(quickModalForm.priceTHB) : null,
         wholesalePriceTHB: quickModalForm.wholesalePriceTHB && Number(quickModalForm.wholesalePriceTHB) > 0 ? Number(quickModalForm.wholesalePriceTHB) : null,
+        ...(isBossOrManager && {
+          costPrice: quickModalForm.costPrice && Number(quickModalForm.costPrice) > 0 ? Number(quickModalForm.costPrice) : null,
+          costPriceTHB: quickModalForm.costPriceTHB && Number(quickModalForm.costPriceTHB) > 0 ? Number(quickModalForm.costPriceTHB) : null,
+        }),
       };
 
       const res = await fetch(`/api/admin/products/${quickModalProduct.id}`, {
@@ -1327,6 +1352,20 @@ export default function AdminProductsPage() {
                   </div>
                 </div>
 
+                {/* Giá Vốn (Giá 6 - Chỉ Boss & Quản lý xem) */}
+                {isBossOrManager && (p.costPriceTHB || p.costPrice) && (
+                  <div className="flex items-center justify-between px-2.5 py-1.5 bg-rose-950/30 rounded-xl border border-rose-800/40 text-xs">
+                    <span className="text-[10px] text-rose-300 font-semibold flex items-center gap-1">
+                      <Lock className="w-3 h-3 text-rose-400" />
+                      <span>Giá vốn (Giá 6)</span>
+                      <span className="text-[9px] bg-rose-500/20 text-rose-300 px-1 rounded">Boss/QL 🔒</span>
+                    </span>
+                    <span className="font-mono font-bold text-rose-400">
+                      {p.costPriceTHB ? `${p.costPriceTHB} ฿` : ''} {p.costPrice ? `(${formatPriceLAK(p.costPrice)})` : ''}
+                    </span>
+                  </div>
+                )}
+
                 {/* Footer: Tồn kho + Trạng thái ẩn/hiện + Thao tác */}
                 <div className="flex items-center justify-between gap-2 pt-1 border-t border-zinc-800/70">
                   <div className="flex items-center gap-2">
@@ -1403,10 +1442,19 @@ export default function AdminProductsPage() {
                 <th className="py-4 px-4 font-semibold text-amber-400">
                   <div className="flex items-center gap-1">
                     <Boxes className="w-3 h-3" />
-                    <span>Giá bán sỉ (ສົ່ງ)</span>
+                    <span>Giá bán sỉ (Giá 3 & 5)</span>
                     <span className="text-[9px] text-amber-500/70 font-normal lowercase ml-0.5 hidden xl:inline">(click để sửa)</span>
                   </div>
                 </th>
+                {isBossOrManager && (
+                  <th className="py-4 px-4 font-semibold text-rose-400">
+                    <div className="flex items-center gap-1">
+                      <Lock className="w-3 h-3 text-rose-400" />
+                      <span>Giá vốn (Giá 6)</span>
+                      <span className="text-[9px] bg-rose-500/20 text-rose-300 px-1 py-0.2 rounded border border-rose-500/30">Boss/QL 🔒</span>
+                    </div>
+                  </th>
+                )}
                 <th className="py-4 px-4 font-semibold">Tồn kho</th>
                 <th className="py-4 px-4 font-semibold">Trạng thái</th>
                 <th className="py-4 px-6 font-semibold text-right">Thao tác</th>
@@ -1682,6 +1730,37 @@ export default function AdminProductsPage() {
                         </div>
                       )}
                     </td>
+
+                    {isBossOrManager && (
+                      <td className="py-4 px-4">
+                        {p.costPriceTHB !== undefined && p.costPriceTHB > 0 ? (
+                          <div>
+                            <span className="font-bold text-rose-400 text-sm font-mono">
+                              {formatPriceTHB(p.costPriceTHB)}
+                            </span>
+                            {p.costPrice !== undefined && p.costPrice > 0 && (
+                              <div className="text-[11px] font-mono text-rose-300/80">
+                                {formatPriceLAK(p.costPrice)}
+                              </div>
+                            )}
+                            <span className="text-[9px] text-rose-400/80 bg-rose-500/10 px-1.5 py-0.2 rounded font-medium border border-rose-500/20 inline-block mt-0.5">
+                              Vốn Baht 🔒
+                            </span>
+                          </div>
+                        ) : p.costPrice !== undefined && p.costPrice > 0 ? (
+                          <div>
+                            <span className="font-bold text-rose-400 text-sm font-mono">
+                              {formatPriceLAK(p.costPrice)}
+                            </span>
+                            <span className="text-[9px] text-rose-400/80 bg-rose-500/10 px-1.5 py-0.2 rounded font-medium border border-rose-500/20 inline-block mt-0.5">
+                              Vốn Kíp 🔒
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-zinc-600 text-xs italic">Chưa có</span>
+                        )}
+                      </td>
+                    )}
 
                     <td className="py-4 px-4">
                       <span className={`font-bold ${isLow ? 'text-amber-400' : 'text-zinc-200'}`}>
@@ -2109,6 +2188,61 @@ export default function AdminProductsPage() {
                     />
                   </div>
                 </div>
+
+                {/* HÀNG 3: BẢNG GIÁ VỐN (GIÁ THỨ 6) - CHỈ BOSS & QUẢN LÝ */}
+                {isBossOrManager && (
+                  <div className="p-3.5 bg-rose-950/20 rounded-xl border border-rose-800/40 space-y-2 mt-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-rose-300 flex items-center gap-1.5">
+                        <Lock className="w-3.5 h-3.5 text-rose-400" />
+                        <span>Bảng Giá Vốn (Giá Thứ 6)</span>
+                        <span className="text-[10px] bg-rose-500/20 text-rose-300 px-1.5 py-0.5 rounded font-bold border border-rose-500/30">
+                          Chỉ Boss & Quản lý xem 🔒
+                        </span>
+                      </label>
+                      <span className="text-[10px] text-zinc-400">
+                        Nhân viên bán hàng và khách không xem được giá này
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      <div>
+                        <label className="block text-rose-300 font-bold mb-1 text-[11px]">
+                          Giá Vốn Tiền Baht (฿) (Nhập khẩu Thái)
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={formData.costPriceTHB}
+                            onChange={(e) => setFormData({ ...formData, costPriceTHB: e.target.value })}
+                            placeholder="Ví dụ: 35"
+                            className="w-full bg-zinc-900 border border-rose-800/60 rounded-xl px-3.5 py-2 pr-7 text-rose-300 font-mono font-bold focus:outline-none focus:border-rose-500 text-xs"
+                          />
+                          <span className="absolute right-2.5 top-2 text-rose-400 font-bold text-xs">฿</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-rose-300 font-bold mb-1 text-[11px]">
+                          Giá Vốn Tiền Kíp (₭)
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            min="0"
+                            value={formData.costPrice}
+                            onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
+                            placeholder="Ví dụ: 24000"
+                            className="w-full bg-zinc-900 border border-rose-800/60 rounded-xl px-3.5 py-2 pr-7 text-rose-300 font-mono font-bold focus:outline-none focus:border-rose-500 text-xs"
+                          />
+                          <span className="absolute right-2.5 top-2 text-rose-400 font-bold text-xs">₭</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* QUY CÁCH ĐÓNG GÓI: LỐC, HỘP, THÙNG (DÙNG Ô TICK, TỰ CHỈNH GIÁ, KHÔNG TỰ ĐỘNG TÍNH) */}
@@ -3347,6 +3481,50 @@ export default function AdminProductsPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Nhóm Giá Vốn (Chỉ Boss & Quản lý xem) */}
+              {isBossOrManager && (
+                <div className="p-3.5 bg-rose-950/25 rounded-2xl border border-rose-800/40 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <label className="font-bold text-rose-300 flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5 text-rose-400" />
+                      <span>Giá Vốn (Giá 6)</span>
+                      <span className="text-[10px] bg-rose-500/20 text-rose-300 px-1.5 py-0.5 rounded font-bold border border-rose-500/30">Boss/QL 🔒</span>
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] text-zinc-400 block mb-1">Vốn Baht (฿)</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={quickModalForm.costPriceTHB}
+                          onChange={(e) => setQuickModalForm({ ...quickModalForm, costPriceTHB: e.target.value })}
+                          placeholder="Ví dụ: 35"
+                          className="w-full bg-zinc-900 border border-rose-800/60 focus:border-rose-500 rounded-xl px-3 py-2 text-rose-300 font-mono font-bold outline-none"
+                        />
+                        <span className="absolute right-2.5 top-2 text-rose-400 font-bold">฿</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-zinc-400 block mb-1">Vốn Kíp (₭)</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min="0"
+                          value={quickModalForm.costPrice}
+                          onChange={(e) => setQuickModalForm({ ...quickModalForm, costPrice: e.target.value })}
+                          placeholder="Ví dụ: 24000"
+                          className="w-full bg-zinc-900 border border-rose-800/60 focus:border-rose-500 rounded-xl px-3 py-2 text-rose-300 font-mono font-bold outline-none"
+                        />
+                        <span className="absolute right-2.5 top-2 text-rose-400 font-bold">₭</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="pt-2 flex items-center justify-end gap-2.5 border-t border-zinc-800">
                 <button

@@ -18,7 +18,14 @@ export async function GET(
       return NextResponse.json({ error: 'Không tìm thấy sản phẩm' }, { status: 404 });
     }
 
-    return NextResponse.json({ product });
+    const isBossOrManager = authRes.user.role === 'ADMIN' || authRes.user.role === 'MANAGER';
+    let safeProduct = product;
+    if (!isBossOrManager) {
+      const { costPrice, costPriceTHB, ...rest } = product;
+      safeProduct = rest as any;
+    }
+
+    return NextResponse.json({ product: safeProduct, canViewCost: isBossOrManager });
   } catch (error) {
     console.error('Admin get product error:', error);
     return NextResponse.json({ error: 'Đã có lỗi xảy ra' }, { status: 500 });
@@ -35,6 +42,7 @@ export async function PUT(
       return NextResponse.json({ error: authRes.error }, { status: authRes.status });
     }
 
+    const isBossOrManager = authRes.user.role === 'ADMIN' || authRes.user.role === 'MANAGER';
     const { id } = await params;
     const body = await req.json();
 
@@ -48,6 +56,8 @@ export async function PUT(
       ...(body.priceTHB !== undefined && { priceTHB: Number(body.priceTHB) > 0 ? Number(body.priceTHB) : undefined }),
       ...(body.wholesalePrice !== undefined && { wholesalePrice: Math.max(0, Number(body.wholesalePrice)) }),
       ...(body.wholesalePriceTHB !== undefined && { wholesalePriceTHB: Number(body.wholesalePriceTHB) > 0 ? Number(body.wholesalePriceTHB) : undefined }),
+      ...(isBossOrManager && body.costPrice !== undefined && { costPrice: Number(body.costPrice) > 0 ? Number(body.costPrice) : undefined }),
+      ...(isBossOrManager && body.costPriceTHB !== undefined && { costPriceTHB: Number(body.costPriceTHB) > 0 ? Number(body.costPriceTHB) : undefined }),
       ...(body.minWholesaleQty !== undefined && { minWholesaleQty: Math.max(1, Number(body.minWholesaleQty) || 3) }),
       ...(body.baseUnitName !== undefined && { baseUnitName: body.baseUnitName?.trim() || undefined }),
       ...(body.baseUnitNameLao !== undefined && { baseUnitNameLao: body.baseUnitNameLao?.trim() || undefined }),

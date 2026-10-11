@@ -95,18 +95,33 @@ spRows.forEach((r, idx) => {
     activeCount++;
   }
 
-  // Giá Baht
+  // Giá thứ 1: Giá bán lẻ Kíp (Gia_Ban_1 đã có ở trên)
+
+  // Giá thứ 4: Giá bán lẻ Baht (Gia_Ban_4)
   const priceTHB = Number(r.Gia_Ban_4) > 0 ? Number(r.Gia_Ban_4) : undefined;
 
-  // Giá sỉ LAK
-  let wholesaleLAK = Number(r.Gia_Ban_2) > 0 
-    ? Number(r.Gia_Ban_2) 
-    : (Number(r.Gia_Ban_3) > 0 ? Number(r.Gia_Ban_3) : Math.round(priceLAK * 0.85));
+  // Giá thứ 3: Giá bán sỉ Kíp (Gia_Ban_3)
+  let wholesaleLAK = Number(r.Gia_Ban_3) > 0 
+    ? Number(r.Gia_Ban_3) 
+    : (Number(r.Gia_Ban_2) > 0 ? Number(r.Gia_Ban_2) : Math.round(priceLAK * 0.85));
 
-  // Giá sỉ THB
+  // Giá thứ 5: Giá bán sỉ Baht (Gia_Ban_5)
   let wholesaleTHB = Number(r.Gia_Ban_5) > 0 
     ? Number(r.Gia_Ban_5) 
-    : (priceTHB ? Math.round(priceTHB * 0.85) : undefined);
+    : undefined;
+
+  // Giá thứ 6: Giá vốn (Gia_Toi_Thieu / Gia_Von - Chỉ Boss & Quản lý xem)
+  let costPrice = undefined;
+  let costPriceTHB = undefined;
+  const rawGia6 = Number(r.Gia_Toi_Thieu) || Number(r.Gia_Von) || 0;
+  if (rawGia6 > 0) {
+    if (priceTHB && rawGia6 <= priceTHB * 2) {
+      costPriceTHB = rawGia6;
+      if (Number(r.Gia_Von) >= 1000) costPrice = Number(r.Gia_Von);
+    } else {
+      costPrice = rawGia6;
+    }
+  }
 
   // Nhóm hàng
   const nhomHangStr = String(r.Nhom_Hang || '').trim();
@@ -144,10 +159,12 @@ spRows.forEach((r, idx) => {
     slug: `sp-${r.ID || idx + 1}`,
     description: name,
     descriptionLao: name,
-    price: priceLAK,
-    priceTHB: priceTHB,
-    wholesalePrice: wholesaleLAK,
-    wholesalePriceTHB: wholesaleTHB,
+    price: priceLAK,               // Giá thứ 1: Giá lẻ Kíp
+    priceTHB: priceTHB,           // Giá thứ 4: Giá lẻ Bat
+    wholesalePrice: wholesaleLAK, // Giá thứ 3: Giá sỉ Kíp
+    wholesalePriceTHB: wholesaleTHB, // Giá thứ 5: Giá sỉ Bat
+    costPrice: costPrice,         // Giá thứ 6: Giá vốn Kíp (Chỉ Boss & Quản lý)
+    costPriceTHB: costPriceTHB,   // Giá thứ 6: Giá vốn Baht (Chỉ Boss & Quản lý)
     minWholesaleQty: 3,
     baseUnitName: baseUnit,
     baseUnitNameLao: baseUnit,
