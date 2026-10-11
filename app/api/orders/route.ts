@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       customerType: customerType === 'WHOLESALE' ? 'WHOLESALE' : 'RETAIL',
       shippingAddress: shippingAddress.trim(),
       note: note?.trim() || '',
-      currency: currency === 'THB' ? 'THB' : 'LAK',
+      currency: (currency === 'THB' || currency === 'MIXED') ? 'THB' : 'LAK',
       exchangeRate: typeof exchangeRate === 'number' && exchangeRate > 0 ? exchangeRate : undefined,
       items: items.map(i => ({
         productId: i.productId,

@@ -160,7 +160,7 @@ export interface OrderItem {
   selectedSize?: string;
 }
 
-export type Currency = 'LAK' | 'THB'; // 'LAK' = Tiền Kíp Lào (₭), 'THB' = Tiền Baht Thái (฿)
+export type Currency = 'LAK' | 'THB' | 'MIXED'; // 'LAK' = Tiền Kíp Lào (₭), 'THB' = Tiền Baht Thái (฿), 'MIXED' = Baht + Kíp
 
 export interface Order {
   id: string;
@@ -172,9 +172,11 @@ export interface Order {
   shippingAddress: string;
   note?: string;
   totalPrice: number;
-  currency?: Currency;        // Loại tiền khách chọn thanh toán ('LAK' hoặc 'THB')
-  totalPriceLAK?: number;    // Số tiền quy đổi sang Tiền Kíp (₭)
-  totalPriceTHB?: number;    // Số tiền quy đổi sang Tiền Baht (฿)
+  currency?: Currency;        // Loại tiền khách chọn thanh toán ('LAK', 'THB', hoặc 'MIXED')
+  totalPriceLAK?: number;    // Tiền Kíp (hoặc tổng quy đổi Kíp)
+  totalPriceTHB?: number;    // Tiền Baht (hoặc tổng quy đổi Baht)
+  paidTHB?: number;          // Tiền Baht thực tế khách thanh toán
+  paidLAK?: number;          // Tiền Kíp thực tế khách thanh toán
   exchangeRate?: number;     // Tỷ giá quy đổi tại thời điểm đặt đơn (1 THB = ... LAK)
   status: OrderStatus;
   items: OrderItem[];

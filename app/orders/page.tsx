@@ -205,13 +205,26 @@ export default function MyOrdersPage() {
                     </div>
 
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black border ${
-                        order.currency === 'THB'
-                          ? 'bg-amber-100 text-amber-800 border-amber-300'
-                          : 'bg-blue-100 text-blue-800 border-blue-300'
-                      }`}>
-                        {order.currency === 'THB' ? '฿ Tiền Baht (THB)' : '₭ Tiền Kíp (LAK)'}
-                      </span>
+                      {/* Badge Loại tiền */}
+                      {(() => {
+                        const isMixed = order.currency === 'MIXED' || (Boolean(order.paidTHB && order.paidTHB > 0) && Boolean(order.paidLAK && order.paidLAK > 0));
+                        if (isMixed) {
+                          return (
+                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black border bg-purple-100 text-purple-800 border-purple-300">
+                              ฿ + ₭ Baht & Kíp (Hỗn hợp)
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black border ${
+                            order.currency === 'THB'
+                              ? 'bg-amber-100 text-amber-800 border-amber-300'
+                              : 'bg-blue-100 text-blue-800 border-blue-300'
+                          }`}>
+                            {order.currency === 'THB' ? '฿ Tiền Baht (THB)' : '₭ Tiền Kíp (LAK)'}
+                          </span>
+                        );
+                      })()}
 
                       {/* Trạng thái đơn hàng */}
                       {isCancellable ? (
@@ -301,15 +314,25 @@ export default function MyOrdersPage() {
                                 </span>
                               )}
                               <span className="text-xs text-zinc-400">
-                                • {formatPrice(item.price)}
+                                • {order.currency === 'MIXED'
+                                    ? (item.priceTHB && item.priceTHB > 0 ? `${new Intl.NumberFormat('de-DE').format(item.priceTHB)} ฿` : formatPrice(item.price))
+                                    : order.currency === 'THB'
+                                    ? (item.priceTHB && item.priceTHB > 0 ? `${new Intl.NumberFormat('de-DE').format(item.priceTHB)} ฿` : formatPrice(item.price))
+                                    : formatPrice(item.price)}
                               </span>
                             </div>
                           </div>
                         </div>
 
                         <div className="text-right flex-shrink-0">
-                          <span className="text-xs sm:text-sm font-bold text-zinc-800">
-                            {formatPrice(item.price * (item.unitQuantity !== undefined ? item.unitQuantity : item.quantity))}
+                          <span className="text-xs sm:text-sm font-bold text-zinc-800 font-mono">
+                            {(() => {
+                              const qty = item.unitQuantity !== undefined ? item.unitQuantity : item.quantity;
+                              if ((order.currency === 'MIXED' || order.currency === 'THB') && item.priceTHB && item.priceTHB > 0) {
+                                return `${new Intl.NumberFormat('de-DE').format(item.priceTHB * qty)} ฿`;
+                              }
+                              return formatPrice(item.price * qty);
+                            })()}
                           </span>
                         </div>
                       </div>
@@ -326,16 +349,35 @@ export default function MyOrdersPage() {
                     <div className="flex items-center gap-3">
                       <div className="text-right">
                         <span className="text-zinc-500 text-[11px] block">{t('orders_total')}</span>
-                        <strong className="text-base font-black text-blue-600 font-mono block">
-                          {order.currency === 'THB'
-                            ? `${new Intl.NumberFormat('de-DE').format(order.totalPrice)} ฿`
-                            : `${new Intl.NumberFormat('de-DE').format(order.totalPrice)} ₭`}
-                        </strong>
-                        <span className="text-[10px] text-zinc-400 font-medium font-mono block">
-                          ≈ {order.currency === 'THB'
-                            ? `${new Intl.NumberFormat('de-DE').format(order.totalPriceLAK || order.totalPrice * (order.exchangeRate || 650))} ₭`
-                            : `${new Intl.NumberFormat('de-DE').format(order.totalPriceTHB || Math.round(order.totalPrice / (order.exchangeRate || 650)))} ฿`}
-                        </span>
+                        {(() => {
+                          const isMixed = order.currency === 'MIXED' || (Boolean(order.paidTHB && order.paidTHB > 0) && Boolean(order.paidLAK && order.paidLAK > 0));
+                          if (isMixed) {
+                            return (
+                              <>
+                                <strong className="text-base font-black text-purple-700 font-mono block">
+                                  {new Intl.NumberFormat('de-DE').format(order.paidTHB || 0)} ฿ + {new Intl.NumberFormat('de-DE').format(order.paidLAK || 0)} ₭
+                                </strong>
+                                <span className="text-[10px] text-zinc-400 font-medium font-mono block">
+                                  ≈ {new Intl.NumberFormat('de-DE').format(Math.round((order.paidTHB || 0) * (order.exchangeRate || 650) + (order.paidLAK || 0)))} ₭
+                                </span>
+                              </>
+                            );
+                          }
+                          return (
+                            <>
+                              <strong className="text-base font-black text-blue-600 font-mono block">
+                                {order.currency === 'THB'
+                                  ? `${new Intl.NumberFormat('de-DE').format(order.totalPrice)} ฿`
+                                  : `${new Intl.NumberFormat('de-DE').format(order.totalPrice)} ₭`}
+                              </strong>
+                              <span className="text-[10px] text-zinc-400 font-medium font-mono block">
+                                ≈ {order.currency === 'THB'
+                                  ? `${new Intl.NumberFormat('de-DE').format(order.totalPriceLAK || order.totalPrice * (order.exchangeRate || 650))} ₭`
+                                  : `${new Intl.NumberFormat('de-DE').format(order.totalPriceTHB || Math.round(order.totalPrice / (order.exchangeRate || 650)))} ฿`}
+                              </span>
+                            </>
+                          );
+                        })()}
                       </div>
 
                       {/* Nút hủy phụ ở chân đơn hàng */}

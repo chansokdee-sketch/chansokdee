@@ -30,7 +30,11 @@ interface CartContextType {
   clearCart: () => void;
   totalPrice: number;
   totalPriceTHB: number;
+  totalPriceLAKForNonTHB: number;
+  hasTHBItems: boolean;
+  hasNonTHBItems: boolean;
   canPayWithTHB: boolean;
+  isMixedPayment: boolean;
   totalItems: number;
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
@@ -359,19 +363,45 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     return sum + unitPrice * unitQty;
   }, 0);
 
-  // Kiểm tra giỏ hàng có đủ điều kiện thanh toán bằng Tiền Baht không:
-  // "nếu có thì bỏ, còn không thì sẽ không được thanh toán bằng bat"
-  const canPayWithTHB = cart.length > 0 && cart.every(item => {
+  // Tổng tiền Baht thực tế theo giá cài sẵn của các món CÓ hỗ trợ Baht
+  const totalPriceTHB = cart.reduce((sum, item) => {
+    const thb = getItemPriceTHB(item.product, item.unit, item.variantId, item.tier1Value, item.tier2Value);
+    if (thb !== null && thb > 0) {
+      const unitQty = item.unitQuantity !== undefined ? item.unitQuantity : item.quantity;
+      return sum + thb * unitQty;
+    }
+    return sum;
+  }, 0);
+
+  // Tổng tiền Kíp tính thêm cho những món KHÔNG có giá Baht
+  const totalPriceLAKForNonTHB = cart.reduce((sum, item) => {
+    const thb = getItemPriceTHB(item.product, item.unit, item.variantId, item.tier1Value, item.tier2Value);
+    if (thb === null || thb <= 0) {
+      const unit = item.unit || 'PIECE';
+      const unitPrice = getItemPrice(item.product, unit, item.variantId, item.tier1Value, item.tier2Value);
+      const unitQty = item.unitQuantity !== undefined ? item.unitQuantity : item.quantity;
+      return sum + unitPrice * unitQty;
+    }
+    return sum;
+  }, 0);
+
+  // Kiểm tra giỏ hàng có món nào có giá Baht không
+  const hasTHBItems = cart.some(item => {
     const thb = getItemPriceTHB(item.product, item.unit, item.variantId, item.tier1Value, item.tier2Value);
     return thb !== null && thb > 0;
   });
 
-  // Tổng tiền Baht thực tế theo giá cài sẵn của từng món
-  const totalPriceTHB = cart.reduce((sum, item) => {
-    const thb = getItemPriceTHB(item.product, item.unit, item.variantId, item.tier1Value, item.tier2Value) || 0;
-    const unitQty = item.unitQuantity !== undefined ? item.unitQuantity : item.quantity;
-    return sum + thb * unitQty;
-  }, 0);
+  // Kiểm tra giỏ hàng có món nào KHÔNG có giá Baht không
+  const hasNonTHBItems = cart.some(item => {
+    const thb = getItemPriceTHB(item.product, item.unit, item.variantId, item.tier1Value, item.tier2Value);
+    return thb === null || thb <= 0;
+  });
+
+  // Có cả món trả bằng Baht và món tính thêm bằng Kíp
+  const isMixedPayment = hasTHBItems && hasNonTHBItems;
+
+  // Cho phép thanh toán có Baht nếu trong giỏ có ít nhất 1 món có giá Baht (món không có sẽ tính thêm Kíp)
+  const canPayWithTHB = hasTHBItems;
 
   return (
     <CartContext.Provider
@@ -383,7 +413,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         clearCart,
         totalPrice,
         totalPriceTHB,
+        totalPriceLAKForNonTHB,
+        hasTHBItems,
+        hasNonTHBItems,
         canPayWithTHB,
+        isMixedPayment,
         totalItems,
         isCartOpen,
         setIsCartOpen,

@@ -72,3 +72,64 @@ export function formatDualPrice(lakAmount: number, rate = DEFAULT_THB_RATE): {
     combined,
   };
 }
+
+/**
+ * Định dạng thanh toán đơn hàng (hỗ trợ cả Kíp, Baht và Hỗn hợp Baht + Kíp)
+ */
+export function formatOrderPaymentDisplay(order: {
+  currency?: Currency;
+  totalPrice?: number;
+  totalPriceTHB?: number;
+  totalPriceLAK?: number;
+  paidTHB?: number;
+  paidLAK?: number;
+  exchangeRate?: number;
+}): {
+  main: string;
+  sub: string;
+  isMixed: boolean;
+  thbPart: string;
+  lakPart: string;
+  label: string;
+} {
+  const rate = order.exchangeRate && order.exchangeRate > 0 ? order.exchangeRate : DEFAULT_THB_RATE;
+  const isMixed = order.currency === 'MIXED' || (Boolean(order.paidTHB && order.paidTHB > 0) && Boolean(order.paidLAK && order.paidLAK > 0));
+
+  if (isMixed) {
+    const thb = Math.round(order.paidTHB || order.totalPriceTHB || 0);
+    const lak = Math.round(order.paidLAK || order.totalPriceLAK || 0);
+    const approxTotalLAK = Math.round(thb * rate + lak);
+    return {
+      main: `${formatTHB(thb)} + ${formatLAK(lak)}`,
+      sub: `≈ ${formatLAK(approxTotalLAK)}`,
+      isMixed: true,
+      thbPart: formatTHB(thb),
+      lakPart: formatLAK(lak),
+      label: 'Hỗn hợp Baht & Kíp',
+    };
+  }
+
+  if (order.currency === 'THB') {
+    const thb = Math.round(order.paidTHB !== undefined && order.paidTHB > 0 ? order.paidTHB : (order.totalPriceTHB || order.totalPrice || 0));
+    const approxLAK = order.totalPriceLAK || Math.round(thb * rate);
+    return {
+      main: formatTHB(thb),
+      sub: `≈ ${formatLAK(approxLAK)}`,
+      isMixed: false,
+      thbPart: formatTHB(thb),
+      lakPart: '0 ₭',
+      label: 'Tiền Baht Thái (THB)',
+    };
+  }
+
+  const lak = Math.round(order.paidLAK !== undefined && order.paidLAK > 0 ? order.paidLAK : (order.totalPriceLAK || order.totalPrice || 0));
+  const approxTHB = order.totalPriceTHB || Math.round(lak / rate);
+  return {
+    main: formatLAK(lak),
+    sub: `≈ ${formatTHB(approxTHB)}`,
+    isMixed: false,
+    thbPart: '0 ฿',
+    lakPart: formatLAK(lak),
+    label: 'Tiền Kíp Lào (LAK)',
+  };
+}

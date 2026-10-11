@@ -462,11 +462,15 @@ function readData(): DatabaseSchema {
       const orderRate = o.exchangeRate || parsed.siteSettings?.thbRate || 650;
       const orderLak = o.totalPriceLAK || (orderCurrency === 'THB' ? o.totalPrice * orderRate : o.totalPrice);
       const orderThb = o.totalPriceTHB || (orderCurrency === 'THB' ? o.totalPrice : Math.round(orderLak / orderRate));
+      const paidTHB = o.paidTHB !== undefined ? o.paidTHB : (orderCurrency === 'THB' ? o.totalPrice : 0);
+      const paidLAK = o.paidLAK !== undefined ? o.paidLAK : (orderCurrency === 'LAK' ? o.totalPrice : 0);
       return {
         ...o,
         currency: orderCurrency,
         totalPriceLAK: orderLak,
         totalPriceTHB: orderThb,
+        paidTHB,
+        paidLAK,
         exchangeRate: orderRate,
       };
     });
@@ -732,7 +736,8 @@ export const db = {
       const orderItems: OrderItem[] = [];
       let calculatedTotalPrice = 0;
       let calculatedTotalPriceTHB = 0;
-      const isTHBOrder = orderInput.currency === 'THB';
+      let calculatedTotalPriceLAKNonTHB = 0;
+      const wantsTHB = orderInput.currency === 'THB' || orderInput.currency === 'MIXED';
 
       // Lock/check inventory
       for (const item of orderInput.items) {
@@ -827,15 +832,11 @@ export const db = {
           itemPriceTHB = baseTHB;
         }
 
-        if (isTHBOrder && (!itemPriceTHB || itemPriceTHB <= 0)) {
-          return {
-            order: null,
-            error: `Sản phẩm "${product.name}" không có giá tiền Baht. Đơn hàng này không thể thanh toán bằng tiền Baht, vui lòng chọn thanh toán bằng tiền Kíp.`,
-          };
-        }
-
+        // Nếu món có giá Baht thì tính vào phần Baht, nếu không có giá Baht thì tính thêm bằng Kíp
         if (itemPriceTHB && itemPriceTHB > 0) {
           calculatedTotalPriceTHB += itemPriceTHB * unitQuantity;
+        } else {
+          calculatedTotalPriceLAKNonTHB += itemPrice * unitQuantity;
         }
 
         const itemSubtotal = itemPrice * unitQuantity;
@@ -852,6 +853,7 @@ export const db = {
           productImage: (variant && variant.image) || product.images[0] || '',
           quantity: totalPieceQty,
           price: itemPrice,
+          priceTHB: itemPriceTHB && itemPriceTHB > 0 ? itemPriceTHB : undefined,
           isWholesale,
           unit,
           unitName,
@@ -895,10 +897,41 @@ export const db = {
       });
 
       const thbRate = orderInput.exchangeRate || data.siteSettings?.thbRate || 650;
-      const selectedCurrency: Currency = isTHBOrder ? 'THB' : 'LAK';
-      const totalPriceLAK = calculatedTotalPrice;
-      const totalPriceTHB = calculatedTotalPriceTHB > 0 ? calculatedTotalPriceTHB : Math.round(calculatedTotalPrice / thbRate);
-      const finalTotalPrice = selectedCurrency === 'THB' ? totalPriceTHB : totalPriceLAK;
+      
+      let selectedCurrency: Currency = 'LAK';
+      let paidTHB = 0;
+      let paidLAK = 0;
+      let finalTotalPrice = 0;
+      let finalTotalPriceLAK = calculatedTotalPrice;
+      let finalTotalPriceTHB = Math.round(calculatedTotalPrice / thbRate);
+
+      if (wantsTHB && calculatedTotalPriceTHB > 0) {
+        if (calculatedTotalPriceLAKNonTHB > 0) {
+          // Thanh toán hỗn hợp: Món có giá Baht trả bằng Baht, món không có giá Baht tính thêm bằng Kíp
+          selectedCurrency = 'MIXED';
+          paidTHB = calculatedTotalPriceTHB;
+          paidLAK = calculatedTotalPriceLAKNonTHB;
+          finalTotalPrice = calculatedTotalPriceTHB;
+          finalTotalPriceTHB = calculatedTotalPriceTHB;
+          finalTotalPriceLAK = calculatedTotalPriceLAKNonTHB + Math.round(calculatedTotalPriceTHB * thbRate);
+        } else {
+          // 100% mặt hàng có giá Baht
+          selectedCurrency = 'THB';
+          paidTHB = calculatedTotalPriceTHB;
+          paidLAK = 0;
+          finalTotalPrice = calculatedTotalPriceTHB;
+          finalTotalPriceTHB = calculatedTotalPriceTHB;
+          finalTotalPriceLAK = Math.round(calculatedTotalPriceTHB * thbRate);
+        }
+      } else {
+        // Thanh toán 100% bằng Tiền Kíp Lào
+        selectedCurrency = 'LAK';
+        paidTHB = 0;
+        paidLAK = calculatedTotalPrice;
+        finalTotalPrice = calculatedTotalPrice;
+        finalTotalPriceLAK = calculatedTotalPrice;
+        finalTotalPriceTHB = Math.round(calculatedTotalPrice / thbRate);
+      }
 
       const newOrder: Order = {
         id: orderId,
@@ -911,8 +944,10 @@ export const db = {
         note: orderInput.note || '',
         totalPrice: finalTotalPrice,
         currency: selectedCurrency,
-        totalPriceLAK,
-        totalPriceTHB,
+        totalPriceLAK: finalTotalPriceLAK,
+        totalPriceTHB: finalTotalPriceTHB,
+        paidTHB,
+        paidLAK,
         exchangeRate: thbRate,
         status: 'PENDING',
         items: orderItems,

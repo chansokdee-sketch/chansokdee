@@ -229841,12 +229841,12 @@
       "minWholesaleQty": 3,
       "baseUnitName": "ຊົບ",
       "baseUnitNameLao": "ຊົບ",
-      "stock": 50,
+      "stock": 47,
       "categoryId": "cat-16",
       "status": "ACTIVE",
       "images": [],
       "createdAt": "2026-10-05T02:02:52.000Z",
-      "updatedAt": "2026-10-07T09:50:32.000Z"
+      "updatedAt": "2026-10-11T08:35:02.867Z"
     },
     {
       "id": "prod-9726",
@@ -230125,12 +230125,12 @@
       "minWholesaleQty": 3,
       "baseUnitName": "ຫລອດ",
       "baseUnitNameLao": "ຫລອດ",
-      "stock": 10,
+      "stock": 8,
       "categoryId": "cat-2",
       "status": "ACTIVE",
       "images": [],
       "createdAt": "2026-10-10T08:45:38.000Z",
-      "updatedAt": "2026-10-10T08:45:38.000Z"
+      "updatedAt": "2026-10-11T08:35:02.866Z"
     }
   ],
   "orders": [
@@ -230169,7 +230169,9 @@
       "currency": "LAK",
       "totalPriceLAK": 3215000,
       "totalPriceTHB": 4946,
-      "exchangeRate": 650
+      "exchangeRate": 650,
+      "paidTHB": 0,
+      "paidLAK": 3215000
     },
     {
       "id": "ord-seed-2",
@@ -230202,7 +230204,9 @@
       "currency": "LAK",
       "totalPriceLAK": 1150000,
       "totalPriceTHB": 1769,
-      "exchangeRate": 650
+      "exchangeRate": 650,
+      "paidTHB": 0,
+      "paidLAK": 1150000
     },
     {
       "id": "ord-1791536170733",
@@ -230260,7 +230264,9 @@
       "assignedStaffName": "Boss Hải",
       "assignedStaffPhone": "0988888888",
       "assignedAt": "2026-10-11T04:28:54.486Z",
-      "assignedBy": "Boss Hải (Boss)"
+      "assignedBy": "Boss Hải (Boss)",
+      "paidTHB": 0,
+      "paidLAK": 7050000
     },
     {
       "id": "ord-1791693185687",
@@ -230294,7 +230300,9 @@
         }
       ],
       "createdAt": "2026-10-11T04:33:05.687Z",
-      "updatedAt": "2026-10-11T04:36:00.943Z"
+      "updatedAt": "2026-10-11T04:36:00.943Z",
+      "paidTHB": 0,
+      "paidLAK": 59000
     },
     {
       "id": "ord-1791693423702",
@@ -230332,7 +230340,9 @@
         }
       ],
       "createdAt": "2026-10-11T04:37:03.702Z",
-      "updatedAt": "2026-10-11T05:25:55.870Z"
+      "updatedAt": "2026-10-11T05:25:55.870Z",
+      "paidTHB": 2850,
+      "paidLAK": 0
     }
   ],
   "siteSettings": {

@@ -34,11 +34,16 @@ export default function CartPage() {
     clearCart, 
     totalPrice,
     totalPriceTHB,
+    totalPriceLAKForNonTHB,
+    hasTHBItems,
+    hasNonTHBItems,
     canPayWithTHB,
+    isMixedPayment,
     totalItems,
     customerMode,
     setCustomerMode,
     getItemPrice,
+    getItemPriceTHB,
     isItemWholesalePrice
   } = useCart();
   const { user, setIsAuthModalOpen, setAuthModalMode } = useAuth();
@@ -48,16 +53,18 @@ export default function CartPage() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [shippingAddress, setShippingAddress] = useState('');
   const [note, setNote] = useState('');
-  const [paymentCurrency, setPaymentCurrency] = useState<'LAK' | 'THB'>(currency || 'LAK');
+  const [paymentCurrency, setPaymentCurrency] = useState<'LAK' | 'THB'>(currency === 'THB' ? 'THB' : 'LAK');
 
   const [submitting, setSubmitting] = useState(false);
   const [orderError, setOrderError] = useState('');
   const [orderSuccess, setOrderSuccess] = useState<{
     orderCode: string;
     totalPrice: number;
-    currency: 'LAK' | 'THB';
+    currency: 'LAK' | 'THB' | 'MIXED';
     totalPriceLAK?: number;
     totalPriceTHB?: number;
+    paidTHB?: number;
+    paidLAK?: number;
     exchangeRate?: number;
   } | null>(null);
 
@@ -66,13 +73,15 @@ export default function CartPage() {
     if (currency) {
       if (currency === 'THB' && !canPayWithTHB) {
         setPaymentCurrency('LAK');
+      } else if (currency === 'THB') {
+        setPaymentCurrency('THB');
       } else {
-        setPaymentCurrency(currency);
+        setPaymentCurrency('LAK');
       }
     }
   }, [currency, canPayWithTHB]);
 
-  // Nếu giỏ có sản phẩm không có giá Baht, tự động chuyển về thanh toán Tiền Kíp
+  // Nếu giỏ hàng không có bất kỳ món nào có giá Baht, chuyển về Tiền Kíp
   useEffect(() => {
     if (!canPayWithTHB && paymentCurrency === 'THB') {
       setPaymentCurrency('LAK');
@@ -191,6 +200,8 @@ export default function CartPage() {
           currency: data.order.currency || paymentCurrency,
           totalPriceLAK: data.order.totalPriceLAK,
           totalPriceTHB: data.order.totalPriceTHB,
+          paidTHB: data.order.paidTHB,
+          paidLAK: data.order.paidLAK,
           exchangeRate: data.order.exchangeRate || thbRate,
         });
         clearCart();
@@ -204,6 +215,8 @@ export default function CartPage() {
 
   // SUCCESS SCREEN
   if (orderSuccess) {
+    const isMixedSuccess = orderSuccess.currency === 'MIXED' || (Boolean(orderSuccess.paidTHB && orderSuccess.paidTHB > 0) && Boolean(orderSuccess.paidLAK && orderSuccess.paidLAK > 0));
+
     return (
       <div className="min-h-screen flex flex-col bg-zinc-50">
         <Navbar />
@@ -229,12 +242,20 @@ export default function CartPage() {
               <div className="flex justify-between items-center">
                 <span className="text-zinc-500">{isLao ? 'ສະກຸນເງິນຊຳລະ:' : 'Nhánh tiền thanh toán:'}</span>
                 <span className={`px-2 py-0.5 rounded-lg font-black text-[11px] flex items-center gap-1 ${
-                  orderSuccess.currency === 'THB'
+                  isMixedSuccess
+                    ? 'bg-purple-100 text-purple-900 border border-purple-300'
+                    : orderSuccess.currency === 'THB'
                     ? 'bg-amber-100 text-amber-900 border border-amber-300'
                     : 'bg-blue-100 text-blue-900 border border-blue-300'
                 }`}>
-                  <span>{orderSuccess.currency === 'THB' ? '฿' : '₭'}</span>
-                  <span>{orderSuccess.currency === 'THB' ? (isLao ? 'ເງິນບາດໄທ (THB)' : 'Tiền Baht Thái (THB)') : (isLao ? 'ເງິນກີບລາວ (LAK)' : 'Tiền Kíp Lào (LAK)')}</span>
+                  <span>{isMixedSuccess ? '฿ + ₭' : orderSuccess.currency === 'THB' ? '฿' : '₭'}</span>
+                  <span>
+                    {isMixedSuccess
+                      ? (isLao ? 'ເງິນບາດ & ເງິນກີບ (ປະສົມ)' : 'Baht Thái & Kíp Lào (Hỗn hợp)')
+                      : orderSuccess.currency === 'THB' 
+                      ? (isLao ? 'ເງິນບາດໄທ (THB)' : 'Tiền Baht Thái (THB)') 
+                      : (isLao ? 'ເງິນກີບລາວ (LAK)' : 'Tiền Kíp Lào (LAK)')}
+                  </span>
                 </span>
               </div>
 
@@ -242,19 +263,36 @@ export default function CartPage() {
                 <span className="text-zinc-500">{t('cart_total')}</span>
                 <div className="text-right">
                   <strong className="text-zinc-900 font-black text-base font-mono block">
-                    {orderSuccess.currency === 'THB'
+                    {isMixedSuccess
+                      ? `${new Intl.NumberFormat('de-DE').format(orderSuccess.paidTHB || 0)} ฿ + ${new Intl.NumberFormat('de-DE').format(orderSuccess.paidLAK || 0)} ₭`
+                      : orderSuccess.currency === 'THB'
                       ? `${new Intl.NumberFormat('de-DE').format(orderSuccess.totalPrice)} ฿`
                       : `${new Intl.NumberFormat('de-DE').format(orderSuccess.totalPrice)} ₭`}
                   </strong>
                   <span className="text-[11px] text-zinc-500 font-semibold font-mono block">
-                    ≈ {orderSuccess.currency === 'THB'
+                    ≈ {isMixedSuccess
+                      ? `${new Intl.NumberFormat('de-DE').format(Math.round((orderSuccess.paidTHB || 0) * (orderSuccess.exchangeRate || 650) + (orderSuccess.paidLAK || 0)))} ₭`
+                      : orderSuccess.currency === 'THB'
                       ? `${new Intl.NumberFormat('de-DE').format(orderSuccess.totalPriceLAK || orderSuccess.totalPrice * (orderSuccess.exchangeRate || 650))} ₭`
                       : `${new Intl.NumberFormat('de-DE').format(orderSuccess.totalPriceTHB || Math.round(orderSuccess.totalPrice / (orderSuccess.exchangeRate || 650)))} ฿`}
                   </span>
                 </div>
               </div>
 
-              {orderSuccess.currency === 'THB' && (
+              {isMixedSuccess && (
+                <div className="bg-purple-50/70 border border-purple-200/60 rounded-xl p-2.5 text-[11px] text-purple-900 space-y-1">
+                  <div className="flex justify-between font-mono">
+                    <span>• Tiền Baht (cho các món có giá Baht):</span>
+                    <strong className="font-bold">{new Intl.NumberFormat('de-DE').format(orderSuccess.paidTHB || 0)} ฿</strong>
+                  </div>
+                  <div className="flex justify-between font-mono">
+                    <span>• Tiền Kíp tính thêm (cho món nhận Kíp):</span>
+                    <strong className="font-bold">{new Intl.NumberFormat('de-DE').format(orderSuccess.paidLAK || 0)} ₭</strong>
+                  </div>
+                </div>
+              )}
+
+              {(orderSuccess.currency === 'THB' || isMixedSuccess) && (
                 <div className="flex justify-between text-[11px] text-zinc-400 border-t border-zinc-200/60 pt-1.5">
                   <span>{isLao ? 'ອັດຕາແລກປ່ຽນນຳໃຊ້:' : 'Tỷ giá áp dụng:'}</span>
                   <span className="font-mono font-medium">1 Baht = {orderSuccess.exchangeRate || 650} Kíp</span>
@@ -414,19 +452,37 @@ export default function CartPage() {
                             )}
                           </div>
 
-                          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                            <span className={`text-xs sm:text-sm font-black font-mono ${isWholesale ? 'text-amber-600' : 'text-blue-600'}`}>
-                              {formatPrice(unitPrice)}
-                            </span>
-                            <span className="text-[10px] text-zinc-400">
-                              /{unit === 'CARTON' ? (isLao ? 'ລັງ' : 'thùng') : unit === 'BOX' ? (isLao ? 'ກ່ອງ' : 'hộp') : unit === 'PACK' ? (isLao ? 'ແພັກ' : 'lốc') : (isLao ? (item.product.baseUnitNameLao || 'ອັນ') : (item.product.baseUnitName?.toLowerCase() || 'cái'))}
-                            </span>
-                            {isWholesale && (
-                              <span className="text-[10px] bg-amber-500/15 text-amber-700 px-1.5 py-0.2 rounded font-black border border-amber-500/20">
-                                Giá sỉ ⚡
+                            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                              <span className={`text-xs sm:text-sm font-black font-mono ${isWholesale ? 'text-amber-600' : 'text-blue-600'}`}>
+                                {formatPrice(unitPrice)}
                               </span>
-                            )}
-                          </div>
+                              <span className="text-[10px] text-zinc-400">
+                                /{unit === 'CARTON' ? (isLao ? 'ລັງ' : 'thùng') : unit === 'BOX' ? (isLao ? 'ກ່ອງ' : 'hộp') : unit === 'PACK' ? (isLao ? 'ແພັກ' : 'lốc') : (isLao ? (item.product.baseUnitNameLao || 'ອັນ') : (item.product.baseUnitName?.toLowerCase() || 'cái'))}
+                              </span>
+
+                              {/* Huy hiệu hiển thị giá Baht hoặc chỉ nhận Kíp */}
+                              {(() => {
+                                const itemTHB = getItemPriceTHB(item.product, unit, item.variantId, item.tier1Value, item.tier2Value);
+                                if (itemTHB && itemTHB > 0) {
+                                  return (
+                                    <span className="text-[10px] bg-amber-50 text-amber-800 px-1.5 py-0.2 rounded font-mono font-bold border border-amber-200">
+                                      ฿ {new Intl.NumberFormat('de-DE').format(itemTHB)}
+                                    </span>
+                                  );
+                                }
+                                return (
+                                  <span className="text-[10px] bg-zinc-100 text-zinc-600 px-1.5 py-0.2 rounded font-medium border border-zinc-200">
+                                    ₭ Chỉ nhận Kíp
+                                  </span>
+                                );
+                              })()}
+
+                              {isWholesale && (
+                                <span className="text-[10px] bg-amber-500/15 text-amber-700 px-1.5 py-0.2 rounded font-black border border-amber-500/20">
+                                  Giá sỉ ⚡
+                                </span>
+                              )}
+                            </div>
                         </div>
 
                         {/* Stepper & Delete */}
@@ -563,7 +619,7 @@ export default function CartPage() {
                     />
                   </div>
 
-                  {/* CHỌN NHÁNH TIỀN TỆ THANH TOÁN (KÍP LÀO HOẶC BAHT THÁI) */}
+                  {/* CHỌN NHÁNH TIỀN TỆ THANH TOÁN (KÍP LÀO HOẶC BAHT THÁI / HỖN HỢP) */}
                   <div className="pt-3 pb-1 border-t border-zinc-100 space-y-2">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-bold text-zinc-800 flex items-center gap-1.5">
@@ -576,7 +632,7 @@ export default function CartPage() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-2.5">
-                      {/* Nhánh 1: Tiền Kíp Lào */}
+                      {/* Nhánh 1: 100% Tiền Kíp Lào */}
                       <button
                         type="button"
                         onClick={() => setPaymentCurrency('LAK')}
@@ -599,11 +655,11 @@ export default function CartPage() {
                           {formatDualPrice(totalPrice).lakFormatted}
                         </p>
                         <span className="text-[10px] text-zinc-500 mt-0.5">
-                          {isLao ? 'ເງິນສົດ ຫຼື BCEL One' : 'Tiền mặt hoặc BCEL'}
+                          {isLao ? 'ຊຳລະທັງໝົດດ້ວຍເງິນກີບ' : '100% thanh toán bằng Kíp'}
                         </span>
                       </button>
 
-                      {/* Nhánh 2: Tiền Baht Thái */}
+                      {/* Nhánh 2: Tiền Baht Thái (hoặc Hỗn hợp Baht + Kíp nếu có món không có giá Baht) */}
                       <button
                         type="button"
                         disabled={!canPayWithTHB}
@@ -614,32 +670,62 @@ export default function CartPage() {
                           !canPayWithTHB
                             ? 'opacity-50 cursor-not-allowed bg-zinc-100 border-zinc-200 text-zinc-400'
                             : paymentCurrency === 'THB'
-                            ? 'bg-amber-500/15 border-amber-500 ring-2 ring-amber-500/30 text-amber-950 font-bold shadow-xs'
+                            ? isMixedPayment 
+                              ? 'bg-purple-500/15 border-purple-500 ring-2 ring-purple-500/30 text-purple-950 font-bold shadow-xs'
+                              : 'bg-amber-500/15 border-amber-500 ring-2 ring-amber-500/30 text-amber-950 font-bold shadow-xs'
                             : 'bg-zinc-50 hover:bg-zinc-100/80 border-zinc-200 text-zinc-700'
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-extrabold flex items-center gap-1.5">
-                            <span className="text-sm text-amber-600 font-mono">฿</span>
-                            <span>{isLao ? 'ເງິນບາດ (THB)' : 'Tiền Baht Thái'}</span>
+                            <span className="text-sm text-amber-600 font-mono">{isMixedPayment ? '฿+₭' : '฿'}</span>
+                            <span>
+                              {isMixedPayment 
+                                ? (isLao ? 'ເງິນບາດ + ເງິນກີບ' : 'Baht + Kíp (Hỗn hợp)') 
+                                : (isLao ? 'ເງິນບາດ (THB)' : 'Tiền Baht Thái')}
+                            </span>
                           </span>
                           {paymentCurrency === 'THB' && canPayWithTHB && (
-                            <span className="w-2 h-2 rounded-full bg-amber-600"></span>
+                            <span className={`w-2 h-2 rounded-full ${isMixedPayment ? 'bg-purple-600' : 'bg-amber-600'}`}></span>
                           )}
                         </div>
-                        <p className={`text-sm font-mono font-black mt-1.5 ${canPayWithTHB ? 'text-amber-700' : 'text-zinc-400'}`}>
-                          {canPayWithTHB ? `${new Intl.NumberFormat('de-DE').format(totalPriceTHB)} ฿` : 'Không hỗ trợ'}
-                        </p>
-                        <span className={`text-[10px] mt-0.5 ${canPayWithTHB ? 'text-amber-800/80' : 'text-red-500 font-medium'}`}>
-                          {canPayWithTHB ? (isLao ? 'ຊຳລະດ້ວຍເງິນບາດໄທ' : 'Thanh toán tiền Baht') : (isLao ? 'ມີສິນຄ້າບໍ່ຮັບເງິນບາດ' : 'Giỏ có món chỉ nhận Kíp')}
+
+                        {/* Số tiền hiển thị */}
+                        {isMixedPayment ? (
+                          <div className="mt-1.5">
+                            <p className="text-xs font-mono font-black text-purple-900 leading-tight">
+                              {new Intl.NumberFormat('de-DE').format(totalPriceTHB)} ฿ + {new Intl.NumberFormat('de-DE').format(totalPriceLAKForNonTHB)} ₭
+                            </p>
+                          </div>
+                        ) : (
+                          <p className={`text-sm font-mono font-black mt-1.5 ${canPayWithTHB ? 'text-amber-700' : 'text-zinc-400'}`}>
+                            {canPayWithTHB ? `${new Intl.NumberFormat('de-DE').format(totalPriceTHB)} ฿` : 'Chỉ nhận Kíp'}
+                          </p>
+                        )}
+
+                        <span className={`text-[10px] mt-0.5 ${canPayWithTHB ? (isMixedPayment ? 'text-purple-700 font-medium' : 'text-amber-800/80') : 'text-red-500 font-medium'}`}>
+                          {!canPayWithTHB 
+                            ? (isLao ? 'ທຸກສິນຄ້າຮັບສະເພາະກີບ' : 'Giỏ chỉ nhận Tiền Kíp')
+                            : isMixedPayment
+                            ? (isLao ? 'ຈ່າຍບາດ ແລະ ຄິດໄລ່ກີບຕື່ມ' : 'Món thiếu Baht tính thêm Kíp')
+                            : (isLao ? 'ຊຳລະດ້ວຍເງິນບາດໄທ' : 'Thanh toán 100% bằng Baht')}
                         </span>
                       </button>
                     </div>
 
-                    {!canPayWithTHB && (
-                      <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-xl p-2.5 font-medium">
-                        ⚠️ Trong giỏ có sản phẩm không hỗ trợ thanh toán bằng tiền Baht, đơn hàng chỉ có thể thanh toán bằng <strong>Tiền Kíp Lào</strong>.
-                      </p>
+                    {/* Giải thích chi tiết khi chọn Hỗn hợp Baht + Kíp */}
+                    {paymentCurrency === 'THB' && isMixedPayment && (
+                      <div className="text-[11px] text-purple-900 bg-purple-50/80 border border-purple-200/90 rounded-2xl p-3 space-y-1">
+                        <div className="flex items-center gap-1.5 font-bold text-purple-950">
+                          <span>💡</span>
+                          <span>{isLao ? 'ຊຳລະແບບປະສົມ ເງິນບາດ & ເງິນກີບ:' : 'Thanh toán kết hợp Baht & Kíp:'}</span>
+                        </div>
+                        <p className="leading-relaxed text-purple-800">
+                          {isLao
+                            ? `ສິນຄ້າທີ່ມີລາຄາບາດຈ່າຍເປັນເງິນບາດ (${new Intl.NumberFormat('de-DE').format(totalPriceTHB)} ฿), ສ່ວນສິນຄ້າທີ່ບໍ່ມີລາຄາບາດແມ່ນຄິດໄລ່ເພີ່ມເປັນເງິນກີບ (${new Intl.NumberFormat('de-DE').format(totalPriceLAKForNonTHB)} ₭).`
+                            : `Các món có giá Baht sẽ thanh toán bằng tiền Baht (${new Intl.NumberFormat('de-DE').format(totalPriceTHB)} ฿), các món chưa có giá Baht sẽ tính thêm bằng tiền Kíp (${new Intl.NumberFormat('de-DE').format(totalPriceLAKForNonTHB)} ₭).`}
+                        </p>
+                      </div>
                     )}
                   </div>
 
@@ -664,9 +750,28 @@ export default function CartPage() {
                     <div className="flex justify-between text-zinc-500">
                       <span>{t('cart_subtotal')} ({cart.reduce((a, b) => a + b.quantity, 0)}):</span>
                       <span className="font-semibold text-zinc-800 font-mono">
-                        {paymentCurrency === 'THB' ? `${new Intl.NumberFormat('de-DE').format(totalPriceTHB)} ฿` : formatDualPrice(totalPrice).lakFormatted}
+                        {paymentCurrency === 'THB'
+                          ? (isMixedPayment 
+                              ? `${new Intl.NumberFormat('de-DE').format(totalPriceTHB)} ฿ + ${new Intl.NumberFormat('de-DE').format(totalPriceLAKForNonTHB)} ₭`
+                              : `${new Intl.NumberFormat('de-DE').format(totalPriceTHB)} ฿`)
+                          : formatDualPrice(totalPrice).lakFormatted}
                       </span>
                     </div>
+
+                    {/* Dòng phân tách chi tiết cho Hỗn hợp */}
+                    {paymentCurrency === 'THB' && isMixedPayment && (
+                      <div className="space-y-1 bg-zinc-50 p-2 rounded-xl border border-zinc-200/60 text-[11px] font-mono">
+                        <div className="flex justify-between text-amber-900">
+                          <span>• Phần thanh toán tiền Baht:</span>
+                          <strong>{new Intl.NumberFormat('de-DE').format(totalPriceTHB)} ฿</strong>
+                        </div>
+                        <div className="flex justify-between text-blue-900">
+                          <span>• Phần thanh toán tính thêm Kíp:</span>
+                          <strong>{new Intl.NumberFormat('de-DE').format(totalPriceLAKForNonTHB)} ₭</strong>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex justify-between text-zinc-500">
                       <span>{t('cart_shipping_fee')}</span>
                       <span className="text-emerald-600 font-semibold">{t('cart_free')}</span>
@@ -676,19 +781,25 @@ export default function CartPage() {
                         <span className="font-bold text-zinc-900 text-sm block">{t('cart_total')}</span>
                         <span className="text-[10px] text-zinc-400">
                           {paymentCurrency === 'THB'
-                            ? `(Thanh toán tiền Baht theo giá đã cài đặt)`
-                            : `(Trả bằng Tiền Kíp Lào)`}
+                            ? (isMixedPayment
+                                ? '(Trả phần Baht + phần Kíp)'
+                                : '(Thanh toán 100% tiền Baht)')
+                            : '(Trả bằng Tiền Kíp Lào)'}
                         </span>
                       </div>
                       <div className="text-right">
                         <span className="font-black text-xl text-blue-600 font-mono block">
                           {paymentCurrency === 'THB'
-                            ? `${new Intl.NumberFormat('de-DE').format(totalPriceTHB)} ฿`
+                            ? (isMixedPayment
+                                ? `${new Intl.NumberFormat('de-DE').format(totalPriceTHB)} ฿ + ${new Intl.NumberFormat('de-DE').format(totalPriceLAKForNonTHB)} ₭`
+                                : `${new Intl.NumberFormat('de-DE').format(totalPriceTHB)} ฿`)
                             : formatDualPrice(totalPrice).lakFormatted}
                         </span>
                         <span className="text-[11px] text-zinc-500 font-medium font-mono block">
                           ≈ {paymentCurrency === 'THB'
-                            ? formatDualPrice(totalPrice).lakFormatted
+                            ? (isMixedPayment
+                                ? `${new Intl.NumberFormat('de-DE').format(Math.round(totalPriceTHB * thbRate + totalPriceLAKForNonTHB))} ₭`
+                                : `${new Intl.NumberFormat('de-DE').format(Math.round(totalPriceTHB * thbRate))} ₭`)
                             : formatDualPrice(totalPrice).thbFormatted}
                         </span>
                       </div>
