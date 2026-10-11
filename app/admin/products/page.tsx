@@ -160,7 +160,49 @@ export default function AdminProductsPage() {
   const [bulkPriceTHB, setBulkPriceTHB] = useState('');
   const [bulkWholesaleLAK, setBulkWholesaleLAK] = useState('');
   const [bulkStock, setBulkStock] = useState('20');
+  // Bật/tắt phân loại theo màu/mẫu (Mặc định tắt để thêm thông tin nhanh cho sản phẩm đơn)
+  const [hasVariants, setHasVariants] = useState(false);
+  const [quickImageUploadingId, setQuickImageUploadingId] = useState<string | null>(null);
   const [itemUploadingIndex, setItemUploadingIndex] = useState<number | null>(null);
+
+  // Tải ảnh nhanh trực tiếp từ danh sách sản phẩm (cho trường hợp thêm thông tin trước, thêm ảnh sau)
+  const handleQuickUploadProductImage = async (productId: string, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setQuickImageUploadingId(productId);
+    try {
+      const file = files[0];
+      const data = new FormData();
+      data.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: data });
+      const json = await res.json();
+      if (res.ok && json.url) {
+        const productToUpdate = products.find(p => p.id === productId);
+        const existingImages = productToUpdate?.images || [];
+        const newImages = [json.url, ...existingImages];
+        
+        const updateRes = await fetch(`/api/admin/products/${productId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ images: newImages }),
+        });
+        const updateData = await updateRes.json();
+        if (updateRes.ok && updateData.product) {
+          setProducts(prev => prev.map(p => p.id === productId ? updateData.product : p));
+          setQuickPriceToast(`📸 Đã thêm ảnh thành công cho sản phẩm "${updateData.product.name}"!`);
+          setTimeout(() => setQuickPriceToast(null), 3500);
+        } else {
+          alert('Không thể cập nhật ảnh sản phẩm');
+        }
+      } else {
+        alert(json.error || 'Lỗi khi tải ảnh lên');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Lỗi kết nối khi tải ảnh');
+    } finally {
+      setQuickImageUploadingId(null);
+    }
+  };
 
   // Thêm 1 dòng món mới
   const handleAddShopeeItem = (initial?: Partial<ShopeeItemVariant>) => {
@@ -431,18 +473,8 @@ export default function AdminProductsPage() {
       brand: '',
       status: 'ACTIVE',
     });
-    setShopeeItems([
-      {
-        id: `it-${Date.now()}-1`,
-        name: '',
-        image: '',
-        price: '',
-        priceTHB: '',
-        wholesalePrice: '',
-        wholesalePriceTHB: '',
-        stock: '20',
-      }
-    ]);
+    setHasVariants(false);
+    setShopeeItems([]);
     setBulkPriceLAK('');
     setBulkPriceTHB('');
     setBulkWholesaleLAK('');
@@ -495,6 +527,12 @@ export default function AdminProductsPage() {
       status: p.status,
     });
 
+    const hasMultipleVariants = Boolean(
+      (p.variants && p.variants.length > 1) || 
+      (p.tier1Options && p.tier1Options.length > 1)
+    );
+    setHasVariants(hasMultipleVariants);
+
     const initialShopeeItems: ShopeeItemVariant[] = (p.variants && p.variants.length > 0)
       ? p.variants.map(v => ({
           id: v.id,
@@ -517,18 +555,7 @@ export default function AdminProductsPage() {
           wholesalePriceTHB: (p.wholesalePriceTHB || '').toString(),
           stock: p.stock.toString(),
         }))
-      : [
-          {
-            id: `it-${Date.now()}-1`,
-            name: 'Tiêu chuẩn',
-            image: p.images && p.images.length > 0 ? p.images[0] : '',
-            price: p.price.toString(),
-            priceTHB: p.priceTHB ? p.priceTHB.toString() : '',
-            wholesalePrice: p.wholesalePrice ? p.wholesalePrice.toString() : '',
-            wholesalePriceTHB: p.wholesalePriceTHB ? p.wholesalePriceTHB.toString() : '',
-            stock: p.stock.toString(),
-          }
-        ];
+      : [];
 
     setShopeeItems(initialShopeeItems);
     setBulkPriceLAK(retail.toString());
@@ -584,6 +611,12 @@ export default function AdminProductsPage() {
       status: 'ACTIVE',
     });
 
+    const hasMultipleVariants = Boolean(
+      (p.variants && p.variants.length > 1) || 
+      (p.tier1Options && p.tier1Options.length > 1)
+    );
+    setHasVariants(hasMultipleVariants);
+
     const clonedItems: ShopeeItemVariant[] = (p.variants && p.variants.length > 0)
       ? p.variants.map((v, idx) => ({
           id: `it-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
@@ -606,18 +639,7 @@ export default function AdminProductsPage() {
           wholesalePriceTHB: (p.wholesalePriceTHB || '').toString(),
           stock: p.stock.toString(),
         }))
-      : [
-          {
-            id: `it-${Date.now()}-1`,
-            name: 'Tiêu chuẩn',
-            image: p.images && p.images.length > 0 ? p.images[0] : '',
-            price: p.price.toString(),
-            priceTHB: p.priceTHB ? p.priceTHB.toString() : '',
-            wholesalePrice: p.wholesalePrice ? p.wholesalePrice.toString() : '',
-            wholesalePriceTHB: p.wholesalePriceTHB ? p.wholesalePriceTHB.toString() : '',
-            stock: p.stock.toString(),
-          }
-        ];
+      : [];
 
     setShopeeItems(clonedItems);
     setBulkPriceLAK(retail.toString());
@@ -719,63 +741,90 @@ export default function AdminProductsPage() {
       return;
     }
 
-    // Lọc danh sách món hợp lệ
-    const validItems = shopeeItems.filter(it => 
-      String(it.name || '').trim() || 
-      String(it.image || '').trim() || 
-      String(it.price || '').trim()
-    );
-    if (validItems.length === 0) {
-      setModalError('Vui lòng thêm ít nhất 1 món / phân loại có giá bán!');
-      return;
+    let retailPrice = 0;
+    let priceTHB: number | undefined = undefined;
+    let wholesalePrice = 0;
+    let wholesalePriceTHB: number | undefined = undefined;
+    let totalStock = 0;
+    let images: string[] = [];
+    let syncedVariants: ProductVariant[] | undefined = undefined;
+    let validTier1: ProductTier1Option[] | undefined = undefined;
+
+    if (hasVariants) {
+      // Chế độ nhiều phân loại hàng Shopee
+      const validItems = shopeeItems.filter(it => 
+        String(it.name || '').trim() || 
+        String(it.image || '').trim() || 
+        String(it.price || '').trim()
+      );
+      if (validItems.length === 0) {
+        setModalError('Vui lòng thêm ít nhất 1 món / phân loại có giá bán!');
+        return;
+      }
+
+      const firstPriceNum = Number(validItems[0].price);
+      retailPrice = firstPriceNum > 0 ? firstPriceNum : (Number(formData.price) || 0);
+      if (retailPrice <= 0) {
+        setModalError('Vui lòng nhập giá bán lẻ tiền Kíp (₭) cho món đầu tiên!');
+        return;
+      }
+
+      const firstPriceTHBNum = Number(validItems[0].priceTHB);
+      priceTHB = firstPriceTHBNum > 0 ? firstPriceTHBNum : (formData.priceTHB && Number(formData.priceTHB) > 0 ? Number(formData.priceTHB) : undefined);
+
+      const firstWholesaleNum = Number(validItems[0].wholesalePrice);
+      wholesalePrice = firstWholesaleNum > 0 ? firstWholesaleNum : (formData.wholesalePrice && Number(formData.wholesalePrice) > 0 ? Number(formData.wholesalePrice) : Math.round(retailPrice * 0.8));
+
+      const firstWholesaleTHBNum = Number(validItems[0].wholesalePriceTHB);
+      wholesalePriceTHB = firstWholesaleTHBNum > 0 ? firstWholesaleTHBNum : (formData.wholesalePriceTHB && Number(formData.wholesalePriceTHB) > 0 ? Number(formData.wholesalePriceTHB) : undefined);
+
+      syncedVariants = validItems.map((it, idx) => ({
+        id: it.id,
+        name: String(it.name || '').trim() || `Phân loại ${idx + 1}`,
+        image: String(it.image || '').trim() || undefined,
+        price: it.price && Number(it.price) > 0 ? Number(it.price) : retailPrice,
+        priceTHB: it.priceTHB && Number(it.priceTHB) > 0 ? Number(it.priceTHB) : priceTHB,
+        wholesalePrice: it.wholesalePrice && Number(it.wholesalePrice) > 0 ? Number(it.wholesalePrice) : wholesalePrice,
+        wholesalePriceTHB: it.wholesalePriceTHB && Number(it.wholesalePriceTHB) > 0 ? Number(it.wholesalePriceTHB) : wholesalePriceTHB,
+        stock: Number(it.stock) || 0,
+      }));
+
+      validTier1 = validItems.map((it, idx) => ({
+        id: it.id,
+        name: String(it.name || '').trim() || `Phân loại ${idx + 1}`,
+        image: String(it.image || '').trim() || undefined,
+        price: it.price && Number(it.price) > 0 ? Number(it.price) : retailPrice,
+        priceTHB: it.priceTHB && Number(it.priceTHB) > 0 ? Number(it.priceTHB) : priceTHB,
+      }));
+
+      const itemImages = validItems.map(it => String(it.image || '').trim()).filter(Boolean);
+      images = itemImages.length > 0
+        ? Array.from(new Set([...itemImages, ...productImages]))
+        : (productImages.length > 0 ? productImages : []);
+
+      totalStock = validItems.reduce((acc, it) => acc + (Number(it.stock) || 0), 0) || Number(formData.stock) || 0;
+    } else {
+      // Chế độ sản phẩm đơn (Thêm thông tin trước, ảnh sau - KHÔNG bắt buộc phân loại và ảnh)
+      retailPrice = Number(formData.price) || 0;
+      if (retailPrice <= 0) {
+        setModalError('Vui lòng nhập giá bán lẻ tiền Kíp (₭)!');
+        return;
+      }
+      priceTHB = formData.priceTHB && Number(formData.priceTHB) > 0 ? Number(formData.priceTHB) : undefined;
+      wholesalePrice = formData.wholesalePrice && Number(formData.wholesalePrice) > 0 
+        ? Number(formData.wholesalePrice) 
+        : Math.round(retailPrice * 0.8);
+      wholesalePriceTHB = formData.wholesalePriceTHB && Number(formData.wholesalePriceTHB) > 0 
+        ? Number(formData.wholesalePriceTHB) 
+        : undefined;
+      totalStock = Number(formData.stock) || 0;
+      images = productImages.length > 0 ? productImages : [];
+      syncedVariants = undefined;
+      validTier1 = undefined;
     }
-
-    // Giá lẻ chính (lấy từ món đầu tiên hoặc formData.price)
-    const firstPriceNum = Number(validItems[0].price);
-    const retailPrice = firstPriceNum > 0 ? firstPriceNum : (Number(formData.price) || 0);
-    if (retailPrice <= 0) {
-      setModalError('Vui lòng nhập giá bán lẻ tiền Kíp (₭) cho món đầu tiên!');
-      return;
-    }
-
-    const firstPriceTHBNum = Number(validItems[0].priceTHB);
-    const priceTHB = firstPriceTHBNum > 0 ? firstPriceTHBNum : (formData.priceTHB && Number(formData.priceTHB) > 0 ? Number(formData.priceTHB) : undefined);
-
-    const firstWholesaleNum = Number(validItems[0].wholesalePrice);
-    const wholesalePrice = firstWholesaleNum > 0 ? firstWholesaleNum : (formData.wholesalePrice && Number(formData.wholesalePrice) > 0 ? Number(formData.wholesalePrice) : Math.round(retailPrice * 0.8));
-
-    const firstWholesaleTHBNum = Number(validItems[0].wholesalePriceTHB);
-    const wholesalePriceTHB = firstWholesaleTHBNum > 0 ? firstWholesaleTHBNum : (formData.wholesalePriceTHB && Number(formData.wholesalePriceTHB) > 0 ? Number(formData.wholesalePriceTHB) : undefined);
 
     const minWholesaleQty = Math.max(1, Number(formData.minWholesaleQty) || 3);
-
     setSubmitting(true);
-
-    const syncedVariants: ProductVariant[] = validItems.map((it, idx) => ({
-      id: it.id,
-      name: String(it.name || '').trim() || `Phân loại ${idx + 1}`,
-      image: String(it.image || '').trim() || undefined,
-      price: it.price && Number(it.price) > 0 ? Number(it.price) : retailPrice,
-      priceTHB: it.priceTHB && Number(it.priceTHB) > 0 ? Number(it.priceTHB) : priceTHB,
-      wholesalePrice: it.wholesalePrice && Number(it.wholesalePrice) > 0 ? Number(it.wholesalePrice) : wholesalePrice,
-      wholesalePriceTHB: it.wholesalePriceTHB && Number(it.wholesalePriceTHB) > 0 ? Number(it.wholesalePriceTHB) : wholesalePriceTHB,
-      stock: Number(it.stock) || 0,
-    }));
-
-    const validTier1: ProductTier1Option[] = validItems.map((it, idx) => ({
-      id: it.id,
-      name: String(it.name || '').trim() || `Phân loại ${idx + 1}`,
-      image: String(it.image || '').trim() || undefined,
-      price: it.price && Number(it.price) > 0 ? Number(it.price) : retailPrice,
-      priceTHB: it.priceTHB && Number(it.priceTHB) > 0 ? Number(it.priceTHB) : priceTHB,
-    }));
-
-    const itemImages = validItems.map(it => String(it.image || '').trim()).filter(Boolean);
-    const images = itemImages.length > 0
-      ? Array.from(new Set(itemImages))
-      : (productImages.length > 0 ? productImages : ['https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1000&auto=format&fit=crop']);
-
-    const totalStock = validItems.reduce((acc, it) => acc + (Number(it.stock) || 0), 0) || Number(formData.stock) || 0;
 
     const selectedCat = categories.find(c => c.id === formData.categoryId);
     const selectedSub = selectedCat?.subCategories?.find(s => s.id === formData.subCategoryId);
@@ -811,9 +860,9 @@ export default function AdminProductsPage() {
       cartonQty: calculatedCartonQty,
       cartonPrice: formData.hasCarton && formData.cartonPrice && Number(formData.cartonPrice) > 0 ? Number(formData.cartonPrice) : undefined,
       cartonPriceTHB: formData.hasCarton && formData.cartonPriceTHB && Number(formData.cartonPriceTHB) > 0 ? Number(formData.cartonPriceTHB) : undefined,
-      tier1Name: validTier1.length > 1 ? 'Phân Loại' : undefined,
-      tier1Options: validTier1.length > 0 ? validTier1 : undefined,
-      variants: syncedVariants.length > 0 ? syncedVariants : undefined,
+      tier1Name: (hasVariants && validTier1 && validTier1.length > 1) ? 'Phân Loại' : undefined,
+      tier1Options: (hasVariants && validTier1 && validTier1.length > 0) ? validTier1 : undefined,
+      variants: (hasVariants && syncedVariants && syncedVariants.length > 0) ? syncedVariants : undefined,
       stock: totalStock,
       categoryId: formData.categoryId,
       subCategoryId: formData.subCategoryId || undefined,
@@ -1162,11 +1211,43 @@ export default function AdminProductsPage() {
               >
                 {/* Header: Ảnh + Tên + Danh mục */}
                 <div className="flex gap-3">
-                  <img
-                    src={p.images[0] || 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=150&auto=format&fit=crop'}
-                    alt={p.name}
-                    className="w-16 h-16 object-cover rounded-xl bg-zinc-800 border border-zinc-700/60 flex-shrink-0"
-                  />
+                  <div className="relative group w-16 h-16 flex-shrink-0">
+                    <img
+                      src={(p.images && p.images[0]) || '/placeholder-product.svg'}
+                      alt={p.name}
+                      className="w-16 h-16 object-cover rounded-xl bg-zinc-800 border border-zinc-700/60"
+                    />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id={`mobile-quick-img-${p.id}`}
+                      className="hidden"
+                      disabled={quickImageUploadingId === p.id}
+                      onChange={(e) => handleQuickUploadProductImage(p.id, e.target.files)}
+                    />
+                    <label
+                      htmlFor={`mobile-quick-img-${p.id}`}
+                      className={`absolute inset-0 rounded-xl flex flex-col items-center justify-center cursor-pointer transition ${
+                        quickImageUploadingId === p.id
+                          ? 'opacity-100 bg-black/80'
+                          : (!p.images || p.images.length === 0)
+                          ? 'opacity-90 bg-blue-950/60 border border-blue-500/50 hover:bg-blue-900/80'
+                          : 'opacity-0 group-hover:opacity-100 bg-black/60'
+                      }`}
+                      title={(!p.images || p.images.length === 0) ? 'Chưa có ảnh. Bấm để chụp hoặc tải ảnh ngay' : 'Bấm để đổi ảnh'}
+                    >
+                      {quickImageUploadingId === p.id ? (
+                        <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
+                      ) : (
+                        <>
+                          <Camera className="w-4 h-4 text-blue-300" />
+                          <span className="text-[9px] font-bold text-blue-200 mt-0.5 leading-none">
+                            {(!p.images || p.images.length === 0) ? '+ Thêm ảnh' : 'Đổi ảnh'}
+                          </span>
+                        </>
+                      )}
+                    </label>
+                  </div>
                   <div className="min-w-0 flex-1">
                     <h4 className="font-bold text-white text-xs line-clamp-2 leading-snug">{p.name}</h4>
                     {p.nameLao && p.nameLao !== p.name && (
@@ -1333,11 +1414,43 @@ export default function AdminProductsPage() {
                   <tr key={p.id} className="hover:bg-zinc-800/40 transition">
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3.5">
-                        <img
-                          src={p.images[0] || 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=100&auto=format&fit=crop'}
-                          alt={p.name}
-                          className="w-12 h-12 object-cover rounded-xl bg-zinc-800 border border-zinc-700/60 flex-shrink-0"
-                        />
+                        <div className="relative group w-12 h-12 flex-shrink-0">
+                          <img
+                            src={(p.images && p.images[0]) || '/placeholder-product.svg'}
+                            alt={p.name}
+                            className="w-12 h-12 object-cover rounded-xl bg-zinc-800 border border-zinc-700/60"
+                          />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            id={`quick-img-${p.id}`}
+                            className="hidden"
+                            disabled={quickImageUploadingId === p.id}
+                            onChange={(e) => handleQuickUploadProductImage(p.id, e.target.files)}
+                          />
+                          <label
+                            htmlFor={`quick-img-${p.id}`}
+                            className={`absolute inset-0 rounded-xl flex flex-col items-center justify-center cursor-pointer transition ${
+                              quickImageUploadingId === p.id
+                                ? 'opacity-100 bg-black/80'
+                                : (!p.images || p.images.length === 0)
+                                ? 'opacity-90 bg-blue-950/60 border border-blue-500/50 hover:bg-blue-900/80'
+                                : 'opacity-0 group-hover:opacity-100 bg-black/60'
+                            }`}
+                            title={(!p.images || p.images.length === 0) ? 'Chưa có ảnh. Bấm để tải ảnh ngay' : 'Bấm để đổi ảnh'}
+                          >
+                            {quickImageUploadingId === p.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+                            ) : (
+                              <>
+                                <Camera className="w-3.5 h-3.5 text-blue-300" />
+                                <span className="text-[8px] font-bold text-blue-200 mt-0.5 leading-none">
+                                  {(!p.images || p.images.length === 0) ? '+ Thêm' : 'Đổi'}
+                                </span>
+                              </>
+                            )}
+                          </label>
+                        </div>
                         <div className="min-w-0">
                           <h4 className="font-bold text-white truncate max-w-xs">{p.name}</h4>
                           {p.nameLao && p.nameLao !== p.name && (
@@ -1804,6 +1917,123 @@ export default function AdminProductsPage() {
                 ))}
               </div>
 
+              {/* BẢNG GIÁ CƠ BẢN & TỒN KHO */}
+              <div className="p-4 bg-zinc-950 rounded-2xl border border-zinc-800 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                  <label className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <Tag className="w-4 h-4 text-emerald-400" />
+                    <span>Giá Bán Lẻ, Giá Bán Sỉ & Tồn Kho (Đơn vị: {formData.baseUnitName || 'Cái'}) *</span>
+                  </label>
+                  <span className="text-[10px] text-zinc-400">
+                    💡 Điền thông tin này để lưu nhanh sản phẩm mà không cần tạo phân loại
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* Giá lẻ Kíp */}
+                  <div>
+                    <label className="block text-emerald-400 font-bold mb-1">
+                      Giá Bán Lẻ Tiền Kíp (₭) *
+                    </label>
+                    <input
+                      type="number"
+                      required={!hasVariants}
+                      min="0"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      placeholder="Ví dụ: 85000"
+                      className="w-full bg-zinc-900 border border-emerald-500/50 rounded-xl px-3.5 py-2 text-emerald-300 font-mono font-bold focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  {/* Giá lẻ Baht */}
+                  <div>
+                    <label className="block text-amber-400 font-bold mb-1">
+                      Giá Bán Lẻ Tiền Baht (฿) (Tùy chọn)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.priceTHB}
+                      onChange={(e) => setFormData({ ...formData, priceTHB: e.target.value })}
+                      placeholder="Ví dụ: 120 (để trống nếu không nhận Baht)"
+                      className="w-full bg-zinc-900 border border-amber-500/40 rounded-xl px-3.5 py-2 text-amber-300 font-mono font-bold focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  {/* Tồn kho cơ bản */}
+                  <div>
+                    <label className="block text-zinc-300 font-bold mb-1">
+                      Số Lượng Tồn Kho (Kho tổng)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.stock}
+                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                      placeholder="Ví dụ: 50"
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2 text-white font-mono font-bold focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Hàng 2: Giá sỉ Kíp, Giá sỉ Baht, SL tối thiểu */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-zinc-800/80">
+                  {/* Giá sỉ Kíp */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-amber-400 font-bold">Giá Bán Sỉ Tiền Kíp (₭)</label>
+                      <button
+                        type="button"
+                        onClick={handleApplySuggestedWholesale}
+                        className="text-[10px] text-amber-400 hover:text-amber-300 font-bold hover:underline"
+                        title="Tự động tính giá sỉ = 80% giá lẻ"
+                      >
+                        ⚡ Gợi ý (-20%)
+                      </button>
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.wholesalePrice}
+                      onChange={(e) => setFormData({ ...formData, wholesalePrice: e.target.value })}
+                      placeholder="Ví dụ: 68000"
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2 text-amber-400 font-mono font-bold focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  {/* Giá sỉ Baht */}
+                  <div>
+                    <label className="block text-amber-400 font-bold mb-1">
+                      Giá Bán Sỉ Tiền Baht (฿) (Tùy chọn)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.wholesalePriceTHB}
+                      onChange={(e) => setFormData({ ...formData, wholesalePriceTHB: e.target.value })}
+                      placeholder="Ví dụ: 95 (nếu có)"
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2 text-amber-300 font-mono focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  {/* Số lượng sỉ tối thiểu */}
+                  <div>
+                    <label className="block text-zinc-400 font-semibold mb-1">
+                      Mua từ bao nhiêu {formData.baseUnitName || 'cái'} được giá sỉ?
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={formData.minWholesaleQty}
+                      onChange={(e) => setFormData({ ...formData, minWholesaleQty: e.target.value })}
+                      placeholder="Ví dụ: 3"
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2 text-white font-mono focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* QUY CÁCH ĐÓNG GÓI: LỐC, HỘP, THÙNG (DÙNG Ô TICK, TỰ CHỈNH GIÁ, KHÔNG TỰ ĐỘNG TÍNH) */}
               <div className="p-4 bg-zinc-950 rounded-2xl border border-zinc-800 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
@@ -2093,26 +2323,201 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              {/* BẢNG PHÂN LOẠI HÀNG CHUẨN SHOPEE (MỖI ẢNH = MỘT MÓN RIÊNG CÓ GIÁ RIÊNG) */}
-              <div className="p-4 bg-zinc-950 rounded-2xl border border-orange-500/40 shadow-lg space-y-4">
-                {/* Header khối Shopee */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-800/80">
-                  <div>
-                    <label className="text-xs font-black text-white flex items-center gap-2">
-                      <span className="p-1 rounded-lg bg-orange-500/20 text-orange-400">
-                        <Palette className="w-4 h-4" />
-                      </span>
-                      <span className="text-sm text-orange-400">
-                        Phân Loại Hàng (Chuẩn Shopee - Mỗi ảnh = Một món riêng, có giá riêng)
-                      </span>
+              {/* KHỐI ẢNH SẢN PHẨM (TÙY CHỌN - CÓ THỂ ĐỂ TRỐNG VÀ THÊM SAU) */}
+              <div className="p-4 bg-zinc-950 rounded-2xl border border-zinc-800 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-2 border-b border-zinc-800/80">
+                  <div className="flex items-center gap-2">
+                    <Camera className="w-4 h-4 text-blue-400" />
+                    <label className="text-xs font-bold text-white">
+                      Ảnh Sản Phẩm <span className="text-zinc-400 font-normal">(Tùy chọn - Có thể để trống và thêm sau)</span>
                     </label>
-                    <p className="text-[11px] text-zinc-400 mt-0.5">
-                      📸 <strong>Mỗi ảnh là một món/màu riêng</strong> có giá riêng. Khách bấm vào ảnh nào sẽ hiển thị đúng giá món đó!
-                    </p>
+                  </div>
+                  <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-medium">
+                    ✨ Không bắt buộc tải ảnh khi tạo mới
+                  </span>
+                </div>
+
+                <div className="p-3 bg-blue-950/20 border border-blue-900/40 rounded-xl text-[11px] text-blue-300 flex items-start gap-2">
+                  <span className="text-blue-400 font-bold">💡 Mẹo:</span>
+                  <span>
+                    Nếu bạn muốn thêm nhanh nhiều mặt hàng, hãy nhập thông tin và giá trước rồi bấm Lưu. Bạn có thể chụp ảnh hoặc tải ảnh lên bất cứ lúc nào từ danh sách sản phẩm bằng 1 lần bấm!
+                  </span>
+                </div>
+
+                {/* Các nút tải ảnh */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      id="product-images-upload"
+                      className="hidden"
+                      onChange={(e) => handleFileUpload(e.target.files)}
+                    />
+                    <label
+                      htmlFor="product-images-upload"
+                      className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-md shadow-blue-600/30 transition active:scale-95"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>📸 Tải ảnh từ máy / Chụp ảnh</span>
+                    </label>
                   </div>
 
+                  <button
+                    type="button"
+                    onClick={() => setShowPresets(!showPresets)}
+                    className="px-3 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 font-bold text-xs flex items-center gap-1.5 transition"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                    <span>{showPresets ? 'Đóng kho ảnh mẫu' : 'Kho ảnh mẫu có sẵn'}</span>
+                  </button>
+
+                  {/* Nhập URL ảnh thủ công */}
+                  <div className="flex items-center gap-1 flex-1 min-w-[200px]">
+                    <input
+                      type="text"
+                      value={manualUrl}
+                      onChange={(e) => setManualUrl(e.target.value)}
+                      placeholder="Dán link ảnh (http://...)"
+                      className="bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-1.5 text-xs text-white flex-1 focus:border-blue-500 outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddManualUrl}
+                      className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-xl font-bold text-xs border border-zinc-700 transition"
+                    >
+                      Thêm
+                    </button>
+                  </div>
+                </div>
+
+                {uploadingImage && (
+                  <div className="p-2.5 bg-blue-950/40 border border-blue-800/80 rounded-xl text-xs text-blue-300 flex items-center gap-2 animate-pulse">
+                    <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+                    <span>Đang tải ảnh lên hệ thống...</span>
+                  </div>
+                )}
+
+                {uploadError && (
+                  <div className="p-2 bg-red-500/20 border border-red-500/40 rounded-xl text-xs text-red-300 flex items-center gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>{uploadError}</span>
+                  </div>
+                )}
+
+                {/* Kho ảnh mẫu */}
+                {showPresets && (
+                  <div className="p-3 bg-zinc-900 border border-purple-500/40 rounded-2xl space-y-2 animate-in fade-in">
+                    <p className="text-[11px] font-bold text-purple-300 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Bấm vào ảnh mẫu để chọn:</span>
+                    </p>
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 max-h-40 overflow-y-auto p-1">
+                      {PRESET_BEAUTY_IMAGES.map((preset, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handleAddPresetImage(preset.url)}
+                          className="group relative aspect-square rounded-xl overflow-hidden border border-zinc-700 hover:border-blue-400 transition"
+                        >
+                          <img src={preset.url} alt={preset.name} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-end p-1 text-[9px] text-white font-semibold">
+                            + {preset.name}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Danh sách ảnh đã chọn */}
+                {productImages.length > 0 ? (
+                  <div className="space-y-1.5 pt-1">
+                    <span className="text-[10px] text-zinc-400 font-medium">Danh sách ảnh ({productImages.length} ảnh - Ảnh đầu tiên là ảnh bìa):</span>
+                    <div className="flex items-center gap-2.5 overflow-x-auto pb-2">
+                      {productImages.map((img, idx) => (
+                        <div key={idx} className="relative group w-20 h-20 rounded-xl overflow-hidden bg-zinc-900 border border-zinc-700 flex-shrink-0 shadow-sm">
+                          <img src={img} alt="" className="w-full h-full object-cover" />
+                          {idx === 0 && (
+                            <span className="absolute top-1 left-1 bg-blue-600 text-[8px] font-bold text-white px-1.5 py-0.5 rounded shadow">
+                              Bìa
+                            </span>
+                          )}
+                          <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-1">
+                            {idx !== 0 && (
+                              <button
+                                type="button"
+                                onClick={() => handleSetPrimaryImage(idx)}
+                                className="p-1 bg-blue-600 text-white rounded-lg hover:bg-blue-500"
+                                title="Đặt làm ảnh bìa"
+                              >
+                                <Star className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveImage(idx)}
+                              className="p-1 bg-red-600 text-white rounded-lg hover:bg-red-500"
+                              title="Xóa ảnh này"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 border border-dashed border-zinc-800 rounded-xl text-center text-zinc-500 text-xs">
+                    Chưa có ảnh nào được tải lên. (Sản phẩm sẽ hiển thị ảnh mặc định và bạn có thể tải ảnh lên sau bất cứ lúc nào)
+                  </div>
+                )}
+              </div>
+
+              {/* BẢNG PHÂN LOẠI HÀNG CHUẨN SHOPEE (MỖI ẢNH = MỘT MÓN RIÊNG CÓ GIÁ RIÊNG) */}
+              <div className="p-4 bg-zinc-950 rounded-2xl border border-orange-500/40 shadow-lg space-y-4">
+                {/* Header khối Shopee kèm Checkbox bật/tắt phân loại */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-800/80">
+                  <label className="flex items-start sm:items-center gap-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={hasVariants}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setHasVariants(checked);
+                        if (checked && shopeeItems.length === 0) {
+                          handleAddShopeeItem({
+                            name: '',
+                            price: formData.price || '',
+                            priceTHB: formData.priceTHB || '',
+                            wholesalePrice: formData.wholesalePrice || '',
+                            stock: formData.stock || '20',
+                          });
+                        }
+                      }}
+                      className="w-5 h-5 mt-0.5 sm:mt-0 rounded accent-orange-500 cursor-pointer flex-shrink-0"
+                    />
+                    <div>
+                      <div className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+                        <span className="p-1 rounded-lg bg-orange-500/20 text-orange-400">
+                          <Palette className="w-4 h-4" />
+                        </span>
+                        <span className="text-orange-400">
+                          Bật Phân Loại Hàng (Chuẩn Shopee - Mỗi ảnh = Một món riêng, có giá riêng)
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-zinc-400 mt-0.5">
+                        {hasVariants 
+                          ? '📸 Đang bật: Mỗi ảnh là một món/màu riêng có giá riêng. Khách bấm vào ảnh nào sẽ hiển thị đúng giá món đó!' 
+                          : 'Đang tắt: Sản phẩm đơn (bán theo 1 giá ở trên). Tick vào nếu muốn tạo nhiều phân loại/màu sắc!'}
+                      </p>
+                    </div>
+                  </label>
+
                   {/* 3 Nút thao tác nhanh trên đầu */}
-                  <div className="flex items-center gap-2 flex-wrap">
+                  {hasVariants && (
+                    <div className="flex items-center gap-2 flex-wrap">
                     {/* Nút Tải nhiều ảnh cùng lúc */}
                     <div>
                       <input
@@ -2153,7 +2558,15 @@ export default function AdminProductsPage() {
                       <span>{showPresets ? 'Đóng kho ảnh' : 'Kho ảnh mẫu'}</span>
                     </button>
                   </div>
+                )}
                 </div>
+
+                {!hasVariants ? (
+                  <div className="p-3.5 bg-zinc-900/40 border border-dashed border-zinc-800 rounded-xl text-center text-zinc-400 text-xs">
+                    Món này đang ở chế độ <strong>sản phẩm đơn</strong> (áp dụng giá và tồn kho ở bảng trên). Nếu bạn muốn tạo nhiều màu sắc hoặc phiên bản riêng, hãy tick chọn <strong>"Bật Phân Loại Hàng"</strong> ở trên.
+                  </div>
+                ) : (
+                  <>
 
                 {uploadingImage && (
                   <div className="p-3 bg-blue-950/40 border border-blue-800/80 rounded-xl text-xs text-blue-300 flex items-center gap-2 animate-pulse">
@@ -2602,6 +3015,8 @@ export default function AdminProductsPage() {
                       ))}
                     </div>
                   </div>
+                )}
+                  </>
                 )}
               </div>
 

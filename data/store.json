@@ -247,7 +247,27 @@
       "createdAt": "2026-10-11T06:09:16.837Z"
     }
   ],
-  "products": [],
+  "products": [
+    {
+      "id": "prod-1791700807946",
+      "name": "Garnier Sữa Rửa Mặt Chanh Sáng Da",
+      "nameLao": "Garnier Sữa Rửa Mặt Chanh Sáng Da",
+      "sku": "GAR-SRM-100",
+      "description": "Sạch sâu, sáng da",
+      "descriptionLao": "Sạch sâu, sáng da",
+      "price": 65000,
+      "priceTHB": 95,
+      "wholesalePrice": 52000,
+      "wholesalePriceTHB": 75,
+      "minWholesaleQty": 3,
+      "baseUnitName": "Tuýp",
+      "stock": 25,
+      "categoryId": "cat-skincare",
+      "status": "ACTIVE",
+      "images": [],
+      "createdAt": "2026-10-11T06:40:07.946Z"
+    }
+  ],
   "orders": [
     {
       "id": "ord-seed-1",

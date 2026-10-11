@@ -294,7 +294,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             <div className="lg:col-span-6 space-y-4">
               <div className="aspect-square w-full rounded-3xl overflow-hidden bg-zinc-100 border border-zinc-200/70 relative">
                 <img
-                  src={selectedImage || product.images[0]}
+                  src={selectedImage || (product.images && product.images[0]) || '/placeholder-product.svg'}
                   alt={product.name}
                   className="w-full h-full object-cover"
                 />
@@ -315,7 +315,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               </div>
 
               {/* Multi-image Thumbnails (Bấm vào mỗi ảnh lập tức chuyển giá riêng và chọn món riêng) */}
-              {product.images.length > 1 && (
+              {product.images && product.images.length > 1 && (
                 <div className="flex items-center gap-3 overflow-x-auto pb-2">
                   {product.images.map((img, idx) => (
                     <button

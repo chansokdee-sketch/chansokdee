@@ -142,9 +142,7 @@ export async function POST(req: NextRequest) {
       subCategoryNameLao: subCategoryNameLao || undefined,
       brand: brand || undefined,
       status: status === 'HIDDEN' ? 'HIDDEN' : 'ACTIVE',
-      images: Array.isArray(images) && images.length > 0 ? images : [
-        'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1000&auto=format&fit=crop'
-      ],
+      images: Array.isArray(images) && images.length > 0 ? images.filter(Boolean) : [],
     });
 
     return NextResponse.json({ message: 'Thêm sản phẩm thành công!', product: newProduct }, { status: 201 });

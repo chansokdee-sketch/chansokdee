@@ -981,7 +981,7 @@ function HomeContent() {
                     {/* Image Box */}
                     <Link href={`/products/${product.id}`} className="block relative aspect-square rounded-2xl overflow-hidden bg-zinc-100 mb-3">
                       <img
-                        src={product.images[0] || 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=500&auto=format&fit=crop'}
+                        src={(product.images && product.images.length > 0 && product.images[0]) ? product.images[0] : '/placeholder-product.svg'}
                         alt={product.name}
                         className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
                         loading="lazy"
