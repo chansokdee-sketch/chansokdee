@@ -1090,16 +1090,27 @@ export default function AdminProductsPage() {
     }
   };
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 50;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, categoryFilter]);
+
   const filteredProducts = products.filter(p => {
     const q = search.toLowerCase();
     const matchSearch = 
       p.name.toLowerCase().includes(q) || 
       (p.nameLao && p.nameLao.toLowerCase().includes(q)) || 
       p.sku.toLowerCase().includes(q) ||
+      (p.barcode && p.barcode.toLowerCase().includes(q)) ||
       (p.brand && p.brand.toLowerCase().includes(q));
     const matchCat = categoryFilter === 'all' || p.categoryId === categoryFilter;
     return matchSearch && matchCat;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
+  const paginatedProducts = filteredProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <div className="space-y-6">
@@ -1197,7 +1208,7 @@ export default function AdminProductsPage() {
             Không tìm thấy sản phẩm nào
           </div>
         ) : (
-          filteredProducts.map((p) => {
+          paginatedProducts.map((p) => {
             const isHidden = p.status === 'HIDDEN';
             const isLow = p.stock <= 5;
             const wholesalePrice = p.wholesalePrice !== undefined && p.wholesalePrice > 0 
@@ -1402,7 +1413,7 @@ export default function AdminProductsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/60">
-              {filteredProducts.map((p) => {
+              {paginatedProducts.map((p) => {
                 const isHidden = p.status === 'HIDDEN';
                 const isLow = p.stock <= 5;
                 const wholesalePrice = p.wholesalePrice !== undefined && p.wholesalePrice > 0 
@@ -1733,6 +1744,72 @@ export default function AdminProductsPage() {
           </table>
         </div>
       </div>
+
+      {/* THANH PHÂN TRANG (PAGINATION) DÀNH CHO BỘ DANH SÁCH HÀNG NGHÌN SẢN PHẨM */}
+      {filteredProducts.length > pageSize && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-sm">
+          <div className="text-xs text-zinc-400">
+            Hiển thị <span className="font-bold text-white">{(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, filteredProducts.length)}</span> trong tổng số <span className="font-bold text-white">{filteredProducts.length.toLocaleString()}</span> sản phẩm (Trang {currentPage}/{totalPages})
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+              className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 disabled:pointer-events-none text-zinc-200 text-xs font-semibold rounded-lg transition"
+            >
+              «« Trang đầu
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 disabled:pointer-events-none text-zinc-200 text-xs font-semibold rounded-lg transition"
+            >
+              ‹ Trước
+            </button>
+            
+            {/* 5 nút trang quanh trang hiện tại */}
+            {Array.from({ length: Math.min(5, totalPages) }, (_, idx) => {
+              let pNum = currentPage - 2 + idx;
+              if (currentPage <= 2) pNum = idx + 1;
+              else if (currentPage >= totalPages - 2) pNum = totalPages - 4 + idx;
+              if (pNum < 1 || pNum > totalPages) return null;
+              return (
+                <button
+                  key={pNum}
+                  type="button"
+                  onClick={() => setCurrentPage(pNum)}
+                  className={`w-8 h-8 rounded-lg text-xs font-bold transition ${
+                    currentPage === pNum
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                      : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
+                  }`}
+                >
+                  {pNum}
+                </button>
+              );
+            })}
+
+            <button
+              type="button"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 disabled:pointer-events-none text-zinc-200 text-xs font-semibold rounded-lg transition"
+            >
+              Sau ›
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+              className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 disabled:pointer-events-none text-zinc-200 text-xs font-semibold rounded-lg transition"
+            >
+              Trang cuối »»
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* MODAL THÊM / SỬA SẢN PHẨM CÓ 2 BẢNG GIÁ (SỈ & LẺ) */}
       {isModalOpen && (

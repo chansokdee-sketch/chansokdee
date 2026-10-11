@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   SlidersHorizontal,
   ChevronRight,
+  ChevronDown,
   Edit,
   Edit3,
   ShieldCheck,
@@ -362,26 +363,93 @@ function HomeContent() {
 
   const getCategoryEmoji = (iconOrSlug?: string) => {
     switch (iconOrSlug) {
-      case 'Sparkles':
-      case 'cham-soc-da-mat':
-      case 'cat-skincare':
-        return '✨';
-      case 'Heart':
-      case 'son-moi':
-      case 'cat-lipstick':
-        return '💄';
-      case 'Palette':
-      case 'trang-diem':
-      case 'cat-makeup':
-        return '🎨';
-      case 'Flame':
-      case 'nuoc-hoa':
-      case 'cat-perfume':
+      case 'phan-rom-bot':
+      case 'cat-1':
         return '🌸';
-      case 'Droplets':
-      case 'cham-soc-toc-body':
-      case 'cat-body-hair':
+      case 'duong-da-body':
+      case 'cat-2':
+        return '🧴';
+      case 'dau-goi-xa-u':
+      case 'cat-3':
+        return '💆‍♀️';
+      case 'sua-tam-xa-bong':
+      case 'cat-4':
+        return '🧼';
+      case 'dung-dich-ve-sinh':
+      case 'cat-5':
+        return '🛡️';
+      case 'duong-nhuom-toc':
+      case 'cat-6':
+        return '💇‍♀️';
+      case 'san-pham-cho-be':
+      case 'cat-7':
+        return '👶';
+      case 'lan-khu-mui':
+      case 'cat-8':
         return '💧';
+      case 'sua-rua-mat':
+      case 'cat-9':
+        return '🫧';
+      case 'cham-soc-rang-mieng':
+      case 'cat-10':
+        return '🪥';
+      case 'wax-vuot-toc':
+      case 'cat-11':
+        return '✨';
+      case 'chong-muoi-con-trung':
+      case 'cat-12':
+        return '🦟';
+      case 'dau-cu-la-dau-gio':
+      case 'cat-13':
+        return '🌿';
+      case 'tra-ca-phe':
+      case 'cat-14':
+        return '☕';
+      case 'dao-cao-rau':
+      case 'cat-15':
+        return '🪒';
+      case 'nuoc-tay-rua-lau-san':
+      case 'cat-16':
+        return '🧹';
+      case 'xit-phong-sap-thom':
+      case 'cat-17':
+        return '🌬️';
+      case 'khan-giay-ve-sinh':
+      case 'cat-18':
+        return '🧻';
+      case 'dung-cu-trang-diem':
+      case 'cat-19':
+        return '💄';
+      case 'my-pham-trang-diem':
+      case 'cat-20':
+        return '🎨';
+      case 'binh-sua-num-ti':
+      case 'cat-21':
+        return '🍼';
+      case 'nuoc-hoa':
+      case 'cat-22':
+        return '💐';
+      case 'phan-nen-phan-phu':
+      case 'cat-23':
+        return '🪞';
+      case 'bang-ve-sinh-ta-bim':
+      case 'cat-24':
+        return '📦';
+      case 'bot-giat-nuoc-xa-vai':
+      case 'cat-25':
+        return '🧺';
+      case 'dung-cu-hoc-tap':
+      case 'cat-26':
+        return '✏️';
+      case 'thuoc-la':
+      case 'cat-27':
+        return '🚬';
+      case 'tat-vo-gang-tay':
+      case 'cat-28':
+        return '🧤';
+      case 'hang-tieu-dung-khac':
+      case 'cat-29':
+        return '🛍️';
       default:
         return '✨';
     }
@@ -445,6 +513,16 @@ function HomeContent() {
     (selectedColorFilter !== 'all' ? 1 : 0) +
     (selectedSizeFilter !== 'all' ? 1 : 0) +
     (onlyInStock ? 1 : 0);
+
+  const [visibleCount, setVisibleCount] = useState<number>(48);
+
+  useEffect(() => {
+    setVisibleCount(48);
+  }, [initialSearch, selectedCategory, selectedSubCategory, sortBy, selectedPriceRange, selectedPackagingFilter, selectedColorFilter, selectedSizeFilter, onlyInStock]);
+
+  const displayedProducts = React.useMemo(() => {
+    return filteredProducts.slice(0, visibleCount);
+  }, [filteredProducts, visibleCount]);
 
   const resetAllFilters = () => {
     setSelectedPriceRange('all');
@@ -967,8 +1045,9 @@ function HomeContent() {
             </button>
           </div>
         ) : (
-          <div className={`grid ${gridColsClass} gap-4 sm:gap-6`}>
-            {filteredProducts.map((product) => {
+          <>
+            <div className={`grid ${gridColsClass} gap-4 sm:gap-6`}>
+            {displayedProducts.map((product) => {
               const isLowStock = product.stock > 0 && product.stock <= 5;
               const isOutOfStock = product.stock <= 0;
 
@@ -1108,7 +1187,36 @@ function HomeContent() {
               );
             })}
           </div>
-        )}
+
+          {/* NÚT XEM THÊM DÀNH CHO BỘ DỮ LIỆU LỚN SABUYSOFT */}
+          {filteredProducts.length > visibleCount && (
+            <div className="flex flex-col items-center justify-center gap-3 pt-8 pb-12">
+              <p className="text-xs text-zinc-500 font-medium">
+                {isLao 
+                  ? `ກຳລັງສະແດງ ${displayedProducts.length} ຈາກທັງໝົດ ${filteredProducts.length.toLocaleString()} ສິນຄ້າ` 
+                  : `Đang hiển thị ${displayedProducts.length} trong tổng số ${filteredProducts.length.toLocaleString()} sản phẩm`}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount(prev => prev + 48)}
+                  className={`px-6 py-3 ${theme.btnPrimary} text-white text-xs sm:text-sm font-bold rounded-2xl shadow-lg transition flex items-center gap-2 active:scale-95`}
+                >
+                  <span>{isLao ? 'ເບິ່ງຕື່ມ 48 ສິນຄ້າ' : 'Xem thêm 48 sản phẩm'}</span>
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount(prev => Math.min(prev + 120, filteredProducts.length))}
+                  className="px-4 py-3 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-xs sm:text-sm font-bold rounded-2xl transition active:scale-95"
+                >
+                  <span>{isLao ? 'ເບິ່ງຕື່ມ 120' : 'Xem thêm 120'}</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
       </main>
 

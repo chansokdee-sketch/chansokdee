@@ -80,6 +80,7 @@ export type PackagingUnit = 'PIECE' | 'PACK' | 'BOX' | 'CARTON'; // 'PIECE' = CÃ
 export interface Product {
   id: string;
   sku: string;
+  barcode?: string;
   name: string;
   nameLao?: string;
   slug: string;

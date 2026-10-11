@@ -603,9 +603,11 @@ export const db = {
       if (options?.search) {
         const query = options.search.toLowerCase().trim();
         result = result.filter(p => 
-          p.name.toLowerCase().includes(query) ||
-          p.sku.toLowerCase().includes(query) ||
-          p.description.toLowerCase().includes(query)
+          (p.name && p.name.toLowerCase().includes(query)) ||
+          (p.nameLao && p.nameLao.toLowerCase().includes(query)) ||
+          (p.sku && p.sku.toLowerCase().includes(query)) ||
+          (p.barcode && p.barcode.toLowerCase().includes(query)) ||
+          (p.description && p.description.toLowerCase().includes(query))
         );
       }
 
