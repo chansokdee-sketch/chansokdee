@@ -92,20 +92,23 @@ export interface Product {
   minWholesaleQty?: number;   // Số lượng tối thiểu để tính giá sỉ (mặc định 3 hoặc 5)
   
   // Tùy chọn bật/tắt (ô tick) quy cách đóng gói:
+  baseUnitName?: string;      // Tên đơn vị cơ sở (mặc định "Cái", có thể là "Gói", "Tuýp", "Chai", "Hũ", "Miếng"...)
+  baseUnitNameLao?: string;   // Tên đơn vị cơ sở tiếng Lào (ອັນ, ຊອງ, ຫຼອດ, ແກ້ວ...)
   hasPack?: boolean;          // Có bán theo Lốc không?
-  packQty?: number;           // Số lượng cái trong 1 Lốc
+  packQty?: number;           // Số lượng cái/gói trong 1 Lốc
   packPrice?: number;         // Giá bán 1 Lốc (₭ LAK)
   packPriceTHB?: number;      // Giá bán 1 Lốc (฿ THB)
   packWholesalePrice?: number;
 
   hasBox?: boolean;           // Có bán theo Hộp không?
-  boxQty?: number;            // Số lượng cái trong 1 Hộp
+  boxQty?: number;            // Số lượng cái/gói trong 1 Hộp
   boxPrice?: number;          // Giá bán 1 Hộp (₭ LAK)
   boxPriceTHB?: number;       // Giá bán 1 Hộp (฿ THB)
   boxWholesalePrice?: number;
 
   hasCarton?: boolean;        // Có bán theo Thùng không?
-  cartonQty?: number;         // Số lượng cái trong 1 Thùng
+  cartonQty?: number;         // Tổng số lượng cái/gói trong 1 Thùng
+  cartonBoxQty?: number;      // Số Hộp trong 1 Thùng (ví dụ: 24 hộp/thùng => cartonQty = 24 × boxQty)
   cartonPrice?: number;       // Giá bán 1 Thùng (₭ LAK)
   cartonPriceTHB?: number;    // Giá bán 1 Thùng (฿ THB)
   cartonWholesalePrice?: number;

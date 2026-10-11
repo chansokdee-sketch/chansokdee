@@ -240,186 +240,75 @@
   ],
   "products": [
     {
-      "id": "prod-1",
-      "sku": "ESTEE-ANR-50ML",
-      "name": "Serum Phục Hồi & Trẻ Hóa Da Estée Lauder Advanced Night Repair 50ml",
-      "slug": "serum-estee-lauder-advanced-night-repair-50ml",
-      "description": "Tinh chất phục hồi số 1 thế giới với công nghệ Chronolux Power Signal độc quyền. Giúp da chống lại các tác nhân gây lão hóa từ môi trường, cấp ẩm sâu 72 giờ, thu nhỏ lỗ chân lông và làm mờ nếp nhăn rõ rệt chỉ sau 3 tuần sử dụng.",
-      "price": 2750000,
-      "stock": 25,
+      "id": "prod-garnier-7ml",
+      "sku": "GARNIER-7ML-YEL",
+      "name": "Kem Dưỡng Garnier Bright Complete Vitamin C Gói 7ml",
+      "nameLao": "ຄຣີມບຳລຸງ ການິເຍ່ ຊອງ 7ml",
+      "slug": "kem-duong-garnier-bright-complete-7ml",
+      "description": "Garnier Skin Naturals Bright Complete Vitamin C Serum Cream gói 7ml tiện lợi. 1 Hộp gồm 6 gói, 1 Thùng gồm 24 hộp (144 gói). Dưỡng sáng da mờ thâm nám, thẩm thấu nhanh không nhờn rít.",
+      "descriptionLao": "ການິເຍ່ ຄຣີມບຳລຸງຜິວຂາວໃສ ຊອງ 7ml. 1 ກ່ອງມີ 6 ຊອງ, 1 ລັງມີ 24 ກ່ອງ (144 ຊອງ). ຫຼຸດຮອຍດຳ ຜິວກະຈ່າງໃສ.",
+      "price": 15000,
+      "priceTHB": 22,
+      "wholesalePrice": 12000,
+      "wholesalePriceTHB": 18,
+      "minWholesaleQty": 6,
+      "baseUnitName": "Gói",
+      "baseUnitNameLao": "ຊອງ",
+      "hasPack": false,
+      "hasBox": true,
+      "boxQty": 6,
+      "boxPrice": 85000,
+      "boxPriceTHB": 125,
+      "hasCarton": true,
+      "cartonBoxQty": 24,
+      "cartonQty": 144,
+      "cartonPrice": 1950000,
+      "cartonPriceTHB": 2850,
+      "tier1Name": "Màu Sắc & Dòng",
+      "tier1Options": [
+        {
+          "id": "t1-garnier-yel1",
+          "name": "Vàng Chanh (Light Complete)",
+          "image": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=1000&auto=format&fit=crop",
+          "price": 15000,
+          "priceTHB": 22
+        },
+        {
+          "id": "t1-garnier-yel2",
+          "name": "Vàng Cam (Anti-Acne Booster)",
+          "image": "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=1000&auto=format&fit=crop",
+          "price": 16000,
+          "priceTHB": 24
+        }
+      ],
+      "tier2Name": "Loại Da & Phiên Bản",
+      "tier2Options": [
+        {
+          "id": "t2-garnier-type1",
+          "name": "Da Dầu Mụn",
+          "priceBonus": 0,
+          "priceBonusTHB": 0
+        },
+        {
+          "id": "t2-garnier-type2",
+          "name": "Da Thường & Hỗn Hợp",
+          "priceBonus": 0,
+          "priceBonusTHB": 0
+        }
+      ],
+      "stock": 288,
       "categoryId": "cat-skincare",
-      "subCategoryId": "sub-serum",
-      "subCategoryName": "Serum & Tinh Chất",
-      "subCategoryNameLao": "ເຊຣັ່ມ & ຫົວເຊື້ອ",
-      "brand": "Estée Lauder",
+      "subCategoryId": "sub-cream",
+      "subCategoryName": "Kem Dưỡng Da & Phục Hồi",
+      "subCategoryNameLao": "ຄຣີມບຳລຸງ & ຟື້ນຟູຜິວ",
+      "brand": "Garnier",
       "status": "ACTIVE",
       "images": [
         "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=1000&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1608248597359-543598739d48?q=80&w=1000&auto=format&fit=crop"
+        "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=1000&auto=format&fit=crop"
       ],
-      "createdAt": "2026-10-08T06:47:17.648Z",
-      "updatedAt": "2026-10-08T06:47:17.648Z",
-      "nameLao": "ເຊຣັ່ມຟື້ນຟູ & ຊະລໍໄວ Estée Lauder Advanced Night Repair 50ml",
-      "descriptionLao": "ຫົວເຊື້ອຟື້ນຟູຜິວອັນດັບ 1 ຂອງໂລກ ດ້ວຍເທັກໂນໂລຢີ Chronolux Power Signal. ຊ່ວຍປົກປ້ອງຜິວຈາກມົນລະພິດ, ເຕີມຄວາມຊຸ່ມຊື່ນເລິກ 72 ຊົ່ວໂມງ, ຮັດຮູຂຸມຂົນ ແລະ ຫຼຸດຮອຍຫ່ຽວຍົ່ນພາຍໃນ 3 ອາທິດ.",
-      "wholesalePrice": 2200000,
-      "minWholesaleQty": 3,
-      "packQty": 6,
-      "boxQty": 10,
-      "cartonQty": 50
-    },
-    {
-      "id": "prod-2",
-      "sku": "LRP-ANTHELIOS-50ML",
-      "name": "Kem Chống Nắng Kiểm Soát Dầu La Roche-Posay Anthelios Oil Control 50ml",
-      "slug": "kem-chong-nang-la-roche-posay-anthelios-50ml",
-      "description": "Kem chống nắng kiểm soát dầu hàng đầu từ Pháp dành riêng cho da dầu mụn nhạy cảm. Màng lọc Mexoryl 400 độc quyền ngăn chặn tia UVA siêu dài, kiềm dầu khô thoáng suốt 12 giờ, không bết dính và không vệt trắng.",
-      "price": 465000,
-      "stock": 58,
-      "categoryId": "cat-skincare",
-      "subCategoryId": "sub-sunscreen",
-      "subCategoryName": "Kem Chống Nắng",
-      "subCategoryNameLao": "ຄີມກັນແດດ",
-      "brand": "La Roche-Posay",
-      "status": "ACTIVE",
-      "images": [
-        "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=1000&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?q=80&w=1000&auto=format&fit=crop"
-      ],
-      "createdAt": "2026-10-08T06:47:17.648Z",
-      "updatedAt": "2026-10-08T06:47:17.648Z",
-      "nameLao": "ຄີມກັນແດດຄຸມມັນ La Roche-Posay Anthelios Oil Control 50ml",
-      "descriptionLao": "ຄີມກັນແດດຄຸມມັນອັນດັບ 1 ຈາກປະເທດຝຣັ່ງ ສຳລັບຜິວມັນແລະເປັນສິວງ່າຍ. ນະວັດຕະກຳ Mexoryl 400 ປ້ອງກັນລັງສີ Ultra-long UVA, ຄຸມມັນແຫ້ງສະບາຍຍາວນານ 12 ຊົ່ວໂມງ ບໍ່ໜຽວໜຶບ.",
-      "wholesalePrice": 372000,
-      "minWholesaleQty": 3,
-      "packQty": 6,
-      "boxQty": 10,
-      "cartonQty": 50
-    },
-    {
-      "id": "prod-3",
-      "sku": "DIOR-999-VELVET",
-      "name": "Son Thỏi Dior Rouge Dior Forever Matte 999 Velvet Red",
-      "slug": "son-dior-rouge-dior-999-velvet",
-      "description": "Huyền thoại đỏ thuần kiêu kỳ của thương hiệu Dior Pháp. Công thức chuyển giao không lem bền màu suốt 16 giờ, chiết xuất hoa mẫu đơn đỏ dưỡng ẩm môi căng mịn tự nhiên suốt cả ngày dài.",
-      "price": 1150000,
-      "stock": 15,
-      "categoryId": "cat-lipstick",
-      "subCategoryId": "sub-matte-lip",
-      "subCategoryName": "Son Thỏi Lì",
-      "subCategoryNameLao": "ລິບແທ່ງເນື້ອແມັດ",
-      "brand": "Dior",
-      "status": "ACTIVE",
-      "images": [
-        "https://images.unsplash.com/photo-1586495777744-4413f21062fa?q=80&w=1000&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1625093742435-6fa192b6fb10?q=80&w=1000&auto=format&fit=crop"
-      ],
-      "createdAt": "2026-10-08T06:47:17.648Z",
-      "updatedAt": "2026-10-11T02:19:58.432Z",
-      "nameLao": "ລິບສະຕິກ Dior Rouge Dior Forever Matte 999 Velvet ແດງຄລາສສິກ",
-      "descriptionLao": "ຕຳນານສີແດງສຸດຫຼູຫຼາຈາກແບຣນ Dior ຝຣັ່ງ. ສູດຕິດທົນບໍ່ເລິະຕະຫຼອດ 16 ຊົ່ວໂມງ, ສານສະກັດຈາກດອກໂບຕັນແດງບຳລຸງຮິມສົບນຸ່ມນຽນຕະຫຼອດມື້.",
-      "wholesalePrice": 920000,
-      "priceTHB": 1770,
-      "wholesalePriceTHB": 1415,
-      "minWholesaleQty": 3,
-      "packQty": 6,
-      "boxQty": 12,
-      "cartonQty": 60,
-      "tier1Name": "Màu Sắc",
-      "tier1Options": [
-        {
-          "id": "t1-dior-999",
-          "name": "[999] Đỏ Velvet",
-          "image": "https://images.unsplash.com/photo-1586495777744-4413f21062fa?q=80&w=1000&auto=format&fit=crop",
-          "price": 1150000,
-          "priceTHB": 1770
-        },
-        {
-          "id": "t1-dior-772",
-          "name": "[772] Hồng Đất",
-          "image": "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?q=80&w=1000&auto=format&fit=crop",
-          "price": 1150000,
-          "priceTHB": 1770
-        },
-        {
-          "id": "t1-dior-840",
-          "name": "[840] Đỏ Gạch",
-          "image": "https://images.unsplash.com/photo-1625093742435-6fa192b6fb10?q=80&w=1000&auto=format&fit=crop",
-          "price": 1150000,
-          "priceTHB": 1770
-        }
-      ],
-      "tier2Name": "Dòng Sản Phẩm",
-      "tier2Options": [
-        {
-          "id": "t2-matte",
-          "name": "Dòng Matte Lì"
-        },
-        {
-          "id": "t2-velvet",
-          "name": "Dòng Velvet Mịn",
-          "priceBonus": 50000,
-          "priceBonusTHB": 80
-        },
-        {
-          "id": "t2-satin",
-          "name": "Dòng Satin Bóng",
-          "priceBonus": 50000,
-          "priceBonusTHB": 80
-        }
-      ]
-    },
-    {
-      "id": "prod-4",
-      "sku": "CHANEL-COCO-100ML",
-      "name": "Nước Hoa Nữ Chanel Coco Mademoiselle Eau De Parfum 100ml",
-      "slug": "nuoc-hoa-chanel-coco-mademoiselle-100ml",
-      "description": "Hương thơm biểu tượng thanh lịch, quý phái và đầy mê hoặc từ Paris. Nốt hương cam tươi mát bùng nổ, hòa quyện cùng cánh hoa hồng Thổ Nhĩ Kỳ và hoắc hương phương Đông vương vấn khó quên.",
-      "price": 4250000,
-      "stock": 11,
-      "categoryId": "cat-perfume",
-      "subCategoryId": "sub-women-perfume",
-      "subCategoryName": "Nước Hoa Nữ",
-      "subCategoryNameLao": "ນ້ຳຫອມຍິງ",
-      "brand": "Chanel",
-      "status": "ACTIVE",
-      "images": [
-        "https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1000&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=1000&auto=format&fit=crop"
-      ],
-      "createdAt": "2026-10-08T06:47:17.648Z",
-      "updatedAt": "2026-10-09T08:56:10.732Z",
-      "nameLao": "ນ້ຳຫອມຜູ້ຍິງ Chanel Coco Mademoiselle Eau De Parfum 100ml",
-      "descriptionLao": "ກິ່ນຫອມສັນຍະລັກແຫ່ງຄວາມຫຼູຫຼາ, ມີສະເໜ່ ແລະ ໂດດເດັ່ນຈາກ ປາຣີ. ກິ່ນສົ້ມສົດຊື່ນຜະສົມຜະສານກັບດອກກຸຫຼາບຕວັກກີ ແລະ ດອກມະລິສຸດໂຣແມນຕິກ.",
-      "wholesalePrice": 3400000,
-      "minWholesaleQty": 3,
-      "packQty": 4,
-      "boxQty": 8,
-      "cartonQty": 32
-    },
-    {
-      "id": "prod-5",
-      "sku": "YSL-CUSHION-B20",
-      "name": "Phấn Nước Cao Cấp YSL Le Cushion Encre De Peau SPF50 / PA+++ 14g",
-      "slug": "phan-nuoc-ysl-le-cushion-encre-de-peau-14g",
-      "description": "Thiết kế vỏ da chevron sang chảnh bậc nhất thế giới. Kết cấu hạt phấn nano siêu nhẹ tiệp vào da, che phủ khuyết điểm hoàn hảo, kiềm dầu giữ lớp nền mịn màng bền màu suốt 24 giờ.",
-      "price": 1650000,
-      "stock": 21,
-      "categoryId": "cat-makeup",
-      "subCategoryId": "sub-cushion",
-      "subCategoryName": "Cushion & Kem Nền",
-      "subCategoryNameLao": "ຄຸຊຊັ່ນ & ຮອງພື້ນ",
-      "brand": "YSL",
-      "status": "ACTIVE",
-      "images": [
-        "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?q=80&w=1000&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1000&auto=format&fit=crop"
-      ],
-      "createdAt": "2026-10-08T06:47:17.648Z",
-      "updatedAt": "2026-10-09T08:56:10.732Z",
-      "nameLao": "ຄູຊັ່ນຜິວເນຽນທຳມະຊາດ YSL Le Cushion Encre De Peau SPF50 14g",
-      "descriptionLao": "ຄູຊັ່ນລະດັບໄຮເອນຈາກ YSL ມອບງານຜິວແມັດເປັ່ງປະກາຍແບບ luminous matte. ປົກປິດຮອຍດ່າງດຳດີຢ້ຽມ, ບາງເບົາສະບາຍຜິວ ແລະ ຄຸມມັນຕະຫຼອດມື້.",
-      "wholesalePrice": 1320000,
-      "minWholesaleQty": 3
+      "createdAt": "2026-10-11T03:50:00.000Z",
+      "updatedAt": "2026-10-11T03:50:00.000Z"
     },
     {
       "id": "prod-6",
@@ -817,7 +706,7 @@
       ],
       "id": "prod-1791616486979",
       "createdAt": "2026-10-10T07:14:46.979Z",
-      "updatedAt": "2026-10-10T09:45:38.854Z",
+      "updatedAt": "2026-10-11T03:35:34.854Z",
       "packQty": 3,
       "boxQty": 10,
       "cartonQty": 12,
@@ -837,6 +726,63 @@
       ],
       "priceTHB": 90,
       "wholesalePriceTHB": 90
+    },
+    {
+      "name": "ຄີມທາໝ້າ Garnier ຝາເເຫຼືອງ 7ມລ",
+      "nameLao": "ຄີມທາໝ້າ Garnier ຝາເເຫຼືອງ 7ມລ",
+      "sku": "NOVA-8782",
+      "slug": "-garnier-7",
+      "description": "",
+      "price": 10000,
+      "priceTHB": 15,
+      "wholesalePrice": 8500,
+      "wholesalePriceTHB": 12,
+      "minWholesaleQty": 3,
+      "hasPack": false,
+      "packQty": 6,
+      "hasBox": false,
+      "boxQty": 10,
+      "hasCarton": false,
+      "cartonQty": 50,
+      "stock": 20,
+      "categoryId": "cat-skincare",
+      "subCategoryId": "sub-serum",
+      "subCategoryName": "Serum & Tinh Chất",
+      "subCategoryNameLao": "ເຊຣັ່ມ & ຫົວເຊື້ອ",
+      "brand": "GARNIER",
+      "status": "ACTIVE",
+      "images": [
+        "/uploads/phone-upload-1791688170764-4aydbn.jpg"
+      ],
+      "id": "prod-1791688407177",
+      "createdAt": "2026-10-11T03:13:27.177Z",
+      "updatedAt": "2026-10-11T03:47:44.972Z",
+      "tier2Name": "Trọng Lượng (ml, g)",
+      "tier2Options": [
+        {
+          "id": "t2-1791688463178-z7fr",
+          "name": "7ml"
+        }
+      ],
+      "variants": [
+        {
+          "id": "t1-1791688731890-1",
+          "name": "ກ່ອງ",
+          "image": "/uploads/phone-upload-1791688492078-h3lwn1.jpg",
+          "price": 50000,
+          "priceTHB": 72
+        }
+      ],
+      "tier1Name": "Màu Sắc",
+      "tier1Options": [
+        {
+          "id": "t1-1791688731890-1",
+          "name": "ກ່ອງ",
+          "image": "/uploads/phone-upload-1791688492078-h3lwn1.jpg",
+          "price": 50000,
+          "priceTHB": 72
+        }
+      ]
     }
   ],
   "orders": [

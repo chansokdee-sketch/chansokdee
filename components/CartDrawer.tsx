@@ -161,7 +161,7 @@ export default function CartDrawer() {
                             {formatPrice(unitPrice)}
                           </span>
                           <span className="text-[10px] text-zinc-400">
-                            /{unit === 'CARTON' ? (isLao ? 'ລັງ' : 'thùng') : unit === 'BOX' ? (isLao ? 'ກ່ອງ' : 'hộp') : unit === 'PACK' ? (isLao ? 'ແພັກ' : 'lốc') : (isLao ? 'ອັນ' : 'cái')}
+                            /{unit === 'CARTON' ? (isLao ? 'ລັງ' : 'thùng') : unit === 'BOX' ? (isLao ? 'ກ່ອງ' : 'hộp') : unit === 'PACK' ? (isLao ? 'ແພັກ' : 'lốc') : (isLao ? (item.product.baseUnitNameLao || 'ອັນ') : (item.product.baseUnitName?.toLowerCase() || 'cái'))}
                           </span>
                           {isWholesale && (
                             <span className="text-[9px] bg-amber-500/15 text-amber-700 px-1.5 py-0.2 rounded font-black border border-amber-500/20">

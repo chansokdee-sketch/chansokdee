@@ -760,7 +760,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                               }`}
                             >
                               <div className="flex items-center justify-between gap-1">
-                                <span className="text-xs font-black">{isLao ? 'ອັນ (Cái)' : 'Cái'}</span>
+                                <span className="text-xs font-black">
+                                  {isLao ? `${product.baseUnitNameLao || 'ອັນ'} (${product.baseUnitName || 'Cái'})` : (product.baseUnitName || 'Cái')}
+                                </span>
                                 <span className="text-[10px] text-zinc-400">x1</span>
                               </div>
                               <p className="text-[11px] font-mono font-bold text-blue-600 mt-1">
@@ -784,7 +786,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                               >
                                 <div className="flex items-center justify-between gap-1">
                                   <span className="text-xs font-black">{isLao ? 'ແພັກ (Lốc)' : 'Lốc'}</span>
-                                  <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1 py-0.2 rounded font-bold">x{packQty}</span>
+                                  <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1 py-0.2 rounded font-bold">
+                                    x{packQty} {product.baseUnitName || ''}
+                                  </span>
                                 </div>
                                 <p className="text-[11px] font-mono font-bold text-emerald-700 mt-1">
                                   {formatPrice(packPrice)}
@@ -808,7 +812,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                               >
                                 <div className="flex items-center justify-between gap-1">
                                   <span className="text-xs font-black">{isLao ? 'ກ່ອງ (Hộp)' : 'Hộp'}</span>
-                                  <span className="text-[9px] bg-purple-100 text-purple-700 px-1 py-0.2 rounded font-bold">x{boxQty}</span>
+                                  <span className="text-[9px] bg-purple-100 text-purple-700 px-1 py-0.2 rounded font-bold">
+                                    x{boxQty} {product.baseUnitName || ''}
+                                  </span>
                                 </div>
                                 <p className="text-[11px] font-mono font-bold text-purple-700 mt-1">
                                   {formatPrice(boxPrice)}
@@ -832,13 +838,16 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                               >
                                 <div className="flex items-center justify-between gap-1">
                                   <span className="text-xs font-black">{isLao ? 'ລັງ (Thùng)' : 'Thùng ⚡'}</span>
-                                  <span className="text-[9px] bg-amber-400 text-amber-950 px-1 py-0.2 rounded font-black">x{cartonQty}</span>
+                                  <span className="text-[9px] bg-amber-400 text-amber-950 px-1 py-0.2 rounded font-black">
+                                    {product.cartonBoxQty ? `${product.cartonBoxQty} hộp` : `x${cartonQty}`}
+                                  </span>
                                 </div>
                                 <p className="text-[11px] font-mono font-black text-amber-700 mt-1">
                                   {formatPrice(cartonPrice)}
                                 </p>
-                                <span className="text-[9px] text-amber-800 font-bold">
+                                <span className="text-[9px] text-amber-800 font-bold block">
                                   {product.cartonPriceTHB && product.cartonPriceTHB > 0 ? `${product.cartonPriceTHB} ฿` : 'Chỉ nhận Kíp'}
+                                  {product.cartonBoxQty ? ` (${cartonQty} ${product.baseUnitName || 'gói'})` : ''}
                                 </span>
                               </button>
                             )}

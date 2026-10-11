@@ -29,7 +29,8 @@ import {
   Square,
   Layers,
   Scale,
-  Zap
+  Zap,
+  Copy
 } from 'lucide-react';
 
 // Kho ảnh mẫu mỹ phẩm cao cấp có sẵn (1 chạm để thêm ảnh nhanh)
@@ -112,6 +113,9 @@ export default function AdminProductsPage() {
     wholesalePriceTHB: '',  // Giá bán sỉ Baht
     minWholesaleQty: '3',   // Số lượng tối thiểu tính giá sỉ
     
+    // Đơn vị tính cơ sở (Cái, Gói, Tuýp, Chai, Hũ, Miếng, Lon...)
+    baseUnitName: 'Cái',
+
     // Quy cách đóng gói (Ô tick)
     hasPack: false,
     packQty: '6',           // Số cái / Lốc (mặc định 6)
@@ -124,7 +128,8 @@ export default function AdminProductsPage() {
     boxPriceTHB: '',        // Giá bán Hộp (Baht)
     
     hasCarton: false,
-    cartonQty: '50',        // Số cái / Thùng (mặc định 50)
+    cartonBoxQty: '',       // Số Hộp / Thùng (ví dụ: 24 hộp/thùng)
+    cartonQty: '50',        // Tổng số cái / Thùng (mặc định 50 hoặc tự tính = cartonBoxQty * boxQty)
     cartonPrice: '',        // Giá bán Thùng (Kíp)
     cartonPriceTHB: '',     // Giá bán Thùng (Baht)
     
@@ -144,12 +149,36 @@ export default function AdminProductsPage() {
   // Nhóm 1 (Màu sắc / Mẫu mã / Hương thơm):
   const [tier1Name, setTier1Name] = useState('Màu Sắc');
   const [tier1Options, setTier1Options] = useState<ProductTier1Option[]>([]);
+  const [bulkTier1Input, setBulkTier1Input] = useState('');
 
   // Nhóm 2 (Trọng lượng ml, g / Dòng sản phẩm / Dung tích / Kích cỡ):
   const [hasTier2, setHasTier2] = useState(false);
   const [tier2Name, setTier2Name] = useState('Trọng Lượng (ml, g)');
   const [tier2Options, setTier2Options] = useState<ProductTier2Option[]>([]);
   const [newTier2Input, setNewTier2Input] = useState('');
+
+  // Thêm hàng loạt phân loại Nhóm 1 (ngăn cách bởi dấu phẩy, chấm phẩy hoặc xuống dòng)
+  const handleBulkAddTier1 = () => {
+    if (!bulkTier1Input.trim()) return;
+    const names = bulkTier1Input
+      .split(/[,;\n]/)
+      .map(s => s.trim())
+      .filter(Boolean);
+    if (names.length === 0) return;
+
+    const newOpts: ProductTier1Option[] = names.map((name, idx) => {
+      const img = productImages.length > 0 ? productImages[idx % productImages.length] : undefined;
+      return {
+        id: `t1-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
+        name,
+        image: img,
+        price: formData.price ? Number(formData.price) : undefined,
+        priceTHB: formData.priceTHB ? Number(formData.priceTHB) : undefined,
+      };
+    });
+    setTier1Options(prev => [...prev, ...newOpts]);
+    setBulkTier1Input('');
+  };
 
   const handleAddTier1Option = (initial?: Partial<ProductTier1Option>) => {
     const newOpt: ProductTier1Option = {
@@ -366,6 +395,7 @@ export default function AdminProductsPage() {
       wholesalePrice: '',
       wholesalePriceTHB: '',
       minWholesaleQty: '3',
+      baseUnitName: 'Cái',
       hasPack: false,
       packQty: '6',
       packPrice: '',
@@ -375,6 +405,7 @@ export default function AdminProductsPage() {
       boxPrice: '',
       boxPriceTHB: '',
       hasCarton: false,
+      cartonBoxQty: '',
       cartonQty: '50',
       cartonPrice: '',
       cartonPriceTHB: '',
@@ -389,6 +420,7 @@ export default function AdminProductsPage() {
     setVariants([]);
     setTier1Name('Màu Sắc');
     setTier1Options([]);
+    setBulkTier1Input('');
     setHasTier2(false);
     setTier2Name('Trọng Lượng (ml, g)');
     setTier2Options([]);
@@ -418,6 +450,7 @@ export default function AdminProductsPage() {
       wholesalePrice: wholesale.toString(),
       wholesalePriceTHB: p.wholesalePriceTHB ? p.wholesalePriceTHB.toString() : '',
       minWholesaleQty: minQty.toString(),
+      baseUnitName: p.baseUnitName || 'Cái',
       hasPack: Boolean(p.hasPack || (p.packPrice && p.packPrice > 0)),
       packQty: (p.packQty || 6).toString(),
       packPrice: p.packPrice ? p.packPrice.toString() : '',
@@ -427,6 +460,7 @@ export default function AdminProductsPage() {
       boxPrice: p.boxPrice ? p.boxPrice.toString() : '',
       boxPriceTHB: p.boxPriceTHB ? p.boxPriceTHB.toString() : '',
       hasCarton: Boolean(p.hasCarton || (p.cartonPrice && p.cartonPrice > 0)),
+      cartonBoxQty: p.cartonBoxQty ? p.cartonBoxQty.toString() : (p.hasBox && p.boxQty && p.cartonQty ? Math.round(p.cartonQty / p.boxQty).toString() : ''),
       cartonQty: (p.cartonQty || 50).toString(),
       cartonPrice: p.cartonPrice ? p.cartonPrice.toString() : '',
       cartonPriceTHB: p.cartonPriceTHB ? p.cartonPriceTHB.toString() : '',
@@ -446,6 +480,7 @@ export default function AdminProductsPage() {
           ? p.variants.map(v => ({ id: v.id, name: v.name, image: v.image, price: v.price, priceTHB: v.priceTHB }))
           : []);
     setTier1Options(initialTier1);
+    setBulkTier1Input('');
     setHasTier2(Boolean((p.tier2Options && p.tier2Options.length > 0) || p.tier2Name));
     setTier2Name(p.tier2Name || 'Trọng Lượng (ml, g)');
     setTier2Options(p.tier2Options && p.tier2Options.length > 0 ? [...p.tier2Options] : []);
@@ -456,6 +491,69 @@ export default function AdminProductsPage() {
     setModalError('');
     setShowPresets(false);
     setIsModalOpen(true);
+  };
+
+  // Tính năng Nhân bản sản phẩm (Clone/Duplicate): Giúp tạo nhanh hàng loạt món cùng hãng, cùng phân loại
+  const openDuplicateModal = (p: Product) => {
+    setEditingProduct(null); // Tạo mới món mới
+    const retail = p.price;
+    const wholesale = p.wholesalePrice !== undefined && p.wholesalePrice > 0 
+      ? p.wholesalePrice 
+      : Math.round(retail * 0.8);
+    const minQty = p.minWholesaleQty || 3;
+
+    setFormData({
+      name: `${p.name} (Bản mới)`,
+      sku: generateRandomSku(),
+      description: p.descriptionLao || p.description,
+      price: retail.toString(),
+      priceTHB: p.priceTHB ? p.priceTHB.toString() : '',
+      wholesalePrice: wholesale.toString(),
+      wholesalePriceTHB: p.wholesalePriceTHB ? p.wholesalePriceTHB.toString() : '',
+      minWholesaleQty: minQty.toString(),
+      baseUnitName: p.baseUnitName || 'Cái',
+      hasPack: Boolean(p.hasPack || (p.packPrice && p.packPrice > 0)),
+      packQty: (p.packQty || 6).toString(),
+      packPrice: p.packPrice ? p.packPrice.toString() : '',
+      packPriceTHB: p.packPriceTHB ? p.packPriceTHB.toString() : '',
+      hasBox: Boolean(p.hasBox || (p.boxPrice && p.boxPrice > 0)),
+      boxQty: (p.boxQty || 10).toString(),
+      boxPrice: p.boxPrice ? p.boxPrice.toString() : '',
+      boxPriceTHB: p.boxPriceTHB ? p.boxPriceTHB.toString() : '',
+      hasCarton: Boolean(p.hasCarton || (p.cartonPrice && p.cartonPrice > 0)),
+      cartonBoxQty: p.cartonBoxQty ? p.cartonBoxQty.toString() : (p.hasBox && p.boxQty && p.cartonQty ? Math.round(p.cartonQty / p.boxQty).toString() : ''),
+      cartonQty: (p.cartonQty || 50).toString(),
+      cartonPrice: p.cartonPrice ? p.cartonPrice.toString() : '',
+      cartonPriceTHB: p.cartonPriceTHB ? p.cartonPriceTHB.toString() : '',
+      colors: p.colors ? p.colors.join(', ') : '',
+      sizes: p.sizes ? p.sizes.join(', ') : '',
+      stock: p.stock.toString(),
+      categoryId: p.categoryId,
+      subCategoryId: p.subCategoryId || '',
+      brand: p.brand || '',
+      status: 'ACTIVE',
+    });
+    setVariants(p.variants && p.variants.length > 0 ? p.variants.map(v => ({ ...v, id: `var-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` })) : []);
+    setTier1Name(p.tier1Name || 'Màu Sắc');
+    const initialTier1: ProductTier1Option[] = (p.tier1Options && p.tier1Options.length > 0)
+      ? p.tier1Options.map(o => ({ ...o, id: `t1-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` }))
+      : ((p.variants && p.variants.length > 0)
+          ? p.variants.map(v => ({ id: `t1-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: v.name, image: v.image, price: v.price, priceTHB: v.priceTHB }))
+          : []);
+    setTier1Options(initialTier1);
+    setBulkTier1Input('');
+    setHasTier2(Boolean((p.tier2Options && p.tier2Options.length > 0) || p.tier2Name));
+    setTier2Name(p.tier2Name || 'Trọng Lượng (ml, g)');
+    setTier2Options(p.tier2Options && p.tier2Options.length > 0 ? p.tier2Options.map(o => ({ ...o, id: `t2-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` })) : []);
+    setNewTier2Input('');
+    setProductImages(p.images && p.images.length > 0 ? [...p.images] : []);
+    setUploadError('');
+    setManualUrl('');
+    setModalError('');
+    setShowPresets(false);
+    setIsModalOpen(true);
+    setQuickPriceToast(`📋 Đã nhân bản cấu hình "${p.name}". Bạn có thể đổi màu/tên và lưu thành món mới!`);
+    setTimeout(() => setQuickPriceToast(null), 4000);
   };
 
   // Upload handler (Camera điện thoại & File picker)
@@ -586,6 +684,12 @@ export default function AdminProductsPage() {
         }))
       : (variants.length > 0 ? variants : []);
 
+    const cartonBoxQtyNum = formData.cartonBoxQty && Number(formData.cartonBoxQty) > 0 ? Number(formData.cartonBoxQty) : undefined;
+    const boxQtyNum = Number(formData.boxQty) || 10;
+    const calculatedCartonQty = (formData.hasBox && cartonBoxQtyNum && cartonBoxQtyNum > 0)
+      ? (cartonBoxQtyNum * boxQtyNum)
+      : (Number(formData.cartonQty) || 50);
+
     const payload = {
       name: formData.name.trim(),
       nameLao: formData.name.trim(),
@@ -597,16 +701,18 @@ export default function AdminProductsPage() {
       wholesalePrice,
       wholesalePriceTHB,
       minWholesaleQty,
+      baseUnitName: formData.baseUnitName?.trim() || 'Cái',
       hasPack: formData.hasPack,
       packQty: Number(formData.packQty) || 6,
       packPrice: formData.hasPack && formData.packPrice && Number(formData.packPrice) > 0 ? Number(formData.packPrice) : undefined,
       packPriceTHB: formData.hasPack && formData.packPriceTHB && Number(formData.packPriceTHB) > 0 ? Number(formData.packPriceTHB) : undefined,
       hasBox: formData.hasBox,
-      boxQty: Number(formData.boxQty) || 10,
+      boxQty: boxQtyNum,
       boxPrice: formData.hasBox && formData.boxPrice && Number(formData.boxPrice) > 0 ? Number(formData.boxPrice) : undefined,
       boxPriceTHB: formData.hasBox && formData.boxPriceTHB && Number(formData.boxPriceTHB) > 0 ? Number(formData.boxPriceTHB) : undefined,
       hasCarton: formData.hasCarton,
-      cartonQty: Number(formData.cartonQty) || 50,
+      cartonBoxQty: cartonBoxQtyNum,
+      cartonQty: calculatedCartonQty,
       cartonPrice: formData.hasCarton && formData.cartonPrice && Number(formData.cartonPrice) > 0 ? Number(formData.cartonPrice) : undefined,
       cartonPriceTHB: formData.hasCarton && formData.cartonPriceTHB && Number(formData.cartonPriceTHB) > 0 ? Number(formData.cartonPriceTHB) : undefined,
       tier1Name: validTier1.length > 0 ? (tier1Name.trim() || 'Màu Sắc') : undefined,
@@ -1026,6 +1132,14 @@ export default function AdminProductsPage() {
 
                   <div className="flex items-center gap-1.5">
                     <button
+                      onClick={() => openDuplicateModal(p)}
+                      className="px-2 py-1.5 bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-1 active:scale-95 border border-purple-500/30"
+                      title="Nhân bản món này (sao chép nhanh để tạo món cùng hãng khác màu)"
+                    >
+                      <Copy className="w-3 h-3 text-purple-400" />
+                      <span>Nhân bản</span>
+                    </button>
+                    <button
                       onClick={() => openQuickModal(p)}
                       className="px-2 py-1.5 bg-amber-500/15 hover:bg-amber-500 text-amber-300 hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-1 active:scale-95 border border-amber-500/30"
                       title="Sửa nhanh 2 bảng giá"
@@ -1353,6 +1467,13 @@ export default function AdminProductsPage() {
                           <span>Sửa giá</span>
                         </button>
                         <button
+                          onClick={() => openDuplicateModal(p)}
+                          className="p-2 text-zinc-400 hover:text-purple-400 hover:bg-purple-500/10 rounded-xl transition"
+                          title="Nhân bản món này (sao chép nhanh để tạo món cùng hãng khác màu)"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => openEditModal(p)}
                           className="p-2 text-zinc-400 hover:text-blue-400 hover:bg-zinc-800 rounded-xl transition"
                           title="Sửa thông tin chi tiết món"
@@ -1381,25 +1502,40 @@ export default function AdminProductsPage() {
         <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 sm:p-6">
           <div className="fixed inset-0 bg-black/80 backdrop-blur-xs" onClick={() => setIsModalOpen(false)} />
 
-          <div className="relative bg-zinc-900 border border-zinc-800 rounded-3xl max-w-2xl w-full p-5 sm:p-7 shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
+          <div className="relative bg-zinc-900 border border-zinc-800 rounded-3xl max-w-4xl w-full p-5 sm:p-7 shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
             
             {/* Modal Header */}
-            <div className="flex items-center justify-between pb-3.5 border-b border-zinc-800 flex-shrink-0">
+            <div className="flex items-center justify-between pb-3.5 border-b border-zinc-800 flex-shrink-0 gap-3">
               <div>
                 <h2 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
                   <Package className="w-5 h-5 text-blue-500" />
-                  <span>{editingProduct ? 'Chỉnh Sửa Món & 2 Bảng Giá (Sỉ / Lẻ)' : 'Thêm Món Mới (Thiết Lập 2 Bảng Giá)'}</span>
+                  <span>{editingProduct ? 'Chỉnh Sửa Món & Bảng Giá' : 'Thêm Món Mới (Bảng Giá & Phân Loại)'}</span>
                 </h2>
                 <p className="text-[11px] text-zinc-400 mt-0.5">
-                  Bán hàng tại Lào: Nhập <strong>Giá bán lẻ</strong>, <strong>Giá bán sỉ (buôn)</strong> và chụp ảnh trực tiếp từ điện thoại.
+                  Bán hàng tại Lào: Nhập <strong>Giá bán lẻ</strong>, <strong>Giá bán sỉ (buôn)</strong> và quy cách đóng gói (Gói/Hộp/Thùng).
                 </p>
               </div>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="p-2 text-zinc-400 hover:text-white rounded-full hover:bg-zinc-800 transition"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {editingProduct && (
+                  <button
+                    type="button"
+                    onClick={() => openDuplicateModal(editingProduct)}
+                    className="px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white rounded-xl text-xs font-bold border border-purple-500/40 transition flex items-center gap-1.5 active:scale-95 shadow-xs"
+                    title="Sao chép toàn bộ thông tin sản phẩm này để tạo món mới cùng hãng khác màu"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">📋 Nhân bản món này</span>
+                    <span className="sm:hidden">Nhân bản</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="p-2 text-zinc-400 hover:text-white rounded-full hover:bg-zinc-800 transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Error Banner */}
@@ -1681,7 +1817,7 @@ export default function AdminProductsPage() {
               </div>
 
               {/* QUY CÁCH ĐÓNG GÓI: LỐC, HỘP, THÙNG (DÙNG Ô TICK, TỰ CHỈNH GIÁ, KHÔNG TỰ ĐỘNG TÍNH) */}
-              <div className="p-4 bg-zinc-950 rounded-2xl border border-zinc-800 space-y-3.5">
+              <div className="p-4 bg-zinc-950 rounded-2xl border border-zinc-800 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                   <label className="text-xs font-bold text-white flex items-center gap-1.5">
                     <Boxes className="w-4 h-4 text-amber-500" />
@@ -1690,6 +1826,41 @@ export default function AdminProductsPage() {
                   <span className="text-[10px] text-zinc-400">
                     Tick chọn nếu sản phẩm có bán theo lốc, hộp hoặc thùng
                   </span>
+                </div>
+
+                {/* Chọn đơn vị tính cơ sở (Gói, Cái, Tuýp, Chai, Hũ...) */}
+                <div className="p-3 bg-zinc-900/60 rounded-xl border border-zinc-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-bold text-zinc-300">
+                      Đơn vị tính cơ sở (Đơn vị nhỏ nhất để bán lẻ):
+                    </label>
+                    <span className="text-[10px] text-amber-400 font-medium">
+                      Hiện tại: <strong>{formData.baseUnitName || 'Cái'}</strong>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {['Gói', 'Cái', 'Tuýp', 'Chai', 'Hũ', 'Miếng', 'Thỏi', 'Túi', 'Bịch', 'Lon'].map((unit) => (
+                      <button
+                        key={unit}
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, baseUnitName: unit }))}
+                        className={`text-xs px-2.5 py-1 rounded-lg border font-bold transition active:scale-95 ${
+                          (formData.baseUnitName || 'Cái').toLowerCase() === unit.toLowerCase()
+                            ? 'bg-amber-500 text-black border-amber-400 shadow-sm'
+                            : 'bg-zinc-900 text-zinc-300 border-zinc-700/80 hover:bg-zinc-800 hover:text-white'
+                        }`}
+                      >
+                        {unit}
+                      </button>
+                    ))}
+                    <input
+                      type="text"
+                      value={formData.baseUnitName}
+                      onChange={(e) => setFormData(prev => ({ ...prev, baseUnitName: e.target.value }))}
+                      placeholder="Hoặc tự gõ đơn vị..."
+                      className="bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1 text-xs text-white w-32 focus:border-amber-500 outline-none"
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -1714,7 +1885,7 @@ export default function AdminProductsPage() {
                     {formData.hasPack ? (
                       <div className="space-y-2 pt-1 border-t border-zinc-800 animate-in fade-in">
                         <div>
-                          <label className="text-[10px] text-zinc-400 block mb-0.5">Số cái / 1 Lốc</label>
+                          <label className="text-[10px] text-zinc-400 block mb-0.5">Số {formData.baseUnitName || 'cái'} / 1 Lốc</label>
                           <input
                             type="number"
                             min="1"
@@ -1762,7 +1933,18 @@ export default function AdminProductsPage() {
                       <input
                         type="checkbox"
                         checked={formData.hasBox}
-                        onChange={(e) => setFormData({ ...formData, hasBox: e.target.checked })}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setFormData(prev => {
+                            const bQty = Number(prev.boxQty) || 6;
+                            const autoCarton = (prev.hasCarton && prev.cartonBoxQty) ? (Number(prev.cartonBoxQty) * bQty).toString() : prev.cartonQty;
+                            return {
+                              ...prev,
+                              hasBox: checked,
+                              cartonQty: autoCarton,
+                            };
+                          });
+                        }}
                         className="w-4 h-4 rounded accent-purple-500 cursor-pointer"
                       />
                       <span className="text-xs font-bold text-purple-400">
@@ -1773,13 +1955,24 @@ export default function AdminProductsPage() {
                     {formData.hasBox ? (
                       <div className="space-y-2 pt-1 border-t border-zinc-800 animate-in fade-in">
                         <div>
-                          <label className="text-[10px] text-zinc-400 block mb-0.5">Số cái / 1 Hộp</label>
+                          <label className="text-[10px] text-zinc-400 block mb-0.5">Số {formData.baseUnitName || 'cái'} / 1 Hộp</label>
                           <input
                             type="number"
                             min="1"
                             value={formData.boxQty}
-                            onChange={(e) => setFormData({ ...formData, boxQty: e.target.value })}
-                            placeholder="Ví dụ: 10"
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setFormData(prev => {
+                                const bQty = Number(val) || 1;
+                                const autoCarton = prev.cartonBoxQty ? (Number(prev.cartonBoxQty) * bQty).toString() : prev.cartonQty;
+                                return {
+                                  ...prev,
+                                  boxQty: val,
+                                  ...(prev.cartonBoxQty ? { cartonQty: autoCarton } : {}),
+                                };
+                              });
+                            }}
+                            placeholder="Ví dụ: 6"
                             className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-white font-mono text-xs focus:outline-none focus:border-purple-500"
                           />
                         </div>
@@ -1790,7 +1983,7 @@ export default function AdminProductsPage() {
                             min="0"
                             value={formData.boxPrice}
                             onChange={(e) => setFormData({ ...formData, boxPrice: e.target.value })}
-                            placeholder="Ví dụ: 520000"
+                            placeholder="Ví dụ: 85000"
                             className="w-full bg-zinc-950 border border-purple-500/40 rounded-lg px-2.5 py-1.5 text-purple-300 font-mono text-xs focus:outline-none focus:border-purple-500 font-bold"
                           />
                         </div>
@@ -1801,7 +1994,7 @@ export default function AdminProductsPage() {
                             min="0"
                             value={formData.boxPriceTHB}
                             onChange={(e) => setFormData({ ...formData, boxPriceTHB: e.target.value })}
-                            placeholder="Ví dụ: 800 (nếu có)"
+                            placeholder="Ví dụ: 125 (nếu có)"
                             className="w-full bg-zinc-950 border border-amber-500/30 rounded-lg px-2.5 py-1.5 text-amber-300 font-mono text-xs focus:outline-none focus:border-amber-500"
                           />
                         </div>
@@ -1831,14 +2024,54 @@ export default function AdminProductsPage() {
 
                     {formData.hasCarton ? (
                       <div className="space-y-2 pt-1 border-t border-zinc-800 animate-in fade-in">
+                        {/* Hỗ trợ nhập số Hộp trong 1 Thùng (cho bài toán: 1 thùng = 24 hộp) */}
+                        {formData.hasBox && (
+                          <div className="p-2 bg-amber-500/10 rounded-lg border border-amber-500/30">
+                            <label className="text-[10px] text-amber-300 block mb-0.5 font-bold">
+                              ⚡ Số Hộp / 1 Thùng (tự động nhân số {formData.baseUnitName || 'gói'})
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={formData.cartonBoxQty}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const bQty = Number(formData.boxQty) || 6;
+                                const autoCartonQty = val ? (Number(val) * bQty).toString() : '';
+                                setFormData(prev => ({
+                                  ...prev,
+                                  cartonBoxQty: val,
+                                  ...(autoCartonQty ? { cartonQty: autoCartonQty } : {}),
+                                }));
+                              }}
+                              placeholder="Ví dụ: 24 (24 hộp/thùng)"
+                              className="w-full bg-zinc-950 border border-amber-500/50 rounded-lg px-2.5 py-1.5 text-amber-300 font-mono text-xs focus:outline-none focus:border-amber-400 font-bold"
+                            />
+                            {formData.cartonBoxQty && formData.boxQty && (
+                              <div className="text-[9px] text-amber-200/90 font-mono font-medium mt-1">
+                                💡 Quy đổi: {formData.cartonBoxQty} hộp × {formData.boxQty} {formData.baseUnitName || 'gói'} = <strong className="text-amber-300 font-black">{(Number(formData.cartonBoxQty) || 0) * (Number(formData.boxQty) || 0)}</strong> {formData.baseUnitName || 'gói'}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         <div>
-                          <label className="text-[10px] text-zinc-400 block mb-0.5">Số cái / 1 Thùng</label>
+                          <div className="flex items-center justify-between mb-0.5">
+                            <label className="text-[10px] text-zinc-400">
+                              Tổng số {formData.baseUnitName || 'cái'} / 1 Thùng
+                            </label>
+                            {formData.cartonBoxQty && formData.hasBox && (
+                              <span className="text-[9px] text-zinc-500 font-mono">
+                                (tự tính)
+                              </span>
+                            )}
+                          </div>
                           <input
                             type="number"
                             min="1"
                             value={formData.cartonQty}
                             onChange={(e) => setFormData({ ...formData, cartonQty: e.target.value })}
-                            placeholder="Ví dụ: 50"
+                            placeholder="Ví dụ: 144"
                             className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-white font-mono text-xs focus:outline-none focus:border-amber-500"
                           />
                         </div>
@@ -1849,7 +2082,7 @@ export default function AdminProductsPage() {
                             min="0"
                             value={formData.cartonPrice}
                             onChange={(e) => setFormData({ ...formData, cartonPrice: e.target.value })}
-                            placeholder="Ví dụ: 2500000"
+                            placeholder="Ví dụ: 1950000"
                             className="w-full bg-zinc-950 border border-amber-500/40 rounded-lg px-2.5 py-1.5 text-amber-300 font-mono text-xs focus:outline-none focus:border-amber-500 font-bold"
                           />
                         </div>
@@ -1860,7 +2093,7 @@ export default function AdminProductsPage() {
                             min="0"
                             value={formData.cartonPriceTHB}
                             onChange={(e) => setFormData({ ...formData, cartonPriceTHB: e.target.value })}
-                            placeholder="Ví dụ: 3850 (nếu có)"
+                            placeholder="Ví dụ: 2850 (nếu có)"
                             className="w-full bg-zinc-950 border border-amber-500/30 rounded-lg px-2.5 py-1.5 text-amber-300 font-mono text-xs focus:outline-none focus:border-amber-500"
                           />
                         </div>
@@ -1923,121 +2156,252 @@ export default function AdminProductsPage() {
                     </div>
                   </div>
 
-                  {/* Gợi ý nhanh tên màu sắc */}
-                  <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                    <span className="text-[10px] text-zinc-500">Gợi ý nhanh Nhóm 1:</span>
-                    {['Màu Sắc', 'Mẫu Mã', 'Mùi Hương', 'Hương Thơm'].map((g) => (
+                  {/* Thanh công cụ: Thêm hàng loạt (Bulk Add) */}
+                  <div className="p-2.5 bg-zinc-950/80 rounded-xl border border-zinc-800 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-rose-300 flex items-center gap-1.5">
+                        <Zap className="w-3.5 h-3.5 text-rose-400" />
+                        <span>Thêm nhanh hàng loạt màu sắc / mẫu mã (ngăn cách bởi dấu phẩy):</span>
+                      </span>
+                      <span className="text-[10px] text-zinc-500 hidden sm:inline">Ví dụ: Vàng chanh, Vàng cam, Hồng, Xanh</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={bulkTier1Input}
+                        onChange={(e) => setBulkTier1Input(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleBulkAddTier1();
+                          }
+                        }}
+                        placeholder="Gõ các màu cách nhau bằng dấu phẩy, ví dụ: Vàng chanh, Vàng cam, Hồng Sakura, Đỏ..."
+                        className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:border-rose-500 outline-none"
+                      />
                       <button
-                        key={g}
                         type="button"
-                        onClick={() => setTier1Name(g)}
-                        className={`text-[10px] px-2 py-0.5 rounded-md border transition ${
-                          tier1Name === g
-                            ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 font-bold'
-                            : 'bg-zinc-800/60 text-zinc-400 border-zinc-700/60 hover:text-zinc-200'
-                        }`}
+                        onClick={handleBulkAddTier1}
+                        className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 flex-shrink-0 shadow-sm active:scale-95"
                       >
-                        {g}
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Thêm hàng loạt</span>
                       </button>
-                    ))}
-                    {['Xám Nhung', 'Đen Nhung', 'Đỏ Ruby', 'Hồng Đào', 'Trắng Sữa', 'Tươi Mát'].map((colorName) => (
-                      <button
-                        key={colorName}
-                        type="button"
-                        onClick={() => handleAddTier1Option({ name: colorName })}
-                        className="text-[10px] px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700 hover:bg-zinc-700 transition"
-                      >
-                        +{colorName}
-                      </button>
-                    ))}
+                    </div>
+                  </div>
+
+                  {/* Gợi ý nhanh tên màu sắc & phân loại Garnier */}
+                  <div className="space-y-1.5 pt-0.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] text-zinc-500">Đổi tên Nhóm 1:</span>
+                      {['Màu Sắc', 'Mẫu Mã', 'Mùi Hương', 'Dòng Sản Phẩm'].map((g) => (
+                        <button
+                          key={g}
+                          type="button"
+                          onClick={() => setTier1Name(g)}
+                          className={`text-[10px] px-2 py-0.5 rounded-md border transition ${
+                            tier1Name === g
+                              ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 font-bold'
+                              : 'bg-zinc-800/60 text-zinc-400 border-zinc-700/60 hover:text-zinc-200'
+                          }`}
+                        >
+                          {g}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] text-amber-400 font-semibold">Gợi ý dòng Garnier:</span>
+                      {[
+                        'Vàng Chanh (Light Complete)',
+                        'Vàng Cam (Anti-Acne)',
+                        'Hồng (Sakura Glow)',
+                        'Đỏ (Ageless Booster)',
+                        'Xanh (Super UV)'
+                      ].map((colorName) => (
+                        <button
+                          key={colorName}
+                          type="button"
+                          onClick={() => handleAddTier1Option({ name: colorName })}
+                          className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 transition font-medium"
+                        >
+                          +{colorName}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] text-zinc-400">Tone màu khác:</span>
+                      {['Xám Nhung', 'Đen Nhung', 'Đỏ Ruby', 'Cam Cháy', 'Hồng Đào', 'Trắng Sữa', 'Tone 21 (Sáng)', 'Tone 23 (Tự Nhiên)'].map((colorName) => (
+                        <button
+                          key={colorName}
+                          type="button"
+                          onClick={() => handleAddTier1Option({ name: colorName })}
+                          className="text-[10px] px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700 hover:bg-zinc-700 transition"
+                        >
+                          +{colorName}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Danh sách lựa chọn nhóm 1 */}
                   {tier1Options.length === 0 ? (
                     <div className="p-3 rounded-lg border border-dashed border-zinc-800 text-center space-y-1 bg-zinc-950/40">
                       <p className="text-zinc-500 text-[11px]">
-                        Chưa có phân loại Nhóm 1. Bấm nút "+ Thêm màu/mẫu" hoặc chọn gợi ý ở trên.
+                        Chưa có phân loại Nhóm 1. Nhập vào ô "Thêm hàng loạt" ở trên hoặc bấm "+ Thêm màu/mẫu".
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-2">
+                      {/* Table Header trên màn hình desktop */}
+                      <div className="hidden sm:grid sm:grid-cols-12 gap-2 px-3 py-2 bg-zinc-950/80 rounded-xl text-[10px] font-bold text-zinc-400 uppercase tracking-wider border border-zinc-800/80">
+                        <div className="col-span-1 text-center">STT</div>
+                        <div className="col-span-3">Ảnh đại diện</div>
+                        <div className="col-span-4">Tên màu / loại phân loại *</div>
+                        <div className="col-span-2">Giá Kíp riêng (₭)</div>
+                        <div className="col-span-1">Giá Baht (฿)</div>
+                        <div className="col-span-1 text-center">Xóa</div>
+                      </div>
+
                       {tier1Options.map((opt, idx) => (
-                        <div
-                          key={opt.id}
-                          className="p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl flex flex-col sm:flex-row items-start sm:items-center gap-2.5"
-                        >
-                          <span className="w-4 text-center text-zinc-500 font-bold text-[10px]">{idx + 1}</span>
-                          
-                          {/* Thumbnail */}
-                          <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-700 overflow-hidden flex-shrink-0 relative group">
-                            {opt.image ? (
-                              <img src={opt.image} alt={opt.name} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-zinc-600 text-[9px]">
-                                No img
+                        <React.Fragment key={opt.id}>
+                          {/* Desktop Grid Layout (Rộng rãi, không bị ép co hẹp ô tên) */}
+                          <div className="hidden sm:grid sm:grid-cols-12 items-center gap-2 p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl hover:border-zinc-700 transition">
+                            <div className="col-span-1 text-center font-mono font-bold text-zinc-500 text-xs">
+                              {idx + 1}
+                            </div>
+                            
+                            <div className="col-span-3 flex items-center gap-2">
+                              <div className="w-9 h-9 rounded-lg bg-zinc-900 border border-zinc-700 overflow-hidden flex-shrink-0 relative">
+                                {opt.image ? (
+                                  <img src={opt.image} alt={opt.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-zinc-600 text-[9px]">
+                                    No img
+                                  </div>
+                                )}
                               </div>
-                            )}
+                              <select
+                                value={opt.image || ''}
+                                onChange={(e) => handleUpdateTier1Option(opt.id, { image: e.target.value })}
+                                className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 text-[11px] text-zinc-200 outline-none focus:border-rose-500 truncate"
+                              >
+                                <option value="">Ảnh mặc định</option>
+                                {productImages.map((img, i) => (
+                                  <option key={i} value={img}>Ảnh {i + 1}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="col-span-4">
+                              <input
+                                type="text"
+                                value={opt.name}
+                                onChange={(e) => handleUpdateTier1Option(opt.id, { name: e.target.value })}
+                                placeholder="Tên màu / loại (ví dụ: Vàng chanh)..."
+                                className="w-full bg-zinc-900 border border-zinc-800 focus:border-rose-500 rounded-lg px-3 py-1.5 text-white font-medium text-xs outline-none"
+                              />
+                            </div>
+
+                            <div className="col-span-2">
+                              <input
+                                type="number"
+                                min="0"
+                                value={opt.price ?? ''}
+                                onChange={(e) => handleUpdateTier1Option(opt.id, { price: e.target.value ? Number(e.target.value) : undefined })}
+                                placeholder="Giá Kíp (₭)"
+                                className="w-full bg-zinc-900 border border-zinc-800 focus:border-emerald-500 rounded-lg px-2 py-1.5 text-emerald-300 font-mono text-xs outline-none"
+                              />
+                            </div>
+
+                            <div className="col-span-1">
+                              <input
+                                type="number"
+                                min="0"
+                                value={opt.priceTHB ?? ''}
+                                onChange={(e) => handleUpdateTier1Option(opt.id, { priceTHB: e.target.value ? Number(e.target.value) : undefined })}
+                                placeholder="Baht ฿"
+                                className="w-full bg-zinc-900 border border-zinc-800 focus:border-amber-500 rounded-lg px-1.5 py-1.5 text-amber-300 font-mono text-xs outline-none"
+                              />
+                            </div>
+
+                            <div className="col-span-1 flex justify-center">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveTier1Option(opt.id)}
+                                className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition"
+                                title="Xóa lựa chọn này"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
 
-                          {/* Chọn ảnh */}
-                          <div className="w-full sm:w-32">
-                            <select
-                              value={opt.image || ''}
-                              onChange={(e) => handleUpdateTier1Option(opt.id, { image: e.target.value })}
-                              className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1 text-[11px] text-zinc-200 outline-none focus:border-rose-500"
-                            >
-                              <option value="">-- Ảnh mặc định --</option>
-                              {productImages.map((img, i) => (
-                                <option key={i} value={img}>Ảnh {i + 1}</option>
-                              ))}
-                            </select>
+                          {/* Mobile Card Layout */}
+                          <div className="sm:hidden p-3 bg-zinc-950 border border-zinc-800 rounded-xl space-y-2.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-zinc-400"># Phân loại {idx + 1}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveTier1Option(opt.id)}
+                                className="text-red-400 text-xs flex items-center gap-1 hover:underline"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                <span>Xóa</span>
+                              </button>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-700 overflow-hidden flex-shrink-0">
+                                {opt.image ? <img src={opt.image} alt={opt.name} className="w-full h-full object-cover" /> : null}
+                              </div>
+                              <select
+                                value={opt.image || ''}
+                                onChange={(e) => handleUpdateTier1Option(opt.id, { image: e.target.value })}
+                                className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-zinc-200 outline-none"
+                              >
+                                <option value="">Ảnh mặc định</option>
+                                {productImages.map((img, i) => (
+                                  <option key={i} value={img}>Ảnh {i + 1}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-zinc-400 block mb-0.5">Tên màu / loại *</label>
+                              <input
+                                type="text"
+                                value={opt.name}
+                                onChange={(e) => handleUpdateTier1Option(opt.id, { name: e.target.value })}
+                                placeholder="Ví dụ: Vàng chanh..."
+                                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-white font-medium text-xs outline-none focus:border-rose-500"
+                              />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="text-[10px] text-emerald-400 block mb-0.5">Giá Kíp riêng (₭)</label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={opt.price ?? ''}
+                                  onChange={(e) => handleUpdateTier1Option(opt.id, { price: e.target.value ? Number(e.target.value) : undefined })}
+                                  placeholder="Kíp (tùy chọn)"
+                                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1 text-emerald-300 font-mono text-xs outline-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] text-amber-400 block mb-0.5">Giá Baht riêng (฿)</label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={opt.priceTHB ?? ''}
+                                  onChange={(e) => handleUpdateTier1Option(opt.id, { priceTHB: e.target.value ? Number(e.target.value) : undefined })}
+                                  placeholder="Baht (tùy chọn)"
+                                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1 text-amber-300 font-mono text-xs outline-none"
+                                />
+                              </div>
+                            </div>
                           </div>
-
-                          {/* Tên lựa chọn */}
-                          <div className="flex-1 w-full sm:w-auto">
-                            <input
-                              type="text"
-                              value={opt.name}
-                              onChange={(e) => handleUpdateTier1Option(opt.id, { name: e.target.value })}
-                              placeholder="Tên màu / mẫu (ví dụ: [2-1-1] Xám Nhung)..."
-                              className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1 text-white font-medium text-xs focus:outline-none focus:border-rose-500"
-                            />
-                          </div>
-
-                          {/* Giá riêng Kíp */}
-                          <div className="w-full sm:w-28">
-                            <input
-                              type="number"
-                              min="0"
-                              value={opt.price ?? ''}
-                              onChange={(e) => handleUpdateTier1Option(opt.id, { price: e.target.value ? Number(e.target.value) : undefined })}
-                              placeholder="Giá Kíp (₭)"
-                              className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1 text-emerald-300 font-mono text-xs focus:outline-none focus:border-emerald-500"
-                            />
-                          </div>
-
-                          {/* Giá riêng Baht */}
-                          <div className="w-full sm:w-24">
-                            <input
-                              type="number"
-                              min="0"
-                              value={opt.priceTHB ?? ''}
-                              onChange={(e) => handleUpdateTier1Option(opt.id, { priceTHB: e.target.value ? Number(e.target.value) : undefined })}
-                              placeholder="Giá Baht (฿)"
-                              className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1 text-amber-300 font-mono text-xs focus:outline-none focus:border-amber-500"
-                            />
-                          </div>
-
-                          {/* Nút xoá */}
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveTier1Option(opt.id)}
-                            className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition ml-auto"
-                            title="Xóa lựa chọn này"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                        </React.Fragment>
                       ))}
                     </div>
                   )}
@@ -2080,7 +2444,7 @@ export default function AdminProductsPage() {
                       {/* Gợi ý nhanh tên nhóm 2 */}
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-[10px] text-zinc-500">Đổi nhanh tên Nhóm 2:</span>
-                        {['Trọng Lượng (ml, g)', 'Dòng Sản Phẩm', 'Dung Tích', 'Kích Cỡ / Size', 'Phiên Bản'].map((titlePreset) => (
+                        {['Trọng Lượng (ml, g)', 'Dòng Sản Phẩm', 'Loại Da Phù Hợp', 'Dung Tích', 'Kích Cỡ / Size', 'Phiên Bản'].map((titlePreset) => (
                           <button
                             key={titlePreset}
                             type="button"
@@ -2102,10 +2466,10 @@ export default function AdminProductsPage() {
                           ⚡ Bấm để thêm nhanh vào danh sách Nhóm 2:
                         </span>
                         
-                        {/* Hàng 1: Trọng lượng & Dung tích */}
+                        {/* Hàng 1: Trọng lượng & Dung tích (bao gồm 7ml gói) */}
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[9px] text-zinc-500">Dung tích & Trọng lượng:</span>
-                          {['50ml', '100ml', '200ml', '250ml', '500ml', '500g', '900g', '1kg', '2kg'].map((val) => {
+                          <span className="text-[9px] text-zinc-500">Dung tích / Trọng lượng:</span>
+                          {['7ml (Gói)', '15ml', '30ml', '50ml', '100ml', '200ml', '250ml', '500ml', '500g', '900g', '1kg'].map((val) => {
                             const isAdded = tier2Options.some(o => o.name === val);
                             return (
                               <button
@@ -2125,10 +2489,10 @@ export default function AdminProductsPage() {
                           })}
                         </div>
 
-                        {/* Hàng 2: Dòng sản phẩm mỹ phẩm */}
+                        {/* Hàng 2: Dòng sản phẩm mỹ phẩm & Loại da */}
                         <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-zinc-900">
-                          <span className="text-[9px] text-zinc-500">Dòng sản phẩm:</span>
-                          {['Dòng Trắng Da', 'Dòng Trị Mụn', 'Dòng Cấp Ẩm', 'Dòng Chống Lão Hóa', 'Dòng Phục Hồi'].map((val) => {
+                          <span className="text-[9px] text-zinc-500">Dòng sản phẩm & Loại da:</span>
+                          {['Da Dầu Mụn', 'Da Thường & Hỗn Hợp', 'Da Khô Nhạy Cảm', 'Dòng Trắng Da', 'Dòng Trị Mụn', 'Ban Ngày (Day)', 'Ban Đêm (Night)'].map((val) => {
                             const isAdded = tier2Options.some(o => o.name === val);
                             return (
                               <button
