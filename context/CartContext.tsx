@@ -36,8 +36,20 @@ interface CartContextType {
   setIsCartOpen: (open: boolean) => void;
   customerMode: CustomerPriceMode;
   setCustomerMode: (mode: CustomerPriceMode) => void;
-  getItemPrice: (product: Product, unitOrQuantity?: PackagingUnit | number, variantId?: string) => number;
-  getItemPriceTHB: (product: Product, unit?: PackagingUnit, variantId?: string) => number | null;
+  getItemPrice: (
+    product: Product, 
+    unitOrQuantity?: PackagingUnit | number, 
+    variantId?: string,
+    tier1Value?: string,
+    tier2Value?: string
+  ) => number;
+  getItemPriceTHB: (
+    product: Product, 
+    unit?: PackagingUnit, 
+    variantId?: string,
+    tier1Value?: string,
+    tier2Value?: string
+  ) => number | null;
   isItemWholesalePrice: (product: Product, quantity?: number) => boolean;
   hasFullPriceAccess: boolean;
 }
@@ -96,16 +108,35 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const getItemPrice = (
     product: Product, 
     unitOrQuantity?: PackagingUnit | number,
-    variantId?: string
+    variantId?: string,
+    tier1Value?: string,
+    tier2Value?: string
   ): number => {
     const unit: PackagingUnit = typeof unitOrQuantity === 'string' ? unitOrQuantity : 'PIECE';
     const variant = variantId && product.variants ? product.variants.find(v => v.id === variantId) : undefined;
+    const tier1Opt = tier1Value && product.tier1Options ? product.tier1Options.find(o => o.name === tier1Value || o.id === tier1Value) : undefined;
+    const tier2Opt = tier2Value && product.tier2Options ? product.tier2Options.find(o => o.name === tier2Value || o.id === tier2Value) : undefined;
 
-    // Giá lẻ và sỉ cơ sở: Ưu tiên giá riêng của biến thể nếu có
-    const baseRetail = (variant && variant.price !== undefined && variant.price > 0) ? variant.price : product.price;
-    const baseWholesale = (variant && variant.wholesalePrice !== undefined && variant.wholesalePrice > 0)
-      ? variant.wholesalePrice
-      : (product.wholesalePrice !== undefined && product.wholesalePrice > 0 ? product.wholesalePrice : Math.round(baseRetail * 0.8));
+    // Giá lẻ và sỉ cơ sở: Ưu tiên giá riêng của phân loại Tier 1 nếu có
+    let baseRetail = product.price;
+    if (tier1Opt?.price && tier1Opt.price > 0) {
+      baseRetail = tier1Opt.price;
+    } else if (variant && variant.price !== undefined && variant.price > 0) {
+      baseRetail = variant.price;
+    }
+    if (tier2Opt?.priceBonus && tier2Opt.priceBonus > 0) {
+      baseRetail += tier2Opt.priceBonus;
+    }
+
+    let baseWholesale = (product.wholesalePrice !== undefined && product.wholesalePrice > 0)
+      ? product.wholesalePrice
+      : Math.round(baseRetail * 0.8);
+    if (variant && variant.wholesalePrice !== undefined && variant.wholesalePrice > 0) {
+      baseWholesale = variant.wholesalePrice;
+    }
+    if (tier2Opt?.priceBonus && tier2Opt.priceBonus > 0) {
+      baseWholesale += tier2Opt.priceBonus;
+    }
 
     const basePrice = customerMode === 'WHOLESALE' ? baseWholesale : baseRetail;
 
@@ -130,10 +161,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const getItemPriceTHB = (
     product: Product,
     unit?: PackagingUnit,
-    variantId?: string
+    variantId?: string,
+    tier1Value?: string,
+    tier2Value?: string
   ): number | null => {
     const targetUnit = unit || 'PIECE';
     const variant = variantId && product.variants ? product.variants.find(v => v.id === variantId) : undefined;
+    const tier1Opt = tier1Value && product.tier1Options ? product.tier1Options.find(o => o.name === tier1Value || o.id === tier1Value) : undefined;
+    const tier2Opt = tier2Value && product.tier2Options ? product.tier2Options.find(o => o.name === tier2Value || o.id === tier2Value) : undefined;
 
     if (targetUnit === 'PACK') {
       if (product.packPriceTHB && product.packPriceTHB > 0) return product.packPriceTHB;
@@ -143,12 +178,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (product.cartonPriceTHB && product.cartonPriceTHB > 0) return product.cartonPriceTHB;
     } else {
       // PIECE
-      if (customerMode === 'WHOLESALE') {
-        if (variant && variant.wholesalePriceTHB && variant.wholesalePriceTHB > 0) return variant.wholesalePriceTHB;
-        if (product.wholesalePriceTHB && product.wholesalePriceTHB > 0) return product.wholesalePriceTHB;
+      let baseTHB: number | null = null;
+      if (tier1Opt?.priceTHB && tier1Opt.priceTHB > 0) {
+        baseTHB = tier1Opt.priceTHB;
+      } else if (customerMode === 'WHOLESALE' && variant && variant.wholesalePriceTHB && variant.wholesalePriceTHB > 0) {
+        baseTHB = variant.wholesalePriceTHB;
+      } else if (variant && variant.priceTHB && variant.priceTHB > 0) {
+        baseTHB = variant.priceTHB;
+      } else if (customerMode === 'WHOLESALE' && product.wholesalePriceTHB && product.wholesalePriceTHB > 0) {
+        baseTHB = product.wholesalePriceTHB;
+      } else if (product.priceTHB && product.priceTHB > 0) {
+        baseTHB = product.priceTHB;
       }
-      if (variant && variant.priceTHB && variant.priceTHB > 0) return variant.priceTHB;
-      if (product.priceTHB && product.priceTHB > 0) return product.priceTHB;
+      if (baseTHB !== null && tier2Opt?.priceBonusTHB && tier2Opt.priceBonusTHB > 0) {
+        baseTHB += tier2Opt.priceBonusTHB;
+      }
+      return baseTHB;
     }
     return null;
   };
@@ -309,7 +354,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Tính tổng tiền Kíp dựa trên đơn vị và phân loại của từng món
   const totalPrice = cart.reduce((sum, item) => {
     const unit = item.unit || 'PIECE';
-    const unitPrice = getItemPrice(item.product, unit, item.variantId);
+    const unitPrice = getItemPrice(item.product, unit, item.variantId, item.tier1Value, item.tier2Value);
     const unitQty = item.unitQuantity !== undefined ? item.unitQuantity : item.quantity;
     return sum + unitPrice * unitQty;
   }, 0);
@@ -317,13 +362,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Kiểm tra giỏ hàng có đủ điều kiện thanh toán bằng Tiền Baht không:
   // "nếu có thì bỏ, còn không thì sẽ không được thanh toán bằng bat"
   const canPayWithTHB = cart.length > 0 && cart.every(item => {
-    const thb = getItemPriceTHB(item.product, item.unit, item.variantId);
+    const thb = getItemPriceTHB(item.product, item.unit, item.variantId, item.tier1Value, item.tier2Value);
     return thb !== null && thb > 0;
   });
 
   // Tổng tiền Baht thực tế theo giá cài sẵn của từng món
   const totalPriceTHB = cart.reduce((sum, item) => {
-    const thb = getItemPriceTHB(item.product, item.unit, item.variantId) || 0;
+    const thb = getItemPriceTHB(item.product, item.unit, item.variantId, item.tier1Value, item.tier2Value) || 0;
     const unitQty = item.unitQuantity !== undefined ? item.unitQuantity : item.quantity;
     return sum + thb * unitQty;
   }, 0);

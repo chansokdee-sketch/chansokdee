@@ -362,7 +362,12 @@ export default function AdminOrdersPage() {
 📞 Số điện thoại: ${o.customerPhone}
 📍 Địa chỉ giao: ${o.shippingAddress}
 ${o.note ? `📝 Ghi chú: ${o.note}\n` : ''}🛍️ Sản phẩm:
-${o.items.map(i => `- ${i.productName}${i.unitName ? ` (${i.unitName} x${i.unitQuantity || i.quantity})` : ` (x${i.quantity})`} = ${formatPriceLAK(i.price * (i.unitQuantity !== undefined ? i.unitQuantity : i.quantity))}`).join('\n')}
+${o.items.map(i => {
+  const varParts = [i.variantName, i.tier1Value, i.tier2Value, i.selectedColor, i.selectedSize].filter(Boolean);
+  const varLabel = varParts.length > 0 ? ` [${Array.from(new Set(varParts)).join(' • ')}]` : '';
+  const priceItem = isThb ? formatPriceTHB(i.price * (i.unitQuantity !== undefined ? i.unitQuantity : i.quantity)) : formatPriceLAK(i.price * (i.unitQuantity !== undefined ? i.unitQuantity : i.quantity));
+  return `- ${i.productName}${varLabel}${i.unitName ? ` (${i.unitName} x${i.unitQuantity || i.quantity})` : ` (x${i.quantity})`} = ${priceItem}`;
+}).join('\n')}
 💰 TỔNG TIỀN THU (COD): ${mainPriceStr} [${isThb ? 'TIỀN BAHT THÁI (THB)' : 'TIỀN KÍP LÀO (LAK)'}]
 🔄 Quy đổi tương đương: ${altPriceStr}`;
 
@@ -1329,6 +1334,16 @@ ${o.items.map(i => `- ${i.productName}${i.unitName ? ` (${i.unitName} x${i.unitQ
                             {item.variantName && (
                               <span className="text-[10px] text-pink-300 bg-pink-950/60 border border-pink-800 px-1.5 py-0.5 rounded font-bold">
                                 🏷️ {item.variantName}
+                              </span>
+                            )}
+                            {item.tier1Value && !item.variantName?.includes(item.tier1Value) && (
+                              <span className="text-[10px] text-rose-300 bg-rose-950/60 border border-rose-800 px-1.5 py-0.5 rounded font-bold">
+                                🎨 {item.tier1Value}
+                              </span>
+                            )}
+                            {item.tier2Value && !item.variantName?.includes(item.tier2Value) && (
+                              <span className="text-[10px] text-purple-300 bg-purple-950/60 border border-purple-800 px-1.5 py-0.5 rounded font-bold">
+                                ⚖️ {item.tier2Value}
                               </span>
                             )}
                             {item.selectedColor && (

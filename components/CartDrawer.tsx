@@ -93,7 +93,7 @@ export default function CartDrawer() {
                 const unit = item.unit || 'PIECE';
                 const unitQty = item.unitQuantity !== undefined ? item.unitQuantity : item.quantity;
                 const isWholesale = isItemWholesalePrice(item.product, item.quantity);
-                const unitPrice = getItemPrice(item.product, unit, item.variantId);
+                const unitPrice = getItemPrice(item.product, unit, item.variantId, item.tier1Value, item.tier2Value);
                 const packQty = item.product.packQty || 6;
                 const boxQty = item.product.boxQty || 10;
                 const cartonQty = item.product.cartonQty || 50;

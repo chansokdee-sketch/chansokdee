@@ -167,6 +167,21 @@ export default function MyOrdersPage() {
                               <span className="text-[10px] font-bold bg-zinc-100 text-zinc-700 px-1.5 py-0.5 rounded">
                                 📦 {item.unitName || 'Cái'} x{item.unitQuantity !== undefined ? item.unitQuantity : item.quantity}
                               </span>
+                              {item.variantName && (
+                                <span className="text-[10px] font-bold bg-pink-50 text-pink-700 px-1.5 py-0.5 rounded border border-pink-200">
+                                  🏷️ {item.variantName}
+                                </span>
+                              )}
+                              {item.tier1Value && !item.variantName?.includes(item.tier1Value) && (
+                                <span className="text-[10px] font-bold bg-rose-50 text-rose-700 px-1.5 py-0.5 rounded border border-rose-200">
+                                  🎨 {item.tier1Value}
+                                </span>
+                              )}
+                              {item.tier2Value && !item.variantName?.includes(item.tier2Value) && (
+                                <span className="text-[10px] font-bold bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200">
+                                  ⚖️ {item.tier2Value}
+                                </span>
+                              )}
                               {item.selectedColor && (
                                 <span className="text-[10px] font-semibold bg-rose-50 text-rose-700 px-1.5 py-0.5 rounded border border-rose-200">
                                   {item.selectedColor}

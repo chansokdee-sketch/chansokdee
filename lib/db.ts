@@ -757,10 +757,28 @@ export const db = {
 
         const isWholesale = orderInput.customerType === 'WHOLESALE';
         const variant = item.variantId && product.variants ? product.variants.find(v => v.id === item.variantId) : undefined;
-        const baseRetail = (variant && variant.price !== undefined && variant.price > 0) ? variant.price : product.price;
-        const baseWholesale = (variant && variant.wholesalePrice !== undefined && variant.wholesalePrice > 0)
-          ? variant.wholesalePrice
-          : (product.wholesalePrice !== undefined && product.wholesalePrice > 0 ? product.wholesalePrice : Math.round(baseRetail * 0.8));
+        const tier1Opt = item.tier1Value && product.tier1Options ? product.tier1Options.find(o => o.name === item.tier1Value || o.id === item.tier1Value) : undefined;
+        const tier2Opt = item.tier2Value && product.tier2Options ? product.tier2Options.find(o => o.name === item.tier2Value || o.id === item.tier2Value) : undefined;
+
+        let baseRetail = product.price;
+        if (tier1Opt?.price && tier1Opt.price > 0) {
+          baseRetail = tier1Opt.price;
+        } else if (variant && variant.price !== undefined && variant.price > 0) {
+          baseRetail = variant.price;
+        }
+        if (tier2Opt?.priceBonus && tier2Opt.priceBonus > 0) {
+          baseRetail += tier2Opt.priceBonus;
+        }
+
+        let baseWholesale = (product.wholesalePrice !== undefined && product.wholesalePrice > 0)
+          ? product.wholesalePrice
+          : Math.round(baseRetail * 0.8);
+        if (variant && variant.wholesalePrice !== undefined && variant.wholesalePrice > 0) {
+          baseWholesale = variant.wholesalePrice;
+        }
+        if (tier2Opt?.priceBonus && tier2Opt.priceBonus > 0) {
+          baseWholesale += tier2Opt.priceBonus;
+        }
 
         const basePrice = isWholesale ? baseWholesale : baseRetail;
 
@@ -783,14 +801,22 @@ export const db = {
           itemPriceTHB = product.cartonPriceTHB;
         } else {
           // PIECE
-          if (isWholesale) {
-            if (variant && variant.wholesalePriceTHB && variant.wholesalePriceTHB > 0) itemPriceTHB = variant.wholesalePriceTHB;
-            else if (product.wholesalePriceTHB && product.wholesalePriceTHB > 0) itemPriceTHB = product.wholesalePriceTHB;
+          let baseTHB: number | null = null;
+          if (tier1Opt?.priceTHB && tier1Opt.priceTHB > 0) {
+            baseTHB = tier1Opt.priceTHB;
+          } else if (isWholesale && variant && variant.wholesalePriceTHB && variant.wholesalePriceTHB > 0) {
+            baseTHB = variant.wholesalePriceTHB;
+          } else if (variant && variant.priceTHB && variant.priceTHB > 0) {
+            baseTHB = variant.priceTHB;
+          } else if (isWholesale && product.wholesalePriceTHB && product.wholesalePriceTHB > 0) {
+            baseTHB = product.wholesalePriceTHB;
+          } else if (product.priceTHB && product.priceTHB > 0) {
+            baseTHB = product.priceTHB;
           }
-          if (itemPriceTHB === null) {
-            if (variant && variant.priceTHB && variant.priceTHB > 0) itemPriceTHB = variant.priceTHB;
-            else if (product.priceTHB && product.priceTHB > 0) itemPriceTHB = product.priceTHB;
+          if (baseTHB !== null && tier2Opt?.priceBonusTHB && tier2Opt.priceBonusTHB > 0) {
+            baseTHB += tier2Opt.priceBonusTHB;
           }
+          itemPriceTHB = baseTHB;
         }
 
         if (isTHBOrder && (!itemPriceTHB || itemPriceTHB <= 0)) {
