@@ -275,28 +275,52 @@
         },
         {
           "id": "t1-garnier-yel2",
-          "name": "Vàng Cam (Anti-Acne Booster)",
+          "name": "Vàng Cam (Anti-Acne)",
           "image": "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=1000&auto=format&fit=crop",
           "price": 16000,
           "priceTHB": 24
-        }
-      ],
-      "tier2Name": "Loại Da & Phiên Bản",
-      "tier2Options": [
-        {
-          "id": "t2-garnier-type1",
-          "name": "Da Dầu Mụn",
-          "priceBonus": 0,
-          "priceBonusTHB": 0
         },
         {
-          "id": "t2-garnier-type2",
-          "name": "Da Thường & Hỗn Hợp",
-          "priceBonus": 0,
-          "priceBonusTHB": 0
+          "id": "t1-garnier-pink",
+          "name": "Hồng (Sakura Glow)",
+          "image": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1000&auto=format&fit=crop",
+          "price": 17000,
+          "priceTHB": 25
         }
       ],
-      "stock": 288,
+      "variants": [
+        {
+          "id": "t1-garnier-yel1",
+          "name": "Vàng Chanh (Light Complete)",
+          "image": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=1000&auto=format&fit=crop",
+          "price": 15000,
+          "priceTHB": 22,
+          "wholesalePrice": 12000,
+          "wholesalePriceTHB": 18,
+          "stock": 100
+        },
+        {
+          "id": "t1-garnier-yel2",
+          "name": "Vàng Cam (Anti-Acne)",
+          "image": "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=1000&auto=format&fit=crop",
+          "price": 16000,
+          "priceTHB": 24,
+          "wholesalePrice": 13000,
+          "wholesalePriceTHB": 19,
+          "stock": 90
+        },
+        {
+          "id": "t1-garnier-pink",
+          "name": "Hồng (Sakura Glow)",
+          "image": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1000&auto=format&fit=crop",
+          "price": 17000,
+          "priceTHB": 25,
+          "wholesalePrice": 14000,
+          "wholesalePriceTHB": 20,
+          "stock": 98
+        }
+      ],
+      "stock": 144,
       "categoryId": "cat-skincare",
       "subCategoryId": "sub-cream",
       "subCategoryName": "Kem Dưỡng Da & Phục Hồi",
@@ -305,10 +329,11 @@
       "status": "ACTIVE",
       "images": [
         "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=1000&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=1000&auto=format&fit=crop"
+        "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1000&auto=format&fit=crop"
       ],
       "createdAt": "2026-10-11T03:50:00.000Z",
-      "updatedAt": "2026-10-11T03:50:00.000Z"
+      "updatedAt": "2026-10-11T04:37:03.702Z"
     },
     {
       "id": "prod-6",
@@ -706,7 +731,7 @@
       ],
       "id": "prod-1791616486979",
       "createdAt": "2026-10-10T07:14:46.979Z",
-      "updatedAt": "2026-10-11T03:35:34.854Z",
+      "updatedAt": "2026-10-11T04:36:00.943Z",
       "packQty": 3,
       "boxQty": 10,
       "cartonQty": 12,
@@ -866,7 +891,7 @@
       "shippingAddress": "Số 123 Đường Kim Mã, Ba Đình, Hà Nội",
       "note": "",
       "totalPrice": 7050000,
-      "status": "PROCESSING",
+      "status": "COMPLETED",
       "items": [
         {
           "id": "item-1791536170732-8m9g",
@@ -903,11 +928,88 @@
         }
       ],
       "createdAt": "2026-10-09T08:56:10.732Z",
-      "updatedAt": "2026-10-09T08:57:26.991Z",
+      "updatedAt": "2026-10-11T04:28:54.611Z",
       "currency": "LAK",
       "totalPriceLAK": 7050000,
       "totalPriceTHB": 10846,
-      "exchangeRate": 650
+      "exchangeRate": 650,
+      "assignedStaffId": "usr-admin-1",
+      "assignedStaffName": "Boss Hải",
+      "assignedStaffPhone": "0988888888",
+      "assignedAt": "2026-10-11T04:28:54.486Z",
+      "assignedBy": "Boss Hải (Boss)"
+    },
+    {
+      "id": "ord-1791693185687",
+      "orderCode": "ORD-20261011-1507",
+      "userId": "usr-customer-1",
+      "customerName": "Nguyễn Thu Trang",
+      "customerPhone": "0912345678",
+      "customerType": "RETAIL",
+      "shippingAddress": "Số 123 Đường Kim Mã, Ba Đình, Hà Nội",
+      "note": "",
+      "totalPrice": 59000,
+      "currency": "LAK",
+      "totalPriceLAK": 59000,
+      "totalPriceTHB": 90,
+      "exchangeRate": 650,
+      "status": "CANCELLED",
+      "items": [
+        {
+          "id": "item-1791693185686-7wdh",
+          "orderId": "ord-1791693185687",
+          "productId": "prod-1791616486979",
+          "productName": "Babi mild 380ml",
+          "productNameLao": "Babi mild 380ml",
+          "productImage": "/uploads/phone-upload-1791616388650-iq9unf.jpg",
+          "quantity": 1,
+          "price": 59000,
+          "isWholesale": false,
+          "unit": "PIECE",
+          "unitName": "Cái",
+          "unitQuantity": 1
+        }
+      ],
+      "createdAt": "2026-10-11T04:33:05.687Z",
+      "updatedAt": "2026-10-11T04:36:00.943Z"
+    },
+    {
+      "id": "ord-1791693423702",
+      "orderCode": "ORD-20261011-6528",
+      "userId": "usr-customer-1",
+      "customerName": "Nguyễn Thu Trang",
+      "customerPhone": "0912345678",
+      "customerType": "RETAIL",
+      "shippingAddress": "Số 123 Đường Kim Mã, Ba Đình, Hà Nội",
+      "note": "",
+      "totalPrice": 2850,
+      "currency": "THB",
+      "totalPriceLAK": 1950000,
+      "totalPriceTHB": 2850,
+      "exchangeRate": 650,
+      "status": "PENDING",
+      "items": [
+        {
+          "id": "item-1791693423702-9sjv",
+          "orderId": "ord-1791693423702",
+          "productId": "prod-garnier-7ml",
+          "productName": "Kem Dưỡng Garnier Bright Complete Vitamin C Gói 7ml",
+          "productNameLao": "ຄຣີມບຳລຸງ ການິເຍ່ ຊອງ 7ml",
+          "productImage": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1000&auto=format&fit=crop",
+          "quantity": 144,
+          "price": 1950000,
+          "isWholesale": false,
+          "unit": "CARTON",
+          "unitName": "Thùng",
+          "unitQuantity": 1,
+          "variantId": "t1-garnier-pink",
+          "variantName": "Hồng (Sakura Glow)",
+          "variantImage": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1000&auto=format&fit=crop",
+          "tier1Value": "Hồng (Sakura Glow)"
+        }
+      ],
+      "createdAt": "2026-10-11T04:37:03.702Z",
+      "updatedAt": "2026-10-11T04:37:03.702Z"
     }
   ],
   "siteSettings": {

@@ -91,6 +91,18 @@ const POPULAR_BRANDS = [
   'La Roche-Posay', 'Kiehl\'s', 'Black Rouge', 'Anessa', 'Bioderma', 'Laneige'
 ];
 
+// Interface cho từng món phân loại chuẩn Shopee (Mỗi ảnh = Một món riêng có giá riêng)
+export interface ShopeeItemVariant {
+  id: string;
+  name: string;
+  image: string;
+  price: string | number;
+  priceTHB: string | number;
+  wholesalePrice: string | number;
+  wholesalePriceTHB?: string | number;
+  stock: string | number;
+}
+
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -142,125 +154,127 @@ export default function AdminProductsPage() {
     status: 'ACTIVE' as 'ACTIVE' | 'HIDDEN',
   });
 
-  // Quản lý biến thể phân loại (Shopee style: mỗi ảnh có tên và giá riêng)
-  const [variants, setVariants] = useState<ProductVariant[]>([]);
+  // Quản lý biến thể phân loại chuẩn Shopee: Mỗi ảnh = Một món riêng có giá riêng
+  const [shopeeItems, setShopeeItems] = useState<ShopeeItemVariant[]>([]);
+  const [bulkPriceLAK, setBulkPriceLAK] = useState('');
+  const [bulkPriceTHB, setBulkPriceTHB] = useState('');
+  const [bulkWholesaleLAK, setBulkWholesaleLAK] = useState('');
+  const [bulkStock, setBulkStock] = useState('20');
+  const [itemUploadingIndex, setItemUploadingIndex] = useState<number | null>(null);
 
-  // Phân loại đa cấp Shopee 2-tier:
-  // Nhóm 1 (Màu sắc / Mẫu mã / Hương thơm):
-  const [tier1Name, setTier1Name] = useState('Màu Sắc');
-  const [tier1Options, setTier1Options] = useState<ProductTier1Option[]>([]);
-  const [bulkTier1Input, setBulkTier1Input] = useState('');
-
-  // Nhóm 2 (Trọng lượng ml, g / Dòng sản phẩm / Dung tích / Kích cỡ):
-  const [hasTier2, setHasTier2] = useState(false);
-  const [tier2Name, setTier2Name] = useState('Trọng Lượng (ml, g)');
-  const [tier2Options, setTier2Options] = useState<ProductTier2Option[]>([]);
-  const [newTier2Input, setNewTier2Input] = useState('');
-
-  // Thêm hàng loạt phân loại Nhóm 1 (ngăn cách bởi dấu phẩy, chấm phẩy hoặc xuống dòng)
-  const handleBulkAddTier1 = () => {
-    if (!bulkTier1Input.trim()) return;
-    const names = bulkTier1Input
-      .split(/[,;\n]/)
-      .map(s => s.trim())
-      .filter(Boolean);
-    if (names.length === 0) return;
-
-    const newOpts: ProductTier1Option[] = names.map((name, idx) => {
-      const img = productImages.length > 0 ? productImages[idx % productImages.length] : undefined;
-      return {
-        id: `t1-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
-        name,
-        image: img,
-        price: formData.price ? Number(formData.price) : undefined,
-        priceTHB: formData.priceTHB ? Number(formData.priceTHB) : undefined,
-      };
-    });
-    setTier1Options(prev => [...prev, ...newOpts]);
-    setBulkTier1Input('');
-  };
-
-  const handleAddTier1Option = (initial?: Partial<ProductTier1Option>) => {
-    const newOpt: ProductTier1Option = {
-      id: `t1-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+  // Thêm 1 dòng món mới
+  const handleAddShopeeItem = (initial?: Partial<ShopeeItemVariant>) => {
+    const newItem: ShopeeItemVariant = {
+      id: `it-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       name: initial?.name || '',
-      image: initial?.image || (productImages[0] || ''),
-      price: initial?.price,
-      priceTHB: initial?.priceTHB,
+      image: initial?.image || '',
+      price: initial?.price ?? (bulkPriceLAK || formData.price || ''),
+      priceTHB: initial?.priceTHB ?? (bulkPriceTHB || formData.priceTHB || ''),
+      wholesalePrice: initial?.wholesalePrice ?? (bulkWholesaleLAK || formData.wholesalePrice || ''),
+      wholesalePriceTHB: initial?.wholesalePriceTHB ?? '',
+      stock: initial?.stock ?? (bulkStock || '20'),
     };
-    setTier1Options(prev => [...prev, newOpt]);
+    setShopeeItems(prev => [...prev, newItem]);
   };
 
-  const handleRemoveTier1Option = (id: string) => {
-    setTier1Options(prev => prev.filter(o => o.id !== id));
+  // Cập nhật 1 món
+  const handleUpdateShopeeItem = (id: string, updates: Partial<ShopeeItemVariant>) => {
+    setShopeeItems(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
   };
 
-  const handleUpdateTier1Option = (id: string, updates: Partial<ProductTier1Option>) => {
-    setTier1Options(prev => prev.map(o => o.id === id ? { ...o, ...updates } : o));
+  // Xóa 1 món
+  const handleRemoveShopeeItem = (id: string) => {
+    setShopeeItems(prev => prev.filter(item => item.id !== id));
   };
 
-  const handleGenerateTier1FromImages = () => {
-    if (productImages.length === 0) return;
-    const newOpts: ProductTier1Option[] = productImages.map((img, idx) => ({
-      id: `t1-${Date.now()}-${idx}`,
-      name: `Phân loại ${idx + 1}`,
-      image: img,
-    }));
-    setTier1Options(newOpts);
-  };
-
-  const handleAddTier2Option = (name: string, bonusLAK?: number, bonusTHB?: number) => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    if (tier2Options.some(o => o.name.toLowerCase() === trimmed.toLowerCase())) return;
-    const newOpt: ProductTier2Option = {
-      id: `t2-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      name: trimmed,
-      priceBonus: bonusLAK,
-      priceBonusTHB: bonusTHB,
+  // Nhân bản 1 món (Copy row)
+  const handleDuplicateShopeeItem = (item: ShopeeItemVariant) => {
+    const cloned: ShopeeItemVariant = {
+      ...item,
+      id: `it-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      name: item.name ? `${item.name} (Copy)` : '',
     };
-    setTier2Options(prev => [...prev, newOpt]);
-    setNewTier2Input('');
+    setShopeeItems(prev => [...prev, cloned]);
   };
 
-  const handleRemoveTier2Option = (id: string) => {
-    setTier2Options(prev => prev.filter(o => o.id !== id));
+  // Áp dụng giá nhanh cho toàn bộ danh sách món
+  const handleApplyBulkPrices = () => {
+    if (!bulkPriceLAK && !bulkPriceTHB && !bulkWholesaleLAK && !bulkStock) return;
+    setShopeeItems(prev => prev.map(item => ({
+      ...item,
+      price: bulkPriceLAK || item.price,
+      priceTHB: bulkPriceTHB || item.priceTHB,
+      wholesalePrice: bulkWholesaleLAK || item.wholesalePrice,
+      stock: bulkStock || item.stock,
+    })));
+    setQuickPriceToast('⚡ Đã áp dụng giá và tồn kho cho toàn bộ danh sách món!');
+    setTimeout(() => setQuickPriceToast(null), 3000);
   };
 
-  const handleUpdateTier2Option = (id: string, updates: Partial<ProductTier2Option>) => {
-    setTier2Options(prev => prev.map(o => o.id === id ? { ...o, ...updates } : o));
+  // Tải nhiều ảnh cùng lúc: Tải bao nhiêu ảnh tự động sinh bấy nhiêu món (Chuẩn Shopee)
+  const handleMultiUploadShopeeItems = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploadingImage(true);
+    setUploadError('');
+    try {
+      const newItems: ShopeeItemVariant[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const data = new FormData();
+        data.append('file', file);
+        const res = await fetch('/api/upload', { method: 'POST', body: data });
+        const json = await res.json();
+        if (res.ok && json.url) {
+          newItems.push({
+            id: `it-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
+            name: '',
+            image: json.url,
+            price: bulkPriceLAK || formData.price || '',
+            priceTHB: bulkPriceTHB || formData.priceTHB || '',
+            wholesalePrice: bulkWholesaleLAK || formData.wholesalePrice || '',
+            wholesalePriceTHB: '',
+            stock: bulkStock || '20',
+          });
+        }
+      }
+      if (newItems.length > 0) {
+        setShopeeItems(prev => {
+          const isDefaultEmpty = prev.length === 1 && !prev[0].image && !prev[0].name && !prev[0].price;
+          return isDefaultEmpty ? newItems : [...prev, ...newItems];
+        });
+        setQuickPriceToast(`📸 Đã tạo ${newItems.length} món từ ${newItems.length} ảnh vừa tải!`);
+        setTimeout(() => setQuickPriceToast(null), 4000);
+      }
+    } catch (err) {
+      console.error(err);
+      setUploadError('Lỗi kết nối khi tải ảnh.');
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
-  const handleAddVariant = (initial?: Partial<ProductVariant>) => {
-    const newVar: ProductVariant = {
-      id: `var-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      name: initial?.name || '',
-      image: initial?.image || (productImages[0] || ''),
-      price: initial?.price,
-      priceTHB: initial?.priceTHB,
-      wholesalePrice: initial?.wholesalePrice,
-    };
-    setVariants(prev => [...prev, newVar]);
-  };
-
-  const handleRemoveVariant = (id: string) => {
-    setVariants(prev => prev.filter(v => v.id !== id));
-  };
-
-  const handleUpdateVariant = (id: string, updates: Partial<ProductVariant>) => {
-    setVariants(prev => prev.map(v => v.id === id ? { ...v, ...updates } : v));
-  };
-
-  const handleGenerateVariantsFromImages = () => {
-    if (productImages.length === 0) return;
-    const newVars: ProductVariant[] = productImages.map((img, idx) => ({
-      id: `var-${Date.now()}-${idx}`,
-      name: `Phân loại ${idx + 1}`,
-      image: img,
-      price: formData.price ? Number(formData.price) : undefined,
-      priceTHB: formData.priceTHB ? Number(formData.priceTHB) : undefined,
-    }));
-    setVariants(newVars);
+  // Tải ảnh riêng cho từng món
+  const handleSingleItemImageUpload = async (index: number, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setItemUploadingIndex(index);
+    setUploadError('');
+    try {
+      const file = files[0];
+      const data = new FormData();
+      data.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: data });
+      const json = await res.json();
+      if (res.ok && json.url) {
+        setShopeeItems(prev => prev.map((item, i) => i === index ? { ...item, image: json.url } : item));
+      } else {
+        setUploadError(json.error || 'Lỗi khi tải ảnh món.');
+      }
+    } catch (err) {
+      console.error(err);
+      setUploadError('Lỗi kết nối khi tải ảnh.');
+    } finally {
+      setItemUploadingIndex(null);
+    }
   };
 
   const [productImages, setProductImages] = useState<string[]>([]);
@@ -417,14 +431,22 @@ export default function AdminProductsPage() {
       brand: '',
       status: 'ACTIVE',
     });
-    setVariants([]);
-    setTier1Name('Màu Sắc');
-    setTier1Options([]);
-    setBulkTier1Input('');
-    setHasTier2(false);
-    setTier2Name('Trọng Lượng (ml, g)');
-    setTier2Options([]);
-    setNewTier2Input('');
+    setShopeeItems([
+      {
+        id: `it-${Date.now()}-1`,
+        name: '',
+        image: '',
+        price: '',
+        priceTHB: '',
+        wholesalePrice: '',
+        wholesalePriceTHB: '',
+        stock: '20',
+      }
+    ]);
+    setBulkPriceLAK('');
+    setBulkPriceTHB('');
+    setBulkWholesaleLAK('');
+    setBulkStock('20');
     setProductImages([]);
     setUploadError('');
     setManualUrl('');
@@ -472,19 +494,47 @@ export default function AdminProductsPage() {
       brand: p.brand || '',
       status: p.status,
     });
-    setVariants(p.variants && p.variants.length > 0 ? [...p.variants] : []);
-    setTier1Name(p.tier1Name || 'Màu Sắc');
-    const initialTier1: ProductTier1Option[] = (p.tier1Options && p.tier1Options.length > 0)
-      ? [...p.tier1Options]
-      : ((p.variants && p.variants.length > 0)
-          ? p.variants.map(v => ({ id: v.id, name: v.name, image: v.image, price: v.price, priceTHB: v.priceTHB }))
-          : []);
-    setTier1Options(initialTier1);
-    setBulkTier1Input('');
-    setHasTier2(Boolean((p.tier2Options && p.tier2Options.length > 0) || p.tier2Name));
-    setTier2Name(p.tier2Name || 'Trọng Lượng (ml, g)');
-    setTier2Options(p.tier2Options && p.tier2Options.length > 0 ? [...p.tier2Options] : []);
-    setNewTier2Input('');
+
+    const initialShopeeItems: ShopeeItemVariant[] = (p.variants && p.variants.length > 0)
+      ? p.variants.map(v => ({
+          id: v.id,
+          name: v.name,
+          image: v.image || '',
+          price: (v.price !== undefined && v.price > 0 ? v.price : p.price).toString(),
+          priceTHB: (v.priceTHB !== undefined && v.priceTHB > 0 ? v.priceTHB : (p.priceTHB || '')).toString(),
+          wholesalePrice: (v.wholesalePrice !== undefined && v.wholesalePrice > 0 ? v.wholesalePrice : (p.wholesalePrice || '')).toString(),
+          wholesalePriceTHB: (v.wholesalePriceTHB !== undefined && v.wholesalePriceTHB > 0 ? v.wholesalePriceTHB : (p.wholesalePriceTHB || '')).toString(),
+          stock: (v.stock !== undefined ? v.stock : p.stock).toString(),
+        }))
+      : (p.tier1Options && p.tier1Options.length > 0)
+      ? p.tier1Options.map(t => ({
+          id: t.id,
+          name: t.name,
+          image: t.image || '',
+          price: (t.price !== undefined && t.price > 0 ? t.price : p.price).toString(),
+          priceTHB: (t.priceTHB !== undefined && t.priceTHB > 0 ? t.priceTHB : (p.priceTHB || '')).toString(),
+          wholesalePrice: (p.wholesalePrice || '').toString(),
+          wholesalePriceTHB: (p.wholesalePriceTHB || '').toString(),
+          stock: p.stock.toString(),
+        }))
+      : [
+          {
+            id: `it-${Date.now()}-1`,
+            name: 'Tiêu chuẩn',
+            image: p.images && p.images.length > 0 ? p.images[0] : '',
+            price: p.price.toString(),
+            priceTHB: p.priceTHB ? p.priceTHB.toString() : '',
+            wholesalePrice: p.wholesalePrice ? p.wholesalePrice.toString() : '',
+            wholesalePriceTHB: p.wholesalePriceTHB ? p.wholesalePriceTHB.toString() : '',
+            stock: p.stock.toString(),
+          }
+        ];
+
+    setShopeeItems(initialShopeeItems);
+    setBulkPriceLAK(retail.toString());
+    setBulkPriceTHB(p.priceTHB ? p.priceTHB.toString() : '');
+    setBulkWholesaleLAK(wholesale.toString());
+    setBulkStock(p.stock.toString());
     setProductImages(p.images && p.images.length > 0 ? [...p.images] : []);
     setUploadError('');
     setManualUrl('');
@@ -533,19 +583,47 @@ export default function AdminProductsPage() {
       brand: p.brand || '',
       status: 'ACTIVE',
     });
-    setVariants(p.variants && p.variants.length > 0 ? p.variants.map(v => ({ ...v, id: `var-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` })) : []);
-    setTier1Name(p.tier1Name || 'Màu Sắc');
-    const initialTier1: ProductTier1Option[] = (p.tier1Options && p.tier1Options.length > 0)
-      ? p.tier1Options.map(o => ({ ...o, id: `t1-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` }))
-      : ((p.variants && p.variants.length > 0)
-          ? p.variants.map(v => ({ id: `t1-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: v.name, image: v.image, price: v.price, priceTHB: v.priceTHB }))
-          : []);
-    setTier1Options(initialTier1);
-    setBulkTier1Input('');
-    setHasTier2(Boolean((p.tier2Options && p.tier2Options.length > 0) || p.tier2Name));
-    setTier2Name(p.tier2Name || 'Trọng Lượng (ml, g)');
-    setTier2Options(p.tier2Options && p.tier2Options.length > 0 ? p.tier2Options.map(o => ({ ...o, id: `t2-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` })) : []);
-    setNewTier2Input('');
+
+    const clonedItems: ShopeeItemVariant[] = (p.variants && p.variants.length > 0)
+      ? p.variants.map((v, idx) => ({
+          id: `it-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
+          name: v.name,
+          image: v.image || '',
+          price: (v.price !== undefined && v.price > 0 ? v.price : p.price).toString(),
+          priceTHB: (v.priceTHB !== undefined && v.priceTHB > 0 ? v.priceTHB : (p.priceTHB || '')).toString(),
+          wholesalePrice: (v.wholesalePrice !== undefined && v.wholesalePrice > 0 ? v.wholesalePrice : (p.wholesalePrice || '')).toString(),
+          wholesalePriceTHB: (v.wholesalePriceTHB !== undefined && v.wholesalePriceTHB > 0 ? v.wholesalePriceTHB : (p.wholesalePriceTHB || '')).toString(),
+          stock: (v.stock !== undefined ? v.stock : p.stock).toString(),
+        }))
+      : (p.tier1Options && p.tier1Options.length > 0)
+      ? p.tier1Options.map((t, idx) => ({
+          id: `it-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
+          name: t.name,
+          image: t.image || '',
+          price: (t.price !== undefined && t.price > 0 ? t.price : p.price).toString(),
+          priceTHB: (t.priceTHB !== undefined && t.priceTHB > 0 ? t.priceTHB : (p.priceTHB || '')).toString(),
+          wholesalePrice: (p.wholesalePrice || '').toString(),
+          wholesalePriceTHB: (p.wholesalePriceTHB || '').toString(),
+          stock: p.stock.toString(),
+        }))
+      : [
+          {
+            id: `it-${Date.now()}-1`,
+            name: 'Tiêu chuẩn',
+            image: p.images && p.images.length > 0 ? p.images[0] : '',
+            price: p.price.toString(),
+            priceTHB: p.priceTHB ? p.priceTHB.toString() : '',
+            wholesalePrice: p.wholesalePrice ? p.wholesalePrice.toString() : '',
+            wholesalePriceTHB: p.wholesalePriceTHB ? p.wholesalePriceTHB.toString() : '',
+            stock: p.stock.toString(),
+          }
+        ];
+
+    setShopeeItems(clonedItems);
+    setBulkPriceLAK(retail.toString());
+    setBulkPriceTHB(p.priceTHB ? p.priceTHB.toString() : '');
+    setBulkWholesaleLAK(wholesale.toString());
+    setBulkStock(p.stock.toString());
     setProductImages(p.images && p.images.length > 0 ? [...p.images] : []);
     setUploadError('');
     setManualUrl('');
@@ -641,48 +719,66 @@ export default function AdminProductsPage() {
       return;
     }
 
-    if (!formData.price || Number(formData.price) <= 0) {
-      setModalError('Vui lòng nhập giá bán lẻ hợp lệ (ກະລຸນາໃສ່ລາຄາຂາຍຍ່ອຍ)');
+    // Lọc danh sách món hợp lệ
+    const validItems = shopeeItems.filter(it => 
+      String(it.name || '').trim() || 
+      String(it.image || '').trim() || 
+      String(it.price || '').trim()
+    );
+    if (validItems.length === 0) {
+      setModalError('Vui lòng thêm ít nhất 1 món / phân loại có giá bán!');
       return;
     }
 
-    const retailPrice = Number(formData.price);
-    const wholesalePrice = formData.wholesalePrice && Number(formData.wholesalePrice) > 0
-      ? Number(formData.wholesalePrice)
-      : Math.round(retailPrice * 0.8);
-    const minWholesaleQty = Math.max(1, Number(formData.minWholesaleQty) || 3);
+    // Giá lẻ chính (lấy từ món đầu tiên hoặc formData.price)
+    const firstPriceNum = Number(validItems[0].price);
+    const retailPrice = firstPriceNum > 0 ? firstPriceNum : (Number(formData.price) || 0);
+    if (retailPrice <= 0) {
+      setModalError('Vui lòng nhập giá bán lẻ tiền Kíp (₭) cho món đầu tiên!');
+      return;
+    }
 
-    const parsedColors = formData.colors
-      ? formData.colors.split(',').map(s => s.trim()).filter(Boolean)
-      : undefined;
-    const parsedSizes = formData.sizes
-      ? formData.sizes.split(',').map(s => s.trim()).filter(Boolean)
-      : undefined;
+    const firstPriceTHBNum = Number(validItems[0].priceTHB);
+    const priceTHB = firstPriceTHBNum > 0 ? firstPriceTHBNum : (formData.priceTHB && Number(formData.priceTHB) > 0 ? Number(formData.priceTHB) : undefined);
+
+    const firstWholesaleNum = Number(validItems[0].wholesalePrice);
+    const wholesalePrice = firstWholesaleNum > 0 ? firstWholesaleNum : (formData.wholesalePrice && Number(formData.wholesalePrice) > 0 ? Number(formData.wholesalePrice) : Math.round(retailPrice * 0.8));
+
+    const firstWholesaleTHBNum = Number(validItems[0].wholesalePriceTHB);
+    const wholesalePriceTHB = firstWholesaleTHBNum > 0 ? firstWholesaleTHBNum : (formData.wholesalePriceTHB && Number(formData.wholesalePriceTHB) > 0 ? Number(formData.wholesalePriceTHB) : undefined);
+
+    const minWholesaleQty = Math.max(1, Number(formData.minWholesaleQty) || 3);
 
     setSubmitting(true);
 
-    const images = productImages.length > 0
-      ? productImages
-      : ['https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1000&auto=format&fit=crop'];
+    const syncedVariants: ProductVariant[] = validItems.map((it, idx) => ({
+      id: it.id,
+      name: String(it.name || '').trim() || `Phân loại ${idx + 1}`,
+      image: String(it.image || '').trim() || undefined,
+      price: it.price && Number(it.price) > 0 ? Number(it.price) : retailPrice,
+      priceTHB: it.priceTHB && Number(it.priceTHB) > 0 ? Number(it.priceTHB) : priceTHB,
+      wholesalePrice: it.wholesalePrice && Number(it.wholesalePrice) > 0 ? Number(it.wholesalePrice) : wholesalePrice,
+      wholesalePriceTHB: it.wholesalePriceTHB && Number(it.wholesalePriceTHB) > 0 ? Number(it.wholesalePriceTHB) : wholesalePriceTHB,
+      stock: Number(it.stock) || 0,
+    }));
+
+    const validTier1: ProductTier1Option[] = validItems.map((it, idx) => ({
+      id: it.id,
+      name: String(it.name || '').trim() || `Phân loại ${idx + 1}`,
+      image: String(it.image || '').trim() || undefined,
+      price: it.price && Number(it.price) > 0 ? Number(it.price) : retailPrice,
+      priceTHB: it.priceTHB && Number(it.priceTHB) > 0 ? Number(it.priceTHB) : priceTHB,
+    }));
+
+    const itemImages = validItems.map(it => String(it.image || '').trim()).filter(Boolean);
+    const images = itemImages.length > 0
+      ? Array.from(new Set(itemImages))
+      : (productImages.length > 0 ? productImages : ['https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1000&auto=format&fit=crop']);
+
+    const totalStock = validItems.reduce((acc, it) => acc + (Number(it.stock) || 0), 0) || Number(formData.stock) || 0;
 
     const selectedCat = categories.find(c => c.id === formData.categoryId);
     const selectedSub = selectedCat?.subCategories?.find(s => s.id === formData.subCategoryId);
-
-    const priceTHB = formData.priceTHB && Number(formData.priceTHB) > 0 ? Number(formData.priceTHB) : undefined;
-    const wholesalePriceTHB = formData.wholesalePriceTHB && Number(formData.wholesalePriceTHB) > 0 ? Number(formData.wholesalePriceTHB) : undefined;
-
-    const validTier1 = tier1Options.filter(o => o.name.trim().length > 0);
-    const validTier2 = hasTier2 ? tier2Options.filter(o => o.name.trim().length > 0) : [];
-
-    const syncedVariants: ProductVariant[] = validTier1.length > 0
-      ? validTier1.map(t1 => ({
-          id: t1.id,
-          name: t1.name,
-          image: t1.image,
-          price: t1.price,
-          priceTHB: t1.priceTHB,
-        }))
-      : (variants.length > 0 ? variants : []);
 
     const cartonBoxQtyNum = formData.cartonBoxQty && Number(formData.cartonBoxQty) > 0 ? Number(formData.cartonBoxQty) : undefined;
     const boxQtyNum = Number(formData.boxQty) || 10;
@@ -715,14 +811,10 @@ export default function AdminProductsPage() {
       cartonQty: calculatedCartonQty,
       cartonPrice: formData.hasCarton && formData.cartonPrice && Number(formData.cartonPrice) > 0 ? Number(formData.cartonPrice) : undefined,
       cartonPriceTHB: formData.hasCarton && formData.cartonPriceTHB && Number(formData.cartonPriceTHB) > 0 ? Number(formData.cartonPriceTHB) : undefined,
-      tier1Name: validTier1.length > 0 ? (tier1Name.trim() || 'Màu Sắc') : undefined,
+      tier1Name: validTier1.length > 1 ? 'Phân Loại' : undefined,
       tier1Options: validTier1.length > 0 ? validTier1 : undefined,
-      tier2Name: validTier2.length > 0 ? (tier2Name.trim() || 'Trọng Lượng (ml, g)') : undefined,
-      tier2Options: validTier2.length > 0 ? validTier2 : undefined,
       variants: syncedVariants.length > 0 ? syncedVariants : undefined,
-      colors: parsedColors && parsedColors.length > 0 ? parsedColors : undefined,
-      sizes: parsedSizes && parsedSizes.length > 0 ? parsedSizes : undefined,
-      stock: Number(formData.stock) || 0,
+      stock: totalStock,
       categoryId: formData.categoryId,
       subCategoryId: formData.subCategoryId || undefined,
       subCategoryName: selectedSub?.name || undefined,
@@ -1564,142 +1656,18 @@ export default function AdminProductsPage() {
                 />
               </div>
 
-              {/* BẢNG GIÁ: TIỀN KÍP LÀO (₭ LAK) & TIỀN BAHT THÁI (฿ THB) */}
-              <div className="p-4 bg-zinc-950 rounded-2xl border border-zinc-800 space-y-3.5">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-                  <label className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <DollarSign className="w-4 h-4 text-emerald-400" />
-                    <span>Thiết Lập Bảng Giá: Tiền Kíp Lào (₭) & Tiền Baht Thái (฿)</span>
-                  </label>
-                  <span className="text-[10px] text-zinc-400">
-                    * Giá Baht: Nhập nếu cho phép thanh toán Baht (để trống nếu chỉ nhận Kíp)
-                  </span>
-                </div>
-
-                {/* Hàng 1: GIÁ BÁN LẺ (Kíp & Baht) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-zinc-900/60 rounded-xl border border-emerald-500/25">
-                  <div>
-                    <label className="block text-emerald-400 font-bold mb-1 flex items-center justify-between">
-                      <span className="flex items-center gap-1">
-                        <Tag className="w-3.5 h-3.5" />
-                        <span>1. Giá bán lẻ Tiền Kíp (₭ LAK) *</span>
-                      </span>
-                      <span className="text-[10px] text-zinc-400 font-normal">Khách mua 1-2 cái</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        required
-                        min="0"
-                        value={formData.price}
-                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                        placeholder="Ví dụ: 59000"
-                        className="w-full bg-zinc-950 border border-emerald-500/50 rounded-xl px-3.5 py-2.5 text-emerald-400 font-mono font-bold text-sm focus:outline-none focus:border-emerald-500"
-                      />
-                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 font-bold text-xs">
-                        ₭ LAK
-                      </span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-amber-400 font-bold mb-1 flex items-center justify-between">
-                      <span className="flex items-center gap-1">
-                        <span className="text-amber-400 font-black">฿</span>
-                        <span>Giá bán lẻ Tiền Baht (฿ THB)</span>
-                      </span>
-                      <span className="text-[10px] text-zinc-400 font-normal">Tùy chọn</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min="0"
-                        value={formData.priceTHB}
-                        onChange={(e) => setFormData({ ...formData, priceTHB: e.target.value })}
-                        placeholder="Ví dụ: 90 (để trống nếu không nhận Baht)"
-                        className="w-full bg-zinc-950 border border-amber-500/40 rounded-xl px-3.5 py-2.5 text-amber-300 font-mono font-bold text-sm focus:outline-none focus:border-amber-500"
-                      />
-                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-amber-500 font-bold text-xs">
-                        ฿ THB
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Hàng 2: GIÁ BÁN SỈ (Kíp & Baht) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-zinc-900/60 rounded-xl border border-amber-500/25">
-                  <div>
-                    <label className="block text-amber-400 font-bold mb-1 flex items-center justify-between">
-                      <span className="flex items-center gap-1">
-                        <Boxes className="w-3.5 h-3.5" />
-                        <span>2. Giá bán sỉ Tiền Kíp (₭ LAK)</span>
-                      </span>
-                      <span className="text-[10px] text-zinc-400 font-normal">Đại lý / Mua buôn</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min="0"
-                        value={formData.wholesalePrice}
-                        onChange={(e) => setFormData({ ...formData, wholesalePrice: e.target.value })}
-                        placeholder="Ví dụ: 47000"
-                        className="w-full bg-zinc-950 border border-amber-500/40 rounded-xl px-3.5 py-2.5 text-amber-400 font-mono font-bold text-sm focus:outline-none focus:border-amber-500"
-                      />
-                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 font-bold text-xs">
-                        ₭ LAK
-                      </span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-amber-300 font-bold mb-1 flex items-center justify-between">
-                      <span className="flex items-center gap-1">
-                        <span className="text-amber-400 font-black">฿</span>
-                        <span>Giá bán sỉ Tiền Baht (฿ THB)</span>
-                      </span>
-                      <span className="text-[10px] text-zinc-400 font-normal">Tùy chọn</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min="0"
-                        value={formData.wholesalePriceTHB}
-                        onChange={(e) => setFormData({ ...formData, wholesalePriceTHB: e.target.value })}
-                        placeholder="Ví dụ: 72"
-                        className="w-full bg-zinc-950 border border-amber-500/30 rounded-xl px-3.5 py-2.5 text-amber-300 font-mono font-bold text-sm focus:outline-none focus:border-amber-500"
-                      />
-                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-amber-500 font-bold text-xs">
-                        ฿ THB
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Ghi chú điều kiện thanh toán Baht */}
-                <div className="pt-2 border-t border-zinc-900 text-zinc-400 text-[11px] space-y-1">
-                  <div className="flex items-center gap-1.5 text-zinc-300">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                    <span>Khách lẻ: Mua theo <strong>Giá bán lẻ</strong> • Khách sỉ ⚡: Mua theo <strong>Giá bán sỉ</strong></span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-amber-400/90 font-medium">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                    <span>Quy tắc Tiền Baht: <strong>Nếu nhập giá Baht</strong>, khách có thể thanh toán bằng Baht. <strong>Nếu để trống</strong>, sản phẩm này chỉ thanh toán bằng Tiền Kíp!</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Mã SKU, Tồn kho & Trạng thái bán */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Thông tin cơ bản: SKU & Trạng thái bán */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-zinc-400 font-semibold">Mã SKU</label>
+                    <label className="text-zinc-400 font-semibold">Mã SKU sản phẩm</label>
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, sku: generateRandomSku() })}
                       className="text-[10px] text-blue-400 hover:underline flex items-center gap-1"
                     >
                       <RefreshCw className="w-2.5 h-2.5" />
-                      <span>Sinh mã</span>
+                      <span>Sinh mã ngẫu nhiên</span>
                     </button>
                   </div>
                   <input
@@ -1712,26 +1680,14 @@ export default function AdminProductsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-zinc-400 font-semibold mb-1">Số lượng tồn kho (cái)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={formData.stock}
-                    onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                    placeholder="20"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-zinc-400 font-semibold mb-1">Trạng thái bán</label>
+                  <label className="block text-zinc-400 font-semibold mb-1">Trạng thái bán hàng</label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-blue-500 font-semibold"
                   >
-                    <option value="ACTIVE">Hiển thị bán</option>
-                    <option value="HIDDEN">Ẩn tạm thời</option>
+                    <option value="ACTIVE">Hiển thị bán trên web (ເປີດຂາຍ)</option>
+                    <option value="HIDDEN">Ẩn tạm thời (ເຊື່ອງ)</option>
                   </select>
                 </div>
               </div>
@@ -2105,612 +2061,96 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              {/* PHÂN LOẠI SẢN PHẨM 2 TẦNG (SHOPEE STYLE): MÀU SẮC, TRỌNG LƯỢNG (ml, g), DÒNG SẢN PHẨM */}
-              <div className="p-4 bg-zinc-950 rounded-2xl border border-zinc-800 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-zinc-900">
+              {/* BẢNG PHÂN LOẠI HÀNG CHUẨN SHOPEE (MỖI ẢNH = MỘT MÓN RIÊNG CÓ GIÁ RIÊNG) */}
+              <div className="p-4 bg-zinc-950 rounded-2xl border border-orange-500/40 shadow-lg space-y-4">
+                {/* Header khối Shopee */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-800/80">
                   <div>
-                    <label className="text-xs font-bold text-white flex items-center gap-1.5">
-                      <Layers className="w-4 h-4 text-rose-500" />
-                      <span>Phân Loại Sản Phẩm 2 Tầng (Màu Sắc, Trọng Lượng, Dòng Sản Phẩm...)</span>
+                    <label className="text-xs font-black text-white flex items-center gap-2">
+                      <span className="p-1 rounded-lg bg-orange-500/20 text-orange-400">
+                        <Palette className="w-4 h-4" />
+                      </span>
+                      <span className="text-sm text-orange-400">
+                        Phân Loại Hàng (Chuẩn Shopee - Mỗi ảnh = Một món riêng, có giá riêng)
+                      </span>
                     </label>
                     <p className="text-[11px] text-zinc-400 mt-0.5">
-                      Chuẩn giao diện Shopee: Nhóm 1 có ảnh đại diện (Màu sắc, Mẫu mã) + Nhóm 2 nút chữ (ml, g, Dòng máy, Kích cỡ)
+                      📸 <strong>Mỗi ảnh là một món/màu riêng</strong> có giá riêng. Khách bấm vào ảnh nào sẽ hiển thị đúng giá món đó!
                     </p>
                   </div>
-                </div>
 
-                {/* --- NHÓM 1: MÀU SẮC / MẪU MÃ (KÈM ẢNH) --- */}
-                <div className="p-3.5 bg-zinc-900/60 rounded-xl border border-zinc-800/80 space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <Palette className="w-4 h-4 text-rose-400" />
-                      <span className="text-xs font-bold text-rose-300">Nhóm 1 (Kèm ảnh thumbnail):</span>
+                  {/* 3 Nút thao tác nhanh trên đầu */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Nút Tải nhiều ảnh cùng lúc */}
+                    <div>
                       <input
-                        type="text"
-                        value={tier1Name}
-                        onChange={(e) => setTier1Name(e.target.value)}
-                        placeholder="Tên nhóm 1 (ví dụ: Màu Sắc)"
-                        className="bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1 text-xs text-white font-bold focus:border-rose-500 outline-none w-36 sm:w-44"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        id="shopee-multi-image-upload"
+                        className="hidden"
+                        onChange={(e) => handleMultiUploadShopeeItems(e.target.files)}
                       />
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {productImages.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={handleGenerateTier1FromImages}
-                          className="px-2.5 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-lg text-[10px] font-bold border border-blue-500/30 transition flex items-center gap-1"
-                        >
-                          <Sparkles className="w-3 h-3" />
-                          <span>Tạo từ {productImages.length} ảnh đã tải</span>
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => handleAddTier1Option()}
-                        className="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-[10px] font-bold transition flex items-center gap-1 shadow-sm"
+                      <label
+                        htmlFor="shopee-multi-image-upload"
+                        className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-md shadow-orange-900/30 transition active:scale-95"
+                        title="Chọn nhiều ảnh từ máy, tải bao nhiêu ảnh sẽ tự động tạo bấy nhiêu món!"
                       >
-                        <Plus className="w-3 h-3" />
-                        <span>+ Thêm màu/mẫu</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Thanh công cụ: Thêm hàng loạt (Bulk Add) */}
-                  <div className="p-2.5 bg-zinc-950/80 rounded-xl border border-zinc-800 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-rose-300 flex items-center gap-1.5">
-                        <Zap className="w-3.5 h-3.5 text-rose-400" />
-                        <span>Thêm nhanh hàng loạt màu sắc / mẫu mã (ngăn cách bởi dấu phẩy):</span>
-                      </span>
-                      <span className="text-[10px] text-zinc-500 hidden sm:inline">Ví dụ: Vàng chanh, Vàng cam, Hồng, Xanh</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={bulkTier1Input}
-                        onChange={(e) => setBulkTier1Input(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleBulkAddTier1();
-                          }
-                        }}
-                        placeholder="Gõ các màu cách nhau bằng dấu phẩy, ví dụ: Vàng chanh, Vàng cam, Hồng Sakura, Đỏ..."
-                        className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:border-rose-500 outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleBulkAddTier1}
-                        className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 flex-shrink-0 shadow-sm active:scale-95"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>Thêm hàng loạt</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Gợi ý nhanh tên màu sắc & phân loại Garnier */}
-                  <div className="space-y-1.5 pt-0.5">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[10px] text-zinc-500">Đổi tên Nhóm 1:</span>
-                      {['Màu Sắc', 'Mẫu Mã', 'Mùi Hương', 'Dòng Sản Phẩm'].map((g) => (
-                        <button
-                          key={g}
-                          type="button"
-                          onClick={() => setTier1Name(g)}
-                          className={`text-[10px] px-2 py-0.5 rounded-md border transition ${
-                            tier1Name === g
-                              ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 font-bold'
-                              : 'bg-zinc-800/60 text-zinc-400 border-zinc-700/60 hover:text-zinc-200'
-                          }`}
-                        >
-                          {g}
-                        </button>
-                      ))}
+                        <Camera className="w-3.5 h-3.5" />
+                        <span>📸 Tải ảnh (Tải bao nhiêu ảnh tự sinh bấy nhiêu món)</span>
+                      </label>
                     </div>
 
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[10px] text-amber-400 font-semibold">Gợi ý dòng Garnier:</span>
-                      {[
-                        'Vàng Chanh (Light Complete)',
-                        'Vàng Cam (Anti-Acne)',
-                        'Hồng (Sakura Glow)',
-                        'Đỏ (Ageless Booster)',
-                        'Xanh (Super UV)'
-                      ].map((colorName) => (
-                        <button
-                          key={colorName}
-                          type="button"
-                          onClick={() => handleAddTier1Option({ name: colorName })}
-                          className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 transition font-medium"
-                        >
-                          +{colorName}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[10px] text-zinc-400">Tone màu khác:</span>
-                      {['Xám Nhung', 'Đen Nhung', 'Đỏ Ruby', 'Cam Cháy', 'Hồng Đào', 'Trắng Sữa', 'Tone 21 (Sáng)', 'Tone 23 (Tự Nhiên)'].map((colorName) => (
-                        <button
-                          key={colorName}
-                          type="button"
-                          onClick={() => handleAddTier1Option({ name: colorName })}
-                          className="text-[10px] px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700 hover:bg-zinc-700 transition"
-                        >
-                          +{colorName}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Danh sách lựa chọn nhóm 1 */}
-                  {tier1Options.length === 0 ? (
-                    <div className="p-3 rounded-lg border border-dashed border-zinc-800 text-center space-y-1 bg-zinc-950/40">
-                      <p className="text-zinc-500 text-[11px]">
-                        Chưa có phân loại Nhóm 1. Nhập vào ô "Thêm hàng loạt" ở trên hoặc bấm "+ Thêm màu/mẫu".
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {/* Table Header trên màn hình desktop */}
-                      <div className="hidden sm:grid sm:grid-cols-12 gap-2 px-3 py-2 bg-zinc-950/80 rounded-xl text-[10px] font-bold text-zinc-400 uppercase tracking-wider border border-zinc-800/80">
-                        <div className="col-span-1 text-center">STT</div>
-                        <div className="col-span-3">Ảnh đại diện</div>
-                        <div className="col-span-4">Tên màu / loại phân loại *</div>
-                        <div className="col-span-2">Giá Kíp riêng (₭)</div>
-                        <div className="col-span-1">Giá Baht (฿)</div>
-                        <div className="col-span-1 text-center">Xóa</div>
-                      </div>
-
-                      {tier1Options.map((opt, idx) => (
-                        <React.Fragment key={opt.id}>
-                          {/* Desktop Grid Layout (Rộng rãi, không bị ép co hẹp ô tên) */}
-                          <div className="hidden sm:grid sm:grid-cols-12 items-center gap-2 p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl hover:border-zinc-700 transition">
-                            <div className="col-span-1 text-center font-mono font-bold text-zinc-500 text-xs">
-                              {idx + 1}
-                            </div>
-                            
-                            <div className="col-span-3 flex items-center gap-2">
-                              <div className="w-9 h-9 rounded-lg bg-zinc-900 border border-zinc-700 overflow-hidden flex-shrink-0 relative">
-                                {opt.image ? (
-                                  <img src={opt.image} alt={opt.name} className="w-full h-full object-cover" />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-zinc-600 text-[9px]">
-                                    No img
-                                  </div>
-                                )}
-                              </div>
-                              <select
-                                value={opt.image || ''}
-                                onChange={(e) => handleUpdateTier1Option(opt.id, { image: e.target.value })}
-                                className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 text-[11px] text-zinc-200 outline-none focus:border-rose-500 truncate"
-                              >
-                                <option value="">Ảnh mặc định</option>
-                                {productImages.map((img, i) => (
-                                  <option key={i} value={img}>Ảnh {i + 1}</option>
-                                ))}
-                              </select>
-                            </div>
-
-                            <div className="col-span-4">
-                              <input
-                                type="text"
-                                value={opt.name}
-                                onChange={(e) => handleUpdateTier1Option(opt.id, { name: e.target.value })}
-                                placeholder="Tên màu / loại (ví dụ: Vàng chanh)..."
-                                className="w-full bg-zinc-900 border border-zinc-800 focus:border-rose-500 rounded-lg px-3 py-1.5 text-white font-medium text-xs outline-none"
-                              />
-                            </div>
-
-                            <div className="col-span-2">
-                              <input
-                                type="number"
-                                min="0"
-                                value={opt.price ?? ''}
-                                onChange={(e) => handleUpdateTier1Option(opt.id, { price: e.target.value ? Number(e.target.value) : undefined })}
-                                placeholder="Giá Kíp (₭)"
-                                className="w-full bg-zinc-900 border border-zinc-800 focus:border-emerald-500 rounded-lg px-2 py-1.5 text-emerald-300 font-mono text-xs outline-none"
-                              />
-                            </div>
-
-                            <div className="col-span-1">
-                              <input
-                                type="number"
-                                min="0"
-                                value={opt.priceTHB ?? ''}
-                                onChange={(e) => handleUpdateTier1Option(opt.id, { priceTHB: e.target.value ? Number(e.target.value) : undefined })}
-                                placeholder="Baht ฿"
-                                className="w-full bg-zinc-900 border border-zinc-800 focus:border-amber-500 rounded-lg px-1.5 py-1.5 text-amber-300 font-mono text-xs outline-none"
-                              />
-                            </div>
-
-                            <div className="col-span-1 flex justify-center">
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveTier1Option(opt.id)}
-                                className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition"
-                                title="Xóa lựa chọn này"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Mobile Card Layout */}
-                          <div className="sm:hidden p-3 bg-zinc-950 border border-zinc-800 rounded-xl space-y-2.5">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-bold text-zinc-400"># Phân loại {idx + 1}</span>
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveTier1Option(opt.id)}
-                                className="text-red-400 text-xs flex items-center gap-1 hover:underline"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                                <span>Xóa</span>
-                              </button>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-700 overflow-hidden flex-shrink-0">
-                                {opt.image ? <img src={opt.image} alt={opt.name} className="w-full h-full object-cover" /> : null}
-                              </div>
-                              <select
-                                value={opt.image || ''}
-                                onChange={(e) => handleUpdateTier1Option(opt.id, { image: e.target.value })}
-                                className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-zinc-200 outline-none"
-                              >
-                                <option value="">Ảnh mặc định</option>
-                                {productImages.map((img, i) => (
-                                  <option key={i} value={img}>Ảnh {i + 1}</option>
-                                ))}
-                              </select>
-                            </div>
-                            <div>
-                              <label className="text-[10px] text-zinc-400 block mb-0.5">Tên màu / loại *</label>
-                              <input
-                                type="text"
-                                value={opt.name}
-                                onChange={(e) => handleUpdateTier1Option(opt.id, { name: e.target.value })}
-                                placeholder="Ví dụ: Vàng chanh..."
-                                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-white font-medium text-xs outline-none focus:border-rose-500"
-                              />
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <label className="text-[10px] text-emerald-400 block mb-0.5">Giá Kíp riêng (₭)</label>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  value={opt.price ?? ''}
-                                  onChange={(e) => handleUpdateTier1Option(opt.id, { price: e.target.value ? Number(e.target.value) : undefined })}
-                                  placeholder="Kíp (tùy chọn)"
-                                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1 text-emerald-300 font-mono text-xs outline-none"
-                                />
-                              </div>
-                              <div>
-                                <label className="text-[10px] text-amber-400 block mb-0.5">Giá Baht riêng (฿)</label>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  value={opt.priceTHB ?? ''}
-                                  onChange={(e) => handleUpdateTier1Option(opt.id, { priceTHB: e.target.value ? Number(e.target.value) : undefined })}
-                                  placeholder="Baht (tùy chọn)"
-                                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1 text-amber-300 font-mono text-xs outline-none"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        </React.Fragment>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* --- NHÓM 2: TRỌNG LƯỢNG (ml, g) / DÒNG SẢN PHẨM / DUNG TÍCH / KÍCH CỠ --- */}
-                <div className={`p-3.5 rounded-xl border transition space-y-3 ${
-                  hasTier2 ? 'bg-zinc-900/80 border-purple-500/40' : 'bg-zinc-900/40 border-zinc-800/80'
-                }`}>
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={hasTier2}
-                        onChange={(e) => setHasTier2(e.target.checked)}
-                        className="w-4 h-4 rounded accent-purple-500 cursor-pointer"
-                      />
-                      <span className="text-xs font-bold text-purple-300 flex items-center gap-1.5">
-                        <Scale className="w-4 h-4 text-purple-400" />
-                        <span>Bật Nhóm 2: Trọng Lượng (ml, g), Dòng Sản Phẩm, Kích Cỡ...</span>
-                      </span>
-                    </label>
-
-                    {hasTier2 && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] text-zinc-400">Tên Nhóm 2:</span>
-                        <input
-                          type="text"
-                          value={tier2Name}
-                          onChange={(e) => setTier2Name(e.target.value)}
-                          placeholder="Ví dụ: Trọng Lượng (ml, g)"
-                          className="bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1 text-xs text-white font-bold focus:border-purple-500 outline-none w-44"
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  {hasTier2 && (
-                    <div className="space-y-3 pt-2 border-t border-zinc-800 animate-in fade-in">
-                      {/* Gợi ý nhanh tên nhóm 2 */}
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[10px] text-zinc-500">Đổi nhanh tên Nhóm 2:</span>
-                        {['Trọng Lượng (ml, g)', 'Dòng Sản Phẩm', 'Loại Da Phù Hợp', 'Dung Tích', 'Kích Cỡ / Size', 'Phiên Bản'].map((titlePreset) => (
-                          <button
-                            key={titlePreset}
-                            type="button"
-                            onClick={() => setTier2Name(titlePreset)}
-                            className={`text-[10px] px-2 py-0.5 rounded-md border transition ${
-                              tier2Name === titlePreset
-                                ? 'bg-purple-500/20 text-purple-300 border-purple-500/50 font-bold'
-                                : 'bg-zinc-800/80 text-zinc-400 border-zinc-700 hover:text-white'
-                            }`}
-                          >
-                            {titlePreset}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Chip thêm nhanh 1 chạm các giá trị phổ biến */}
-                      <div className="space-y-1.5 p-2.5 bg-zinc-950/70 rounded-xl border border-zinc-800/70">
-                        <span className="text-[10px] text-zinc-400 font-bold block">
-                          ⚡ Bấm để thêm nhanh vào danh sách Nhóm 2:
-                        </span>
-                        
-                        {/* Hàng 1: Trọng lượng & Dung tích (bao gồm 7ml gói) */}
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[9px] text-zinc-500">Dung tích / Trọng lượng:</span>
-                          {['7ml (Gói)', '15ml', '30ml', '50ml', '100ml', '200ml', '250ml', '500ml', '500g', '900g', '1kg'].map((val) => {
-                            const isAdded = tier2Options.some(o => o.name === val);
-                            return (
-                              <button
-                                key={val}
-                                type="button"
-                                onClick={() => handleAddTier2Option(val)}
-                                disabled={isAdded}
-                                className={`text-[10px] px-2 py-0.5 rounded-md border transition ${
-                                  isAdded
-                                    ? 'bg-zinc-800 text-zinc-600 border-zinc-800 cursor-not-allowed'
-                                    : 'bg-zinc-900 text-purple-300 border-purple-500/30 hover:bg-purple-900/30 font-medium'
-                                }`}
-                              >
-                                {isAdded ? `✓ ${val}` : `+ ${val}`}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        {/* Hàng 2: Dòng sản phẩm mỹ phẩm & Loại da */}
-                        <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-zinc-900">
-                          <span className="text-[9px] text-zinc-500">Dòng sản phẩm & Loại da:</span>
-                          {['Da Dầu Mụn', 'Da Thường & Hỗn Hợp', 'Da Khô Nhạy Cảm', 'Dòng Trắng Da', 'Dòng Trị Mụn', 'Ban Ngày (Day)', 'Ban Đêm (Night)'].map((val) => {
-                            const isAdded = tier2Options.some(o => o.name === val);
-                            return (
-                              <button
-                                key={val}
-                                type="button"
-                                onClick={() => handleAddTier2Option(val)}
-                                disabled={isAdded}
-                                className={`text-[10px] px-2 py-0.5 rounded-md border transition ${
-                                  isAdded
-                                    ? 'bg-zinc-800 text-zinc-600 border-zinc-800 cursor-not-allowed'
-                                    : 'bg-zinc-900 text-rose-300 border-rose-500/30 hover:bg-rose-900/30 font-medium'
-                                }`}
-                              >
-                                {isAdded ? `✓ ${val}` : `+ ${val}`}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        {/* Hàng 3: Size & Bản */}
-                        <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-zinc-900">
-                          <span className="text-[9px] text-zinc-500">Size & Phiên bản:</span>
-                          {['Size S', 'Size M', 'Size L', 'Size XL', 'Bản Tiêu Chuẩn', 'Bản Cao Cấp'].map((val) => {
-                            const isAdded = tier2Options.some(o => o.name === val);
-                            return (
-                              <button
-                                key={val}
-                                type="button"
-                                onClick={() => handleAddTier2Option(val)}
-                                disabled={isAdded}
-                                className={`text-[10px] px-2 py-0.5 rounded-md border transition ${
-                                  isAdded
-                                    ? 'bg-zinc-800 text-zinc-600 border-zinc-800 cursor-not-allowed'
-                                    : 'bg-zinc-900 text-blue-300 border-blue-500/30 hover:bg-blue-900/30 font-medium'
-                                }`}
-                              >
-                                {isAdded ? `✓ ${val}` : `+ ${val}`}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Ô nhập thêm tùy ý */}
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={newTier2Input}
-                          onChange={(e) => setNewTier2Input(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              handleAddTier2Option(newTier2Input);
-                            }
-                          }}
-                          placeholder="Hoặc tự gõ thêm (ví dụ: 750ml, 11 Pro, Dòng Trẻ Hóa)..."
-                          className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white outline-none focus:border-purple-500"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleAddTier2Option(newTier2Input)}
-                          className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 flex-shrink-0"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Thêm vào</span>
-                        </button>
-                      </div>
-
-                      {/* Danh sách lựa chọn nhóm 2 đã thêm */}
-                      {tier2Options.length === 0 ? (
-                        <p className="text-[11px] text-zinc-500 italic p-2 text-center bg-zinc-950/40 rounded-lg">
-                          Chưa có lựa chọn nào trong Nhóm 2. Bấm các chip ở trên để thêm nhanh.
-                        </p>
-                      ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {tier2Options.map((opt) => (
-                            <div
-                              key={opt.id}
-                              className="p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl flex items-center justify-between gap-2"
-                            >
-                              <div className="flex items-center gap-2 flex-1 min-w-0">
-                                <span className="text-xs font-bold text-white px-2 py-0.5 rounded-lg bg-zinc-900 border border-zinc-700 truncate">
-                                  {opt.name}
-                                </span>
-                              </div>
-
-                              <div className="flex items-center gap-1.5 flex-shrink-0">
-                                <div className="relative w-24">
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    value={opt.priceBonus ?? ''}
-                                    onChange={(e) => handleUpdateTier2Option(opt.id, { priceBonus: e.target.value ? Number(e.target.value) : undefined })}
-                                    placeholder="+₭ Kíp"
-                                    title="Phụ thu tiền Kíp (nếu có)"
-                                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1 text-emerald-300 font-mono text-[11px] focus:outline-none focus:border-emerald-500 text-right pr-6"
-                                  />
-                                  <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] text-zinc-500">₭</span>
-                                </div>
-
-                                <div className="relative w-20">
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    value={opt.priceBonusTHB ?? ''}
-                                    onChange={(e) => handleUpdateTier2Option(opt.id, { priceBonusTHB: e.target.value ? Number(e.target.value) : undefined })}
-                                    placeholder="+฿ Baht"
-                                    title="Phụ thu tiền Baht (nếu có)"
-                                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1 text-amber-300 font-mono text-[11px] focus:outline-none focus:border-amber-500 text-right pr-5"
-                                  />
-                                  <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] text-zinc-500">฿</span>
-                                </div>
-
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveTier2Option(opt.id)}
-                                  className="p-1 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition"
-                                  title="Xoá lựa chọn này"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Chụp ảnh Camera & Chọn ảnh */}
-              <div className="bg-zinc-950 p-4 rounded-2xl border border-zinc-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-white flex items-center gap-2">
-                    <Camera className="w-4 h-4 text-emerald-400" />
-                    <span>Hình ảnh sản phẩm (ຮູບພາບສິນຄ້າ) - {productImages.length} ảnh đã chọn</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setShowPresets(!showPresets)}
-                    className="text-[11px] text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 transition"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>{showPresets ? 'Đóng kho ảnh mẫu' : 'Kho ảnh mẫu có sẵn'}</span>
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      id="mobile-camera-capture"
-                      className="hidden"
-                      onChange={(e) => handleFileUpload(e.target.files)}
-                    />
-                    <label
-                      htmlFor="mobile-camera-capture"
-                      className="w-full py-3 px-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-900/30 transition active:scale-98 text-center"
+                    {/* Nút Thêm món mới thủ công */}
+                    <button
+                      type="button"
+                      onClick={() => handleAddShopeeItem()}
+                      className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 font-bold text-xs flex items-center gap-1 transition active:scale-95"
                     >
-                      <Camera className="w-4 h-4" />
-                      <span>📸 Chụp ảnh Camera ngay</span>
-                    </label>
-                  </div>
+                      <Plus className="w-3.5 h-3.5 text-orange-400" />
+                      <span>+ Thêm món mới</span>
+                    </button>
 
-                  <div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      id="mobile-gallery-upload"
-                      className="hidden"
-                      onChange={(e) => handleFileUpload(e.target.files)}
-                    />
-                    <label
-                      htmlFor="mobile-gallery-upload"
-                      className="w-full py-3 px-3 rounded-2xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-100 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition active:scale-98 text-center"
+                    {/* Nút mở Kho ảnh mẫu */}
+                    <button
+                      type="button"
+                      onClick={() => setShowPresets(!showPresets)}
+                      className="px-2.5 py-1.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 font-bold text-xs flex items-center gap-1 transition"
                     >
-                      <Smartphone className="w-4 h-4 text-blue-400" />
-                      <span>📁 Chọn ảnh từ bộ nhớ máy</span>
-                    </label>
+                      <Sparkles className="w-3 h-3 text-purple-400" />
+                      <span>{showPresets ? 'Đóng kho ảnh' : 'Kho ảnh mẫu'}</span>
+                    </button>
                   </div>
                 </div>
 
                 {uploadingImage && (
                   <div className="p-3 bg-blue-950/40 border border-blue-800/80 rounded-xl text-xs text-blue-300 flex items-center gap-2 animate-pulse">
                     <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
-                    <span>Đang xử lý tải ảnh từ điện thoại lên hệ thống...</span>
+                    <span>Đang xử lý tải ảnh lên hệ thống...</span>
                   </div>
                 )}
 
-                {uploadError && (
-                  <div className="p-3 bg-red-950/40 border border-red-800 rounded-xl text-xs text-red-400 flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                    <span>{uploadError}</span>
-                  </div>
-                )}
-
-                {/* Kho ảnh mẫu */}
+                {/* Kho ảnh mẫu mỹ phẩm (1 chạm thêm vào món) */}
                 {showPresets && (
-                  <div className="p-3 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-2">
-                    <p className="text-[11px] font-bold text-amber-300 flex items-center gap-1.5">
+                  <div className="p-3 bg-zinc-900 border border-purple-500/40 rounded-2xl space-y-2 animate-in fade-in">
+                    <p className="text-[11px] font-bold text-purple-300 flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5" />
-                      <span>Bấm 1 chạm vào ảnh mẫu dưới đây để thêm ngay vào món:</span>
+                      <span>Bấm 1 chạm vào ảnh mẫu dưới đây để thêm ngay 1 món mới với ảnh đó:</span>
                     </p>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto p-1">
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 max-h-44 overflow-y-auto p-1">
                       {PRESET_BEAUTY_IMAGES.map((preset, idx) => (
                         <button
                           key={idx}
                           type="button"
-                          onClick={() => handleAddPresetImage(preset.url)}
-                          className="group relative aspect-square rounded-xl overflow-hidden border border-zinc-700 hover:border-amber-400 transition"
+                          onClick={() => {
+                            handleAddShopeeItem({ image: preset.url, name: preset.name });
+                            setShowPresets(false);
+                          }}
+                          className="group relative aspect-square rounded-xl overflow-hidden border border-zinc-700 hover:border-orange-400 transition"
                         >
                           <img src={preset.url} alt={preset.name} className="w-full h-full object-cover group-hover:scale-105 transition" />
                           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-end p-1 text-[9px] text-white font-semibold">
-                            + Thêm ảnh
+                            + {preset.name}
                           </div>
                         </button>
                       ))}
@@ -2718,80 +2158,419 @@ export default function AdminProductsPage() {
                   </div>
                 )}
 
-                {/* Danh sách ảnh đã chọn */}
-                {productImages.length > 0 ? (
-                  <div className="space-y-2 pt-2 border-t border-zinc-800/80">
-                    <p className="text-[11px] text-zinc-400 font-semibold">
-                      Ảnh của sản phẩm (ảnh có viền xanh là ảnh bìa đại diện):
+                {/* Thanh công cụ: ⚡ ÁP DỤNG GIÁ NHANH CHO TẤT CẢ CÁC MÓN */}
+                <div className="p-3 bg-zinc-900/80 rounded-xl border border-zinc-800 space-y-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <span className="text-[11px] font-bold text-orange-300 flex items-center gap-1.5">
+                      <Zap className="w-3.5 h-3.5 text-orange-400" />
+                      <span>⚡ Áp dụng nhanh giá & tồn kho cho toàn bộ danh sách món:</span>
+                    </span>
+                    <span className="text-[10px] text-zinc-500">
+                      Nhập 1 lần và bấm nút áp dụng, sau đó chỉ cần sửa tên/món khác giá
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                    <div>
+                      <input
+                        type="number"
+                        min="0"
+                        value={bulkPriceLAK}
+                        onChange={(e) => setBulkPriceLAK(e.target.value)}
+                        placeholder="Giá lẻ Kíp (₭)"
+                        className="w-full bg-zinc-950 border border-zinc-700 focus:border-emerald-500 rounded-lg px-2.5 py-1.5 text-xs text-emerald-300 font-mono font-bold outline-none"
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="number"
+                        min="0"
+                        value={bulkPriceTHB}
+                        onChange={(e) => setBulkPriceTHB(e.target.value)}
+                        placeholder="Giá lẻ Baht (฿)"
+                        className="w-full bg-zinc-950 border border-zinc-700 focus:border-amber-500 rounded-lg px-2.5 py-1.5 text-xs text-amber-300 font-mono font-bold outline-none"
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="number"
+                        min="0"
+                        value={bulkWholesaleLAK}
+                        onChange={(e) => setBulkWholesaleLAK(e.target.value)}
+                        placeholder="Giá sỉ Kíp (₭)"
+                        className="w-full bg-zinc-950 border border-zinc-700 focus:border-amber-500 rounded-lg px-2.5 py-1.5 text-xs text-amber-400 font-mono outline-none"
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="number"
+                        min="0"
+                        value={bulkStock}
+                        onChange={(e) => setBulkStock(e.target.value)}
+                        placeholder="Tồn kho (cái)"
+                        className="w-full bg-zinc-950 border border-zinc-700 focus:border-blue-500 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono outline-none"
+                      />
+                    </div>
+                    <div className="col-span-2 sm:col-span-1">
+                      <button
+                        type="button"
+                        onClick={handleApplyBulkPrices}
+                        className="w-full py-1.5 px-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-lg text-xs font-bold transition shadow-sm active:scale-95 flex items-center justify-center gap-1"
+                      >
+                        <Zap className="w-3 h-3" />
+                        <span>Áp dụng tất cả</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Gợi ý nhanh tên màu / dòng (1 chạm để điền hoặc thêm món) */}
+                <div className="space-y-1.5 pt-0.5">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] text-amber-400 font-semibold">Gợi ý dòng Garnier:</span>
+                    {[
+                      'Vàng Chanh (Light Complete)',
+                      'Vàng Cam (Anti-Acne)',
+                      'Hồng (Sakura Glow)',
+                      'Đỏ (Ageless Booster)',
+                      'Xanh (Super UV)'
+                    ].map((colorName) => (
+                      <button
+                        key={colorName}
+                        type="button"
+                        onClick={() => {
+                          const emptyIdx = shopeeItems.findIndex(it => !it.name.trim());
+                          if (emptyIdx !== -1) {
+                            handleUpdateShopeeItem(shopeeItems[emptyIdx].id, { name: colorName });
+                          } else {
+                            handleAddShopeeItem({ name: colorName });
+                          }
+                        }}
+                        className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 transition font-medium"
+                      >
+                        +{colorName}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] text-zinc-400">Tone màu khác:</span>
+                    {['Xám Nhung', 'Đen Nhung', 'Đỏ Ruby', 'Cam Cháy', 'Hồng Đào', 'Trắng Sữa', 'Tone 21 (Sáng)', 'Tone 23 (Tự Nhiên)'].map((colorName) => (
+                      <button
+                        key={colorName}
+                        type="button"
+                        onClick={() => {
+                          const emptyIdx = shopeeItems.findIndex(it => !it.name.trim());
+                          if (emptyIdx !== -1) {
+                            handleUpdateShopeeItem(shopeeItems[emptyIdx].id, { name: colorName });
+                          } else {
+                            handleAddShopeeItem({ name: colorName });
+                          }
+                        }}
+                        className="text-[10px] px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700 hover:bg-zinc-700 transition"
+                      >
+                        +{colorName}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* DANH SÁCH CÁC MÓN PHÂN LOẠI (MỖI DÒNG = 1 MÓN CÓ ẢNH & GIÁ RIÊNG) */}
+                {shopeeItems.length === 0 ? (
+                  <div className="p-6 rounded-2xl border-2 border-dashed border-zinc-800 text-center space-y-2 bg-zinc-950/40">
+                    <p className="text-zinc-400 text-xs font-semibold">
+                      Chưa có món nào trong danh sách.
                     </p>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 max-h-48 overflow-y-auto p-1 bg-zinc-900/50 rounded-2xl border border-zinc-800">
-                      {productImages.map((imgUrl, idx) => (
-                        <div
-                          key={idx}
-                          className={`relative aspect-square rounded-xl overflow-hidden border bg-zinc-900 group ${
-                            idx === 0 ? 'border-emerald-500 ring-2 ring-emerald-500/40' : 'border-zinc-800'
-                          }`}
-                        >
-                          <img src={imgUrl} alt={`Ảnh ${idx + 1}`} className="w-full h-full object-cover" />
-                          {idx === 0 && (
-                            <div className="absolute top-1 left-1 bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">
-                              Ảnh bìa
-                            </div>
-                          )}
-                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-1.5 p-1">
-                            {idx !== 0 && (
+                    <p className="text-zinc-500 text-[11px]">
+                      Bấm nút <strong>📸 Tải ảnh</strong> ở trên để tự động tạo món theo từng ảnh, hoặc bấm <strong>+ Thêm món mới</strong>.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {/* Desktop Table View */}
+                    <div className="hidden sm:block overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead>
+                          <tr className="border-b border-zinc-800 text-zinc-400 uppercase tracking-wider text-[10px] bg-zinc-900/60">
+                            <th className="py-2.5 px-3 text-center w-10">STT</th>
+                            <th className="py-2.5 px-3 w-28">Ảnh đại diện</th>
+                            <th className="py-2.5 px-3">Tên món / màu / loại *</th>
+                            <th className="py-2.5 px-3 text-emerald-400 w-36">Giá lẻ Kíp (₭) *</th>
+                            <th className="py-2.5 px-3 text-amber-400 w-28">Giá lẻ Baht (฿)</th>
+                            <th className="py-2.5 px-3 text-amber-400 w-32">Giá sỉ Kíp (₭)</th>
+                            <th className="py-2.5 px-3 w-20">Kho</th>
+                            <th className="py-2.5 px-3 text-center w-20">Thao tác</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-800/60">
+                          {shopeeItems.map((item, idx) => (
+                            <tr key={item.id} className="hover:bg-zinc-900/40 transition">
+                              {/* STT */}
+                              <td className="py-2.5 px-3 text-center font-mono font-bold text-zinc-500">
+                                {idx + 1}
+                              </td>
+
+                              {/* Ảnh đại diện riêng của món */}
+                              <td className="py-2.5 px-3">
+                                <div className="flex items-center gap-2">
+                                  <div className="relative w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-700 overflow-hidden flex-shrink-0 group">
+                                    {item.image ? (
+                                      <>
+                                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-1 p-0.5">
+                                          <label
+                                            htmlFor={`item-img-upload-${item.id}`}
+                                            className="p-1 rounded-md bg-blue-600 text-white cursor-pointer hover:bg-blue-500"
+                                            title="Đổi ảnh này"
+                                          >
+                                            <Camera className="w-3 h-3" />
+                                          </label>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleUpdateShopeeItem(item.id, { image: '' })}
+                                            className="p-1 rounded-md bg-red-600 text-white hover:bg-red-500"
+                                            title="Xóa ảnh này"
+                                          >
+                                            <Trash2 className="w-3 h-3" />
+                                          </button>
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <label
+                                        htmlFor={`item-img-upload-${item.id}`}
+                                        className="w-full h-full flex flex-col items-center justify-center text-zinc-500 hover:text-orange-400 hover:border-orange-500 cursor-pointer transition text-center p-1"
+                                        title="Bấm để tải ảnh cho món này"
+                                      >
+                                        <Camera className="w-4 h-4 mb-0.5" />
+                                        <span className="text-[8px] font-bold">+ Ảnh</span>
+                                      </label>
+                                    )}
+                                  </div>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    id={`item-img-upload-${item.id}`}
+                                    className="hidden"
+                                    onChange={(e) => handleSingleItemImageUpload(idx, e.target.files)}
+                                  />
+                                </div>
+                              </td>
+
+                              {/* Tên món / màu / loại */}
+                              <td className="py-2.5 px-3">
+                                <input
+                                  type="text"
+                                  value={item.name}
+                                  onChange={(e) => handleUpdateShopeeItem(item.id, { name: e.target.value })}
+                                  placeholder="Ví dụ: Vàng chanh 7ml, Đỏ Ruby..."
+                                  className="w-full bg-zinc-900 border border-zinc-800 focus:border-orange-500 rounded-lg px-2.5 py-1.5 text-white font-medium text-xs outline-none"
+                                />
+                              </td>
+
+                              {/* Giá lẻ Kíp */}
+                              <td className="py-2.5 px-3">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={item.price}
+                                  onChange={(e) => handleUpdateShopeeItem(item.id, { price: e.target.value })}
+                                  placeholder="Giá Kíp (₭)"
+                                  className="w-full bg-zinc-900 border border-emerald-500/40 focus:border-emerald-500 rounded-lg px-2.5 py-1.5 text-emerald-300 font-mono font-bold text-xs outline-none"
+                                />
+                              </td>
+
+                              {/* Giá lẻ Baht */}
+                              <td className="py-2.5 px-3">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={item.priceTHB}
+                                  onChange={(e) => handleUpdateShopeeItem(item.id, { priceTHB: e.target.value })}
+                                  placeholder="Baht ฿"
+                                  className="w-full bg-zinc-900 border border-amber-500/30 focus:border-amber-500 rounded-lg px-2 py-1.5 text-amber-300 font-mono text-xs outline-none"
+                                />
+                              </td>
+
+                              {/* Giá sỉ Kíp */}
+                              <td className="py-2.5 px-3">
+                                <div className="flex items-center gap-1">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={item.wholesalePrice}
+                                    onChange={(e) => handleUpdateShopeeItem(item.id, { wholesalePrice: e.target.value })}
+                                    placeholder="Giá sỉ ₭"
+                                    className="w-full bg-zinc-900 border border-zinc-700 focus:border-amber-500 rounded-lg px-2 py-1.5 text-amber-400 font-mono text-xs outline-none"
+                                  />
+                                  {item.price && Number(item.price) > 0 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const r = Number(item.price);
+                                        const sug = Math.round(r * 0.8 / 1000) * 1000;
+                                        handleUpdateShopeeItem(item.id, { wholesalePrice: sug.toString() });
+                                      }}
+                                      className="p-1 text-[9px] text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 rounded border border-amber-500/30 flex-shrink-0"
+                                      title="Tính giá sỉ = 80% giá lẻ"
+                                    >
+                                      -20%
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+
+                              {/* Tồn kho */}
+                              <td className="py-2.5 px-3">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={item.stock}
+                                  onChange={(e) => handleUpdateShopeeItem(item.id, { stock: e.target.value })}
+                                  placeholder="Kho"
+                                  className="w-full bg-zinc-900 border border-zinc-800 focus:border-blue-500 rounded-lg px-2 py-1.5 text-zinc-200 font-mono text-xs outline-none text-center"
+                                />
+                              </td>
+
+                              {/* Thao tác */}
+                              <td className="py-2.5 px-3 text-center">
+                                <div className="flex items-center justify-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDuplicateShopeeItem(item)}
+                                    className="p-1.5 text-zinc-400 hover:text-purple-400 hover:bg-purple-500/10 rounded-lg transition"
+                                    title="Nhân bản món này để sửa nhanh"
+                                  >
+                                    <Copy className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveShopeeItem(item.id)}
+                                    className="p-1.5 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition"
+                                    title="Xóa món này"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Mobile Card Layout */}
+                    <div className="sm:hidden space-y-3">
+                      {shopeeItems.map((item, idx) => (
+                        <div key={item.id} className="p-3 bg-zinc-900/80 border border-zinc-800 rounded-2xl space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-orange-400"># Món {idx + 1}</span>
+                            <div className="flex items-center gap-1">
                               <button
                                 type="button"
-                                onClick={() => handleSetPrimaryImage(idx)}
-                                title="Đặt làm ảnh bìa chính"
-                                className="p-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 transition"
+                                onClick={() => handleDuplicateShopeeItem(item)}
+                                className="text-purple-400 p-1 hover:bg-purple-500/10 rounded"
+                                title="Nhân bản"
                               >
-                                <Star className="w-3.5 h-3.5" />
+                                <Copy className="w-3.5 h-3.5" />
                               </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveImage(idx)}
-                              title="Xóa ảnh này"
-                              className="p-1.5 rounded-lg bg-red-600 text-white hover:bg-red-500 transition"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveShopeeItem(item.id)}
+                                className="text-red-400 p-1 hover:bg-red-500/10 rounded"
+                                title="Xóa"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2.5">
+                            <div className="relative w-14 h-14 rounded-xl bg-zinc-950 border border-zinc-700 overflow-hidden flex-shrink-0">
+                              {item.image ? (
+                                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <label
+                                  htmlFor={`mobile-item-img-${item.id}`}
+                                  className="w-full h-full flex flex-col items-center justify-center text-zinc-500 cursor-pointer text-center p-1"
+                                >
+                                  <Camera className="w-4 h-4 mb-0.5" />
+                                  <span className="text-[8px] font-bold">+ Ảnh</span>
+                                </label>
+                              )}
+                            </div>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              id={`mobile-item-img-${item.id}`}
+                              className="hidden"
+                              onChange={(e) => handleSingleItemImageUpload(idx, e.target.files)}
+                            />
+
+                            <div className="flex-1 min-w-0">
+                              <label className="text-[10px] text-zinc-400 block mb-0.5">Tên món / màu *</label>
+                              <input
+                                type="text"
+                                value={item.name}
+                                onChange={(e) => handleUpdateShopeeItem(item.id, { name: e.target.value })}
+                                placeholder="Ví dụ: Vàng chanh 7ml..."
+                                className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none focus:border-orange-500"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-[10px] text-emerald-400 block mb-0.5 font-bold">Giá lẻ Kíp (₭) *</label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={item.price}
+                                onChange={(e) => handleUpdateShopeeItem(item.id, { price: e.target.value })}
+                                placeholder="₭ Kíp"
+                                className="w-full bg-zinc-950 border border-emerald-500/40 rounded-lg px-2 py-1 text-emerald-300 font-mono text-xs outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-amber-400 block mb-0.5 font-bold">Giá lẻ Baht (฿)</label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={item.priceTHB}
+                                onChange={(e) => handleUpdateShopeeItem(item.id, { priceTHB: e.target.value })}
+                                placeholder="฿ Baht"
+                                className="w-full bg-zinc-950 border border-amber-500/30 rounded-lg px-2 py-1 text-amber-300 font-mono text-xs outline-none"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-[10px] text-amber-400 block mb-0.5">Giá sỉ Kíp (₭)</label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={item.wholesalePrice}
+                                onChange={(e) => handleUpdateShopeeItem(item.id, { wholesalePrice: e.target.value })}
+                                placeholder="Giá sỉ ₭"
+                                className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2 py-1 text-amber-400 font-mono text-xs outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-zinc-400 block mb-0.5">Tồn kho</label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={item.stock}
+                                onChange={(e) => handleUpdateShopeeItem(item.id, { stock: e.target.value })}
+                                placeholder="20"
+                                className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2 py-1 text-white font-mono text-xs outline-none text-center"
+                              />
+                            </div>
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
-                ) : (
-                  <div className="p-3 border-2 border-dashed border-zinc-800 rounded-2xl text-center text-zinc-500 text-[11px]">
-                    Chưa có ảnh. Bạn bấm nút chụp ảnh hoặc chọn ảnh mẫu ở trên nhé!
-                  </div>
                 )}
-
-                {/* Dán link phụ */}
-                <div className="pt-1">
-                  <details className="text-xs text-zinc-500">
-                    <summary className="cursor-pointer hover:text-zinc-400 select-none">
-                      + Hoặc dán đường link ảnh web nếu có (Tùy chọn)
-                    </summary>
-                    <div className="mt-2 flex gap-2">
-                      <input
-                        type="url"
-                        placeholder="https://..."
-                        value={manualUrl}
-                        onChange={(e) => setManualUrl(e.target.value)}
-                        className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-white text-xs font-mono focus:outline-none focus:border-blue-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddManualUrl}
-                        className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-xl text-xs transition"
-                      >
-                        Thêm link
-                      </button>
-                    </div>
-                  </details>
-                </div>
               </div>
 
               {/* Mô tả chi tiết */}
