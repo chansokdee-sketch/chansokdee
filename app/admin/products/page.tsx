@@ -865,6 +865,28 @@ export default function AdminProductsPage() {
     }
   };
 
+  const handleDeleteAll = async () => {
+    const confirmation = window.prompt(
+      `CẢNH BÁO: Bạn có chắc chắn muốn XÓA HẾT TẤT CẢ ${products.length} sản phẩm hiện tại không?\n\nThao tác này sẽ xóa sạch toàn bộ hàng hóa để bạn thêm mới từ đầu!\n\nNhập "XOA" để xác nhận:`
+    );
+    if (!confirmation || (confirmation.trim().toUpperCase() !== 'XOA' && confirmation.trim().toUpperCase() !== 'DELETE')) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/admin/products', { method: 'DELETE' });
+      if (res.ok) {
+        setProducts([]);
+        alert('Đã xóa hết toàn bộ sản phẩm hiện tại thành công!');
+      } else {
+        alert('Không thể xóa toàn bộ sản phẩm');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Lỗi kết nối khi xóa sản phẩm');
+    }
+  };
+
   const handleToggleStatus = async (p: Product) => {
     const nextStatus = p.status === 'ACTIVE' ? 'HIDDEN' : 'ACTIVE';
     try {
@@ -1068,6 +1090,16 @@ export default function AdminProductsPage() {
             <Plus className="w-4 h-4 stroke-[3]" />
             <span>+ Thêm món mới (ເພີ່ມສິນຄ້າ)</span>
           </button>
+          {products.length > 0 && (
+            <button
+              onClick={handleDeleteAll}
+              className="px-4 py-3 bg-red-950/40 hover:bg-red-900/60 text-red-300 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-2 border border-red-800/60 active:scale-95 shadow-sm"
+              title="Xóa toàn bộ sản phẩm hiện tại"
+            >
+              <Trash2 className="w-4 h-4 text-red-400" />
+              <span>Xóa tất cả món ({products.length})</span>
+            </button>
+          )}
         </div>
       </div>
 

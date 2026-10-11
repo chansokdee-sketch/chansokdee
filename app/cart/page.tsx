@@ -267,6 +267,22 @@ export default function CartPage() {
               </div>
             </div>
 
+            {/* Thông báo quyền hủy đơn khi nhân viên chưa tiếp nhận */}
+            <div className="bg-amber-50/90 border border-amber-200/80 rounded-2xl p-3.5 text-xs text-amber-900 space-y-1">
+              <div className="flex items-center gap-2 font-bold text-amber-800">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                </span>
+                <span>{isLao ? 'ອໍເດີກຳລັງລໍຖ້າພະນັກງານຮັບ' : 'Đơn hàng đang chờ nhân viên tiếp nhận'}</span>
+              </div>
+              <p className="text-[11px] text-amber-700 leading-relaxed">
+                {isLao 
+                  ? 'ທ່ານສາມາດຍົກເລີກການສັ່ງຊື້ໄດ້ທຸກເວລາໃນໜ້າ "ລາຍການສັ່ງຊື້ຂອງຂ້ອຍ" ກ່ອນທີ່ພະນັກງານຈະຮັບອໍເດີ.'
+                  : 'Bạn có thể tự hủy đơn hàng trong mục "Đơn hàng của tôi" bất cứ lúc nào trước khi nhân viên tiếp nhận.'}
+              </p>
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Link
                 href="/orders"

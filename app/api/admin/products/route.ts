@@ -153,3 +153,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Không thể tạo sản phẩm mới.' }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const authRes = await requireStaffOrAdmin(req);
+    if ('error' in authRes) {
+      return NextResponse.json({ error: authRes.error }, { status: authRes.status });
+    }
+
+    db.products.deleteAll();
+
+    return NextResponse.json({
+      message: 'Đã xóa tất cả sản phẩm thành công!',
+    });
+  } catch (error) {
+    console.error('Admin delete all products error:', error);
+    return NextResponse.json({ error: 'Không thể xóa tất cả sản phẩm.' }, { status: 500 });
+  }
+}
+

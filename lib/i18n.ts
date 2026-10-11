@@ -147,6 +147,21 @@ export interface TranslationDictionary {
   orders_ship_to: string;
   orders_note: string;
   orders_total: string;
+  orders_cancel_btn: string;
+  orders_cancel_modal_title: string;
+  orders_cancel_modal_desc: string;
+  orders_cancel_reason_label: string;
+  orders_cancel_reason_1: string;
+  orders_cancel_reason_2: string;
+  orders_cancel_reason_3: string;
+  orders_cancel_reason_4: string;
+  orders_cancel_reason_other: string;
+  orders_cancel_confirm_btn: string;
+  orders_cancel_keep_btn: string;
+  orders_cancel_success: string;
+  orders_cancel_not_allowed: string;
+  orders_status_waiting_staff: string;
+  orders_status_staff_assigned: string;
   status_pending: string;
   status_confirmed: string;
   status_processing: string;
@@ -328,6 +343,21 @@ export const translations: Record<Language, TranslationDictionary> = {
     orders_ship_to: 'Giao tới:',
     orders_note: 'Ghi chú:',
     orders_total: 'Tổng thanh toán:',
+    orders_cancel_btn: 'Hủy đơn hàng',
+    orders_cancel_modal_title: 'Xác nhận hủy đơn hàng',
+    orders_cancel_modal_desc: 'Bạn chỉ có thể tự hủy đơn khi nhân viên chưa tiếp nhận đơn hàng. Sau khi hủy, đơn sẽ không được xử lý và số lượng sản phẩm sẽ được tự động hoàn lại kho.',
+    orders_cancel_reason_label: 'Chọn lý do hủy đơn (tùy chọn):',
+    orders_cancel_reason_1: 'Tôi muốn đổi địa chỉ hoặc số điện thoại nhận hàng',
+    orders_cancel_reason_2: 'Tôi muốn đổi sản phẩm / phân loại / số lượng khác',
+    orders_cancel_reason_3: 'Tôi đổi ý, không có nhu cầu mua nữa',
+    orders_cancel_reason_4: 'Đặt trùng đơn hàng',
+    orders_cancel_reason_other: 'Lý do khác...',
+    orders_cancel_confirm_btn: 'Xác nhận hủy đơn',
+    orders_cancel_keep_btn: 'Không, giữ lại đơn',
+    orders_cancel_success: 'Đã hủy đơn hàng thành công!',
+    orders_cancel_not_allowed: 'Đơn hàng đã được nhân viên tiếp nhận và xử lý, không thể tự hủy.',
+    orders_status_waiting_staff: 'Chờ tiếp nhận (Có thể hủy)',
+    orders_status_staff_assigned: 'Nhân viên đã tiếp nhận',
     status_pending: 'Chờ xác nhận',
     status_confirmed: 'Đã xác nhận',
     status_processing: 'Đang xử lý',
@@ -508,6 +538,21 @@ export const translations: Record<Language, TranslationDictionary> = {
     orders_ship_to: 'ຈັດສົ່ງຫາ:',
     orders_note: 'ໝາຍເຫດ:',
     orders_total: 'ຍອດຊຳລະທັງໝົດ:',
+    orders_cancel_btn: 'ຍົກເລີກການສັ່ງຊື້',
+    orders_cancel_modal_title: 'ຢືນຢັນການຍົກເລີກການສັ່ງຊື້',
+    orders_cancel_modal_desc: 'ທ່ານສາມາດຍົກເລີກໄດ້ສະເພາະຕອນທີ່ພະນັກງານຍັງບໍ່ທັນຮັບອໍເດີ. ຫຼັງຈາກຍົກເລີກ, ອໍເດີຈະຖືກຍົກເລີກ ແລະ ຄືນຈຳນວນເຂົ້າສາງ.',
+    orders_cancel_reason_label: 'ເລືອກເຫດຜົນການຍົກເລີກ (ບໍ່ບັງຄັບ):',
+    orders_cancel_reason_1: 'ຂ້ອຍຕ້ອງການປ່ຽນທີ່ຢູ່ ຫຼື ເບີໂທຮັບເຄື່ອງ',
+    orders_cancel_reason_2: 'ຂ້ອຍຕ້ອງການປ່ຽນສິນຄ້າ / ສີ / ຈຳນວນໃໝ່',
+    orders_cancel_reason_3: 'ປ່ຽນໃຈ, ບໍ່ຕ້ອງການຊື້ແລ້ວ',
+    orders_cancel_reason_4: 'ສັ່ງຊື້ຊໍ້າກັນ',
+    orders_cancel_reason_other: 'ເຫດຜົນອື່ນໆ...',
+    orders_cancel_confirm_btn: 'ຢືນຢັນຍົກເລີກອໍເດີ',
+    orders_cancel_keep_btn: 'ບໍ່, ຮັກສາອໍເດີໄວ້',
+    orders_cancel_success: 'ຍົກເລີກການສັ່ງຊື້ສຳເລັດແລ້ວ!',
+    orders_cancel_not_allowed: 'ພະນັກງານໄດ້ຮັບອໍເດີແລ້ວ, ບໍ່ສາມາດຍົກເລີກເອງໄດ້.',
+    orders_status_waiting_staff: 'ລໍຖ້າພະນັກງານຮັບອໍເດີ (ສາມາດຍົກເລີກໄດ້)',
+    orders_status_staff_assigned: 'ພະນັກງານຮັບອໍເດີແລ້ວ',
     status_pending: 'ລໍຖ້າການຢືນຢັນ',
     status_confirmed: 'ຢືນຢັນແລ້ວ',
     status_processing: 'ກຳລັງດຳເນີນການ',

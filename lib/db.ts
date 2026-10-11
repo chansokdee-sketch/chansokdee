@@ -659,6 +659,12 @@ export const db = {
       }
       return false;
     },
+    deleteAll: (): boolean => {
+      const data = readData();
+      data.products = [];
+      writeData(data);
+      return true;
+    },
   },
 
   // ORDER OPERATIONS
