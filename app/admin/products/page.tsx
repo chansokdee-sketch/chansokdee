@@ -28,7 +28,8 @@ import {
   CheckSquare,
   Square,
   Layers,
-  Scale
+  Scale,
+  Zap
 } from 'lucide-react';
 
 // Kho ảnh mẫu mỹ phẩm cao cấp có sẵn (1 chạm để thêm ảnh nhanh)
@@ -240,6 +241,26 @@ export default function AdminProductsPage() {
   const [modalError, setModalError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showPresets, setShowPresets] = useState(false);
+
+  // Quick Inline Price Editing
+  const [editingPrice, setEditingPrice] = useState<{
+    productId: string;
+    field: 'price' | 'wholesalePrice';
+    priceLAK: string;
+    priceTHB: string;
+  } | null>(null);
+  const [quickSavingId, setQuickSavingId] = useState<string | null>(null);
+  const [quickPriceToast, setQuickPriceToast] = useState<string | null>(null);
+
+  // Quick Modal Sửa 2 Bảng Giá
+  const [quickModalProduct, setQuickModalProduct] = useState<Product | null>(null);
+  const [quickModalForm, setQuickModalForm] = useState({
+    price: '',
+    priceTHB: '',
+    wholesalePrice: '',
+    wholesalePriceTHB: '',
+  });
+  const [quickModalSaving, setQuickModalSaving] = useState(false);
 
   // Quick inline category creator
   const [showInlineCatModal, setShowInlineCatModal] = useState(false);
@@ -666,6 +687,140 @@ export default function AdminProductsPage() {
     return new Intl.NumberFormat('lo-LA').format(price) + ' ₭';
   };
 
+  const formatPriceTHB = (price: number) => {
+    return new Intl.NumberFormat('th-TH').format(price) + ' ฿';
+  };
+
+  const startInlineEdit = (p: Product, field: 'price' | 'wholesalePrice') => {
+    if (field === 'price') {
+      setEditingPrice({
+        productId: p.id,
+        field: 'price',
+        priceLAK: p.price.toString(),
+        priceTHB: p.priceTHB ? p.priceTHB.toString() : '',
+      });
+    } else {
+      const wholesale = p.wholesalePrice !== undefined && p.wholesalePrice > 0 
+        ? p.wholesalePrice 
+        : Math.round(p.price * 0.8);
+      setEditingPrice({
+        productId: p.id,
+        field: 'wholesalePrice',
+        priceLAK: wholesale.toString(),
+        priceTHB: p.wholesalePriceTHB ? p.wholesalePriceTHB.toString() : '',
+      });
+    }
+  };
+
+  const cancelInlineEdit = () => {
+    setEditingPrice(null);
+  };
+
+  const handleSaveInline = async (productId: string) => {
+    if (!editingPrice || editingPrice.productId !== productId) return;
+
+    const { field, priceLAK, priceTHB } = editingPrice;
+    const numLAK = Number(priceLAK);
+    if (isNaN(numLAK) || numLAK < 0) {
+      alert('Vui lòng nhập giá hợp lệ');
+      return;
+    }
+
+    setQuickSavingId(productId);
+    try {
+      const payload: Record<string, any> = {};
+      if (field === 'price') {
+        payload.price = numLAK;
+        if (priceTHB.trim() !== '') {
+          payload.priceTHB = Number(priceTHB) > 0 ? Number(priceTHB) : null;
+        }
+      } else {
+        payload.wholesalePrice = numLAK;
+        if (priceTHB.trim() !== '') {
+          payload.wholesalePriceTHB = Number(priceTHB) > 0 ? Number(priceTHB) : null;
+        }
+      }
+
+      const res = await fetch(`/api/admin/products/${productId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Cập nhật giá thất bại');
+      } else {
+        setProducts(prev => prev.map(p => p.id === productId ? data.product : p));
+        setEditingPrice(null);
+        setQuickPriceToast(`Đã lưu ${field === 'price' ? 'Giá Bán Lẻ' : 'Giá Bán Sỉ'} mới thành công!`);
+        setTimeout(() => setQuickPriceToast(null), 3000);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Lỗi kết nối khi cập nhật giá');
+    } finally {
+      setQuickSavingId(null);
+    }
+  };
+
+  const openQuickModal = (p: Product) => {
+    const wholesale = p.wholesalePrice !== undefined && p.wholesalePrice > 0 
+      ? p.wholesalePrice 
+      : Math.round(p.price * 0.8);
+    setQuickModalProduct(p);
+    setQuickModalForm({
+      price: p.price.toString(),
+      priceTHB: p.priceTHB ? p.priceTHB.toString() : '',
+      wholesalePrice: wholesale.toString(),
+      wholesalePriceTHB: p.wholesalePriceTHB ? p.wholesalePriceTHB.toString() : '',
+    });
+  };
+
+  const handleSaveQuickModal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickModalProduct) return;
+
+    const retailLAK = Number(quickModalForm.price);
+    const wholesaleLAK = Number(quickModalForm.wholesalePrice);
+
+    if (isNaN(retailLAK) || retailLAK <= 0) {
+      alert('Vui lòng nhập giá bán lẻ hợp lệ');
+      return;
+    }
+
+    setQuickModalSaving(true);
+    try {
+      const payload: Record<string, any> = {
+        price: retailLAK,
+        wholesalePrice: !isNaN(wholesaleLAK) && wholesaleLAK > 0 ? wholesaleLAK : Math.round(retailLAK * 0.8),
+        priceTHB: quickModalForm.priceTHB && Number(quickModalForm.priceTHB) > 0 ? Number(quickModalForm.priceTHB) : null,
+        wholesalePriceTHB: quickModalForm.wholesalePriceTHB && Number(quickModalForm.wholesalePriceTHB) > 0 ? Number(quickModalForm.wholesalePriceTHB) : null,
+      };
+
+      const res = await fetch(`/api/admin/products/${quickModalProduct.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Cập nhật giá thất bại');
+      } else {
+        setProducts(prev => prev.map(p => p.id === quickModalProduct.id ? data.product : p));
+        setQuickModalProduct(null);
+        setQuickPriceToast(`Đã cập nhật bảng giá cho "${quickModalProduct.name}"!`);
+        setTimeout(() => setQuickPriceToast(null), 3000);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Lỗi kết nối khi cập nhật giá');
+    } finally {
+      setQuickModalSaving(false);
+    }
+  };
+
   const filteredProducts = products.filter(p => {
     const q = search.toLowerCase();
     const matchSearch = 
@@ -679,6 +834,14 @@ export default function AdminProductsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Toast thông báo sửa giá thành công */}
+      {quickPriceToast && (
+        <div className="fixed top-5 right-5 z-50 bg-emerald-600 text-white px-4 py-2.5 rounded-2xl shadow-2xl border border-emerald-400 flex items-center gap-2 text-xs font-bold animate-in slide-in-from-top duration-200">
+          <Check className="w-4 h-4 stroke-[3]" />
+          <span>{quickPriceToast}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -795,26 +958,50 @@ export default function AdminProductsPage() {
                   </div>
                 </div>
 
-                {/* 2 Bảng Giá: Giá Lẻ & Giá Sỉ */}
+                {/* 2 Bảng Giá: Giá Lẻ & Giá Sỉ (Bấm để sửa nhanh) */}
                 <div className="grid grid-cols-2 gap-2 p-2.5 bg-zinc-950/70 rounded-xl border border-zinc-800/80">
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] text-zinc-400 flex items-center gap-1">
-                      <Tag className="w-3 h-3 text-emerald-400" />
-                      <span>Giá lẻ (ຍ່ອຍ)</span>
+                  <div 
+                    onClick={() => openQuickModal(p)}
+                    className="space-y-0.5 cursor-pointer hover:bg-zinc-900/80 p-1 -m-1 rounded-lg transition active:scale-98"
+                    title="Bấm để sửa nhanh Giá Lẻ"
+                  >
+                    <span className="text-[10px] text-zinc-400 flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <Tag className="w-3 h-3 text-emerald-400" />
+                        <span>Giá lẻ (ຍ່ອຍ)</span>
+                      </span>
+                      <Edit3 className="w-2.5 h-2.5 text-emerald-400" />
                     </span>
                     <div className="font-bold text-emerald-400 text-xs font-mono">
                       {formatPriceLAK(p.price)}
                     </div>
+                    {p.priceTHB && p.priceTHB > 0 && (
+                      <div className="text-[10px] font-mono text-amber-300 font-bold">
+                        {formatPriceTHB(p.priceTHB)}
+                      </div>
+                    )}
                   </div>
 
-                  <div className="space-y-0.5 border-l border-zinc-800 pl-2">
-                    <span className="text-[10px] text-amber-400 font-bold flex items-center gap-1">
-                      <Boxes className="w-3 h-3 text-amber-400" />
-                      <span>Giá sỉ ⚡ (ສົ່ງ)</span>
+                  <div 
+                    onClick={() => openQuickModal(p)}
+                    className="space-y-0.5 border-l border-zinc-800 pl-2 cursor-pointer hover:bg-zinc-900/80 p-1 -m-1 rounded-lg transition active:scale-98"
+                    title="Bấm để sửa nhanh Giá Sỉ"
+                  >
+                    <span className="text-[10px] text-amber-400 font-bold flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <Boxes className="w-3 h-3 text-amber-400" />
+                        <span>Giá sỉ ⚡ (ສົ່ງ)</span>
+                      </span>
+                      <Edit3 className="w-2.5 h-2.5 text-amber-400" />
                     </span>
                     <div className="font-bold text-amber-400 text-xs font-mono">
                       {formatPriceLAK(wholesalePrice)}
                     </div>
+                    {p.wholesalePriceTHB && p.wholesalePriceTHB > 0 && (
+                      <div className="text-[10px] font-mono text-amber-300 font-bold">
+                        {formatPriceTHB(p.wholesalePriceTHB)}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -838,6 +1025,14 @@ export default function AdminProductsPage() {
                   </div>
 
                   <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => openQuickModal(p)}
+                      className="px-2 py-1.5 bg-amber-500/15 hover:bg-amber-500 text-amber-300 hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-1 active:scale-95 border border-amber-500/30"
+                      title="Sửa nhanh 2 bảng giá"
+                    >
+                      <Zap className="w-3 h-3 text-amber-400" />
+                      <span>Sửa giá</span>
+                    </button>
                     <button
                       onClick={() => openEditModal(p)}
                       className="px-2.5 py-1.5 bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white rounded-xl text-xs font-semibold transition flex items-center gap-1 active:scale-95"
@@ -872,12 +1067,14 @@ export default function AdminProductsPage() {
                   <div className="flex items-center gap-1">
                     <Tag className="w-3 h-3" />
                     <span>Giá bán lẻ (ຍ່ອຍ)</span>
+                    <span className="text-[9px] text-emerald-500/70 font-normal lowercase ml-0.5 hidden xl:inline">(click để sửa)</span>
                   </div>
                 </th>
                 <th className="py-4 px-4 font-semibold text-amber-400">
                   <div className="flex items-center gap-1">
                     <Boxes className="w-3 h-3" />
                     <span>Giá bán sỉ (ສົ່ງ)</span>
+                    <span className="text-[9px] text-amber-500/70 font-normal lowercase ml-0.5 hidden xl:inline">(click để sửa)</span>
                   </div>
                 </th>
                 <th className="py-4 px-4 font-semibold">Tồn kho</th>
@@ -931,16 +1128,197 @@ export default function AdminProductsPage() {
 
                     {/* Cột Giá Bán Lẻ */}
                     <td className="py-4 px-4">
-                      <div className="font-bold text-emerald-400 text-sm font-mono">{formatPriceLAK(p.price)}</div>
-                      <span className="text-[10px] text-zinc-500">Khách lẻ / 1 cái</span>
+                      {editingPrice?.productId === p.id && editingPrice?.field === 'price' ? (
+                        <div className="p-2.5 bg-zinc-950 rounded-xl border border-emerald-500 shadow-xl space-y-2 min-w-[175px] z-20 animate-in zoom-in-95">
+                          <div className="flex items-center justify-between text-[10px] font-bold text-emerald-400">
+                            <span>Sửa Giá Lẻ</span>
+                            <span className="text-zinc-500 text-[9px]">Enter để lưu</span>
+                          </div>
+                          <div>
+                            <label className="text-[9px] text-zinc-400 block mb-0.5">Tiền Kíp (₭) *</label>
+                            <div className="relative">
+                              <input
+                                type="number"
+                                autoFocus
+                                min="0"
+                                value={editingPrice.priceLAK}
+                                onChange={(e) => setEditingPrice({ ...editingPrice, priceLAK: e.target.value })}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleSaveInline(p.id);
+                                  if (e.key === 'Escape') cancelInlineEdit();
+                                }}
+                                placeholder="Giá Kíp"
+                                className="w-full bg-zinc-900 border border-emerald-500/60 rounded-lg pl-2 pr-5 py-1 text-emerald-300 font-mono text-xs font-bold outline-none focus:ring-1 focus:ring-emerald-400"
+                              />
+                              <span className="absolute right-1.5 top-1 text-emerald-500 text-xs font-bold">₭</span>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[9px] text-zinc-400 block mb-0.5">Tiền Baht (฿)</label>
+                            <div className="relative">
+                              <input
+                                type="number"
+                                min="0"
+                                value={editingPrice.priceTHB}
+                                onChange={(e) => setEditingPrice({ ...editingPrice, priceTHB: e.target.value })}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleSaveInline(p.id);
+                                  if (e.key === 'Escape') cancelInlineEdit();
+                                }}
+                                placeholder="Baht (nếu có)"
+                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg pl-2 pr-5 py-1 text-amber-300 font-mono text-[11px] outline-none focus:border-amber-500"
+                              />
+                              <span className="absolute right-1.5 top-1 text-amber-500 text-xs font-bold">฿</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 pt-1">
+                            <button
+                              type="button"
+                              onClick={() => handleSaveInline(p.id)}
+                              disabled={quickSavingId === p.id}
+                              className="flex-1 py-1 px-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 shadow-sm transition active:scale-95"
+                            >
+                              {quickSavingId === p.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3 stroke-[3]" />}
+                              <span>Lưu</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={cancelInlineEdit}
+                              className="py-1 px-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-[10px] font-semibold transition"
+                              title="Hủy (Esc)"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div 
+                          onClick={() => startInlineEdit(p, 'price')}
+                          className="cursor-pointer group/price p-2 -m-2 rounded-xl hover:bg-zinc-800/80 hover:ring-1 hover:ring-emerald-500/50 transition relative"
+                          title="Bấm để sửa nhanh Giá Bán Lẻ"
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-emerald-400 text-sm font-mono group-hover/price:underline decoration-emerald-500/50 underline-offset-2">
+                              {formatPriceLAK(p.price)}
+                            </span>
+                            <span className="text-[10px] text-emerald-400/80 opacity-0 group-hover/price:opacity-100 transition flex items-center gap-0.5 bg-emerald-500/10 px-1 py-0.2 rounded border border-emerald-500/20">
+                              <Edit3 className="w-2.5 h-2.5" />
+                              <span>Sửa</span>
+                            </span>
+                          </div>
+                          {p.priceTHB && p.priceTHB > 0 && (
+                            <div className="text-[11px] font-mono text-amber-300 font-bold">
+                              {formatPriceTHB(p.priceTHB)}
+                            </div>
+                          )}
+                          <span className="text-[10px] text-zinc-500 block">Khách lẻ / 1 cái</span>
+                        </div>
+                      )}
                     </td>
 
                     {/* Cột Giá Bán Sỉ */}
                     <td className="py-4 px-4">
-                      <div className="font-bold text-amber-400 text-sm font-mono">{formatPriceLAK(wholesalePrice)}</div>
-                      <span className="text-[10px] text-amber-300/80 bg-amber-500/10 px-1.5 py-0.2 rounded font-medium border border-amber-500/20 inline-block">
-                        Khách sỉ ⚡
-                      </span>
+                      {editingPrice?.productId === p.id && editingPrice?.field === 'wholesalePrice' ? (
+                        <div className="p-2.5 bg-zinc-950 rounded-xl border border-amber-500 shadow-xl space-y-2 min-w-[175px] z-20 animate-in zoom-in-95">
+                          <div className="flex items-center justify-between text-[10px] font-bold text-amber-400">
+                            <span>Sửa Giá Sỉ</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const retail = p.price;
+                                if (retail > 0) {
+                                  const sug = Math.round(retail * 0.8 / 1000) * 1000;
+                                  setEditingPrice({ ...editingPrice, priceLAK: sug.toString() });
+                                }
+                              }}
+                              className="text-[9px] text-amber-300 hover:underline flex items-center gap-0.5"
+                              title="Tự động tính 80% giá lẻ"
+                            >
+                              ⚡ Gợi ý -20%
+                            </button>
+                          </div>
+                          <div>
+                            <label className="text-[9px] text-zinc-400 block mb-0.5">Tiền Kíp Sỉ (₭)</label>
+                            <div className="relative">
+                              <input
+                                type="number"
+                                autoFocus
+                                min="0"
+                                value={editingPrice.priceLAK}
+                                onChange={(e) => setEditingPrice({ ...editingPrice, priceLAK: e.target.value })}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleSaveInline(p.id);
+                                  if (e.key === 'Escape') cancelInlineEdit();
+                                }}
+                                placeholder="Giá Sỉ Kíp"
+                                className="w-full bg-zinc-900 border border-amber-500/60 rounded-lg pl-2 pr-5 py-1 text-amber-300 font-mono text-xs font-bold outline-none focus:ring-1 focus:ring-amber-400"
+                              />
+                              <span className="absolute right-1.5 top-1 text-amber-500 text-xs font-bold">₭</span>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[9px] text-zinc-400 block mb-0.5">Tiền Baht Sỉ (฿)</label>
+                            <div className="relative">
+                              <input
+                                type="number"
+                                min="0"
+                                value={editingPrice.priceTHB}
+                                onChange={(e) => setEditingPrice({ ...editingPrice, priceTHB: e.target.value })}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleSaveInline(p.id);
+                                  if (e.key === 'Escape') cancelInlineEdit();
+                                }}
+                                placeholder="Baht sỉ (nếu có)"
+                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg pl-2 pr-5 py-1 text-amber-300 font-mono text-[11px] outline-none focus:border-amber-500"
+                              />
+                              <span className="absolute right-1.5 top-1 text-amber-500 text-xs font-bold">฿</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 pt-1">
+                            <button
+                              type="button"
+                              onClick={() => handleSaveInline(p.id)}
+                              disabled={quickSavingId === p.id}
+                              className="flex-1 py-1 px-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 shadow-sm transition active:scale-95"
+                            >
+                              {quickSavingId === p.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3 stroke-[3]" />}
+                              <span>Lưu</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={cancelInlineEdit}
+                              className="py-1 px-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-[10px] font-semibold transition"
+                              title="Hủy (Esc)"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div 
+                          onClick={() => startInlineEdit(p, 'wholesalePrice')}
+                          className="cursor-pointer group/price p-2 -m-2 rounded-xl hover:bg-zinc-800/80 hover:ring-1 hover:ring-amber-500/50 transition relative"
+                          title="Bấm để sửa nhanh Giá Bán Sỉ"
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-amber-400 text-sm font-mono group-hover/price:underline decoration-amber-500/50 underline-offset-2">
+                              {formatPriceLAK(wholesalePrice)}
+                            </span>
+                            <span className="text-[10px] text-amber-400/80 opacity-0 group-hover/price:opacity-100 transition flex items-center gap-0.5 bg-amber-500/10 px-1 py-0.2 rounded border border-amber-500/20">
+                              <Edit3 className="w-2.5 h-2.5" />
+                              <span>Sửa</span>
+                            </span>
+                          </div>
+                          {p.wholesalePriceTHB && p.wholesalePriceTHB > 0 && (
+                            <div className="text-[11px] font-mono text-amber-300 font-bold">
+                              {formatPriceTHB(p.wholesalePriceTHB)}
+                            </div>
+                          )}
+                          <span className="text-[10px] text-amber-300/80 bg-amber-500/10 px-1.5 py-0.2 rounded font-medium border border-amber-500/20 inline-block mt-0.5">
+                            Khách sỉ ⚡
+                          </span>
+                        </div>
+                      )}
                     </td>
 
                     <td className="py-4 px-4">
@@ -965,17 +1343,25 @@ export default function AdminProductsPage() {
                     </td>
 
                     <td className="py-4 px-6 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => openQuickModal(p)}
+                          className="px-2.5 py-1.5 bg-amber-500/15 hover:bg-amber-500 text-amber-300 hover:text-white border border-amber-500/30 rounded-xl text-xs font-bold transition flex items-center gap-1 active:scale-95"
+                          title="Sửa nhanh 2 bảng giá (Sỉ / Lẻ / Baht)"
+                        >
+                          <Zap className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Sửa giá</span>
+                        </button>
                         <button
                           onClick={() => openEditModal(p)}
-                          className="p-2 text-zinc-400 hover:text-blue-400 hover:bg-zinc-800 rounded-lg transition"
-                          title="Sửa thông tin món và 2 bảng giá"
+                          className="p-2 text-zinc-400 hover:text-blue-400 hover:bg-zinc-800 rounded-xl transition"
+                          title="Sửa thông tin chi tiết món"
                         >
                           <Edit3 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(p.id, p.name)}
-                          className="p-2 text-zinc-400 hover:text-red-400 hover:bg-zinc-800 rounded-lg transition"
+                          className="p-2 text-zinc-400 hover:text-red-400 hover:bg-zinc-800 rounded-xl transition"
                           title="Xóa sản phẩm"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -2166,6 +2552,159 @@ export default function AdminProductsPage() {
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-md shadow-blue-500/25 transition active:scale-95 disabled:opacity-50"
                 >
                   {inlineCatLoading ? 'Đang tạo...' : 'Tạo & Chọn Luôn'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL SỬA NHANH 2 BẢNG GIÁ (POPUP SIÊU TỐC) */}
+      {quickModalProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-xs" onClick={() => setQuickModalProduct(null)} />
+          
+          <div className="relative bg-zinc-900 border border-zinc-700 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl z-10 animate-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3.5 border-b border-zinc-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-black text-white">Sửa Nhanh Bảng Giá</h3>
+                  <p className="text-[11px] text-zinc-400 truncate max-w-[220px] sm:max-w-xs">{quickModalProduct.name}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setQuickModalProduct(null)}
+                className="p-1.5 text-zinc-400 hover:text-white rounded-full hover:bg-zinc-800 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveQuickModal} className="py-4 space-y-4 text-xs">
+              {/* Nhóm Giá Bán Lẻ */}
+              <div className="p-3.5 bg-zinc-950 rounded-2xl border border-emerald-500/30 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-emerald-400 flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5" />
+                    <span>Giá Bán Lẻ (Khách lẻ)</span>
+                  </label>
+                  <span className="text-[10px] text-zinc-500">Bắt buộc</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] text-zinc-400 block mb-1">Tiền Kíp (₭) *</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        required
+                        min="0"
+                        autoFocus
+                        value={quickModalForm.price}
+                        onChange={(e) => setQuickModalForm({ ...quickModalForm, price: e.target.value })}
+                        placeholder="Ví dụ: 59000"
+                        className="w-full bg-zinc-900 border border-zinc-700 focus:border-emerald-500 rounded-xl px-3 py-2 text-white font-mono font-bold outline-none"
+                      />
+                      <span className="absolute right-2.5 top-2 text-emerald-400 font-bold">₭</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-zinc-400 block mb-1">Tiền Baht (฿) (Tùy chọn)</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        value={quickModalForm.priceTHB}
+                        onChange={(e) => setQuickModalForm({ ...quickModalForm, priceTHB: e.target.value })}
+                        placeholder="Ví dụ: 95"
+                        className="w-full bg-zinc-900 border border-zinc-700 focus:border-amber-500 rounded-xl px-3 py-2 text-white font-mono outline-none"
+                      />
+                      <span className="absolute right-2.5 top-2 text-amber-400 font-bold">฿</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Nhóm Giá Bán Sỉ */}
+              <div className="p-3.5 bg-zinc-950 rounded-2xl border border-amber-500/30 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-amber-400 flex items-center gap-1.5">
+                    <Boxes className="w-3.5 h-3.5" />
+                    <span>Giá Bán Sỉ (Khách sỉ ⚡)</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const retail = Number(quickModalForm.price);
+                      if (retail > 0) {
+                        const sug = Math.round(retail * 0.8 / 1000) * 1000;
+                        setQuickModalForm(prev => ({ ...prev, wholesalePrice: sug.toString() }));
+                      }
+                    }}
+                    className="text-[10px] text-amber-300 font-bold hover:underline"
+                  >
+                    ⚡ Gợi ý sỉ -20%
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] text-zinc-400 block mb-1">Tiền Kíp Sỉ (₭)</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        value={quickModalForm.wholesalePrice}
+                        onChange={(e) => setQuickModalForm({ ...quickModalForm, wholesalePrice: e.target.value })}
+                        placeholder="Ví dụ: 52000"
+                        className="w-full bg-zinc-900 border border-zinc-700 focus:border-amber-500 rounded-xl px-3 py-2 text-white font-mono font-bold outline-none"
+                      />
+                      <span className="absolute right-2.5 top-2 text-amber-400 font-bold">₭</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-zinc-400 block mb-1">Tiền Baht Sỉ (฿)</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        value={quickModalForm.wholesalePriceTHB}
+                        onChange={(e) => setQuickModalForm({ ...quickModalForm, wholesalePriceTHB: e.target.value })}
+                        placeholder="Ví dụ: 80"
+                        className="w-full bg-zinc-900 border border-zinc-700 focus:border-amber-500 rounded-xl px-3 py-2 text-white font-mono outline-none"
+                      />
+                      <span className="absolute right-2.5 top-2 text-amber-400 font-bold">฿</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2.5 border-t border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setQuickModalProduct(null)}
+                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl font-bold transition"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={quickModalSaving}
+                  className="px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-bold transition flex items-center gap-2 shadow-lg active:scale-95 disabled:opacity-50"
+                >
+                  {quickModalSaving ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Đang lưu...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                      <span>Lưu Bảng Giá Ngay</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
