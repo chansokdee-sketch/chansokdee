@@ -431,61 +431,85 @@ function getInitialData(): DatabaseSchema {
   return { users, categories, products, orders, siteSettings };
 }
 
+let memoryDb: DatabaseSchema | null = null;
+
 function readData(): DatabaseSchema {
-  ensureDataDirectory();
-  if (!fs.existsSync(DB_FILE)) {
-    const initial = getInitialData();
-    writeData(initial);
-    return initial;
+  if (memoryDb) {
+    return memoryDb;
   }
 
+  ensureDataDirectory();
+  let parsed: DatabaseSchema | null = null;
+
   try {
-    const raw = fs.readFileSync(DB_FILE, 'utf-8');
-    const parsed: DatabaseSchema = JSON.parse(raw);
-    const defaultSettings = getInitialData().siteSettings!;
-    parsed.siteSettings = {
-      ...defaultSettings,
-      ...(parsed.siteSettings || {}),
-      thbRate: parsed.siteSettings?.thbRate || 650,
-    };
-    parsed.products = (parsed.products || []).map(p => ({
-      ...p,
-      wholesalePrice: p.wholesalePrice !== undefined ? p.wholesalePrice : Math.round(p.price * 0.8),
-      minWholesaleQty: p.minWholesaleQty || 3,
-    }));
-    parsed.users = (parsed.users || []).map(u => ({
-      ...u,
-      customerType: u.customerType || 'RETAIL',
-    }));
-    parsed.orders = (parsed.orders || []).map(o => {
-      const orderCurrency = o.currency || 'LAK';
-      const orderRate = o.exchangeRate || parsed.siteSettings?.thbRate || 650;
-      const orderLak = o.totalPriceLAK || (orderCurrency === 'THB' ? o.totalPrice * orderRate : o.totalPrice);
-      const orderThb = o.totalPriceTHB || (orderCurrency === 'THB' ? o.totalPrice : Math.round(orderLak / orderRate));
-      const paidTHB = o.paidTHB !== undefined ? o.paidTHB : (orderCurrency === 'THB' ? o.totalPrice : 0);
-      const paidLAK = o.paidLAK !== undefined ? o.paidLAK : (orderCurrency === 'LAK' ? o.totalPrice : 0);
-      return {
-        ...o,
-        currency: orderCurrency,
-        totalPriceLAK: orderLak,
-        totalPriceTHB: orderThb,
-        paidTHB,
-        paidLAK,
-        exchangeRate: orderRate,
-      };
-    });
-    return parsed;
+    if (fs.existsSync(DB_FILE)) {
+      const raw = fs.readFileSync(DB_FILE, 'utf-8');
+      parsed = JSON.parse(raw);
+    }
   } catch (error) {
-    console.error('Error reading db file, regenerating:', error);
-    const initial = getInitialData();
-    writeData(initial);
-    return initial;
+    console.warn('Could not read from DB_FILE, will try fallback:', error);
   }
+
+  if (!parsed) {
+    try {
+      // Bundled fallback for serverless / Cloudflare Workers
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const bundled = require('../data/store.json');
+      parsed = JSON.parse(JSON.stringify(bundled));
+    } catch {
+      parsed = getInitialData();
+    }
+  }
+
+  if (!parsed) {
+    parsed = getInitialData();
+  }
+
+  const defaultSettings = getInitialData().siteSettings!;
+  parsed.siteSettings = {
+    ...defaultSettings,
+    ...(parsed.siteSettings || {}),
+    thbRate: parsed.siteSettings?.thbRate || 650,
+  };
+  parsed.products = (parsed.products || []).map(p => ({
+    ...p,
+    wholesalePrice: p.wholesalePrice !== undefined ? p.wholesalePrice : Math.round(p.price * 0.8),
+    minWholesaleQty: p.minWholesaleQty || 3,
+  }));
+  parsed.users = (parsed.users || []).map(u => ({
+    ...u,
+    customerType: u.customerType || 'RETAIL',
+  }));
+  parsed.orders = (parsed.orders || []).map(o => {
+    const orderCurrency = o.currency || 'LAK';
+    const orderRate = o.exchangeRate || parsed?.siteSettings?.thbRate || 650;
+    const orderLak = o.totalPriceLAK || (orderCurrency === 'THB' ? o.totalPrice * orderRate : o.totalPrice);
+    const orderThb = o.totalPriceTHB || (orderCurrency === 'THB' ? o.totalPrice : Math.round(orderLak / orderRate));
+    const paidTHB = o.paidTHB !== undefined ? o.paidTHB : (orderCurrency === 'THB' ? o.totalPrice : 0);
+    const paidLAK = o.paidLAK !== undefined ? o.paidLAK : (orderCurrency === 'LAK' ? o.totalPrice : 0);
+    return {
+      ...o,
+      currency: orderCurrency,
+      totalPriceLAK: orderLak,
+      totalPriceTHB: orderThb,
+      paidTHB,
+      paidLAK,
+      exchangeRate: orderRate,
+    };
+  });
+
+  memoryDb = parsed;
+  return memoryDb;
 }
 
 function writeData(data: DatabaseSchema): void {
-  ensureDataDirectory();
-  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  memoryDb = data;
+  try {
+    ensureDataDirectory();
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (error) {
+    console.warn('Filesystem is read-only (Cloudflare Worker environment), keeping in memory:', error);
+  }
 }
 
 export const db = {
