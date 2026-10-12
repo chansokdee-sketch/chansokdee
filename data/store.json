@@ -230125,12 +230125,12 @@
       "minWholesaleQty": 3,
       "baseUnitName": "ຫລອດ",
       "baseUnitNameLao": "ຫລອດ",
-      "stock": 8,
+      "stock": 7,
       "categoryId": "cat-2",
       "status": "ACTIVE",
       "images": [],
       "createdAt": "2026-10-10T08:45:38.000Z",
-      "updatedAt": "2026-10-11T08:35:02.866Z"
+      "updatedAt": "2026-10-11T08:44:34.045Z"
     }
   ],
   "orders": [
@@ -230343,6 +230343,43 @@
       "updatedAt": "2026-10-11T05:25:55.870Z",
       "paidTHB": 2850,
       "paidLAK": 0
+    },
+    {
+      "id": "ord-1791708274045",
+      "orderCode": "ORD-20261011-7979",
+      "userId": "usr-wholesale-1",
+      "customerName": "Đại Lý Sỉ Vientiane",
+      "customerPhone": "0911223344",
+      "customerType": "WHOLESALE",
+      "shippingAddress": "Chợ Sáng Talat Sao, Vientiane",
+      "note": "",
+      "totalPrice": 142000,
+      "currency": "LAK",
+      "totalPriceLAK": 142000,
+      "totalPriceTHB": 218,
+      "paidTHB": 0,
+      "paidLAK": 142000,
+      "exchangeRate": 650,
+      "status": "PENDING",
+      "items": [
+        {
+          "id": "item-1791708274044-e349",
+          "orderId": "ord-1791708274045",
+          "productId": "prod-9737",
+          "productName": "ໂລຊັນ KA ເຄເອ ສີສົ້ມ 150g",
+          "productNameLao": "ໂລຊັນ KA ເຄເອ ສີສົ້ມ 150g",
+          "productImage": "",
+          "quantity": 1,
+          "price": 142000,
+          "priceTHB": 205,
+          "isWholesale": true,
+          "unit": "PIECE",
+          "unitName": "Cái",
+          "unitQuantity": 1
+        }
+      ],
+      "createdAt": "2026-10-11T08:44:34.045Z",
+      "updatedAt": "2026-10-11T08:44:34.045Z"
     }
   ],
   "siteSettings": {
