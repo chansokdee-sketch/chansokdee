@@ -169,6 +169,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     tier1Value?: string,
     tier2Value?: string
   ): number | null => {
+    // Khách mua lẻ không có giá Baht và chỉ được mua bằng tiền Kíp Lào (Bỏ lẻ Baht)
+    if (customerMode === 'RETAIL' || !hasFullPriceAccess) {
+      return null;
+    }
+
     const targetUnit = unit || 'PIECE';
     const variant = variantId && product.variants ? product.variants.find(v => v.id === variantId) : undefined;
     const tier1Opt = tier1Value && product.tier1Options ? product.tier1Options.find(o => o.name === tier1Value || o.id === tier1Value) : undefined;
@@ -181,18 +186,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } else if (targetUnit === 'CARTON') {
       if (product.cartonPriceTHB && product.cartonPriceTHB > 0) return product.cartonPriceTHB;
     } else {
-      // PIECE
+      // PIECE - CHỈ DÀNH CHO BÁN SỈ (BỎ LẺ BAHT)
       let baseTHB: number | null = null;
-      if (tier1Opt?.priceTHB && tier1Opt.priceTHB > 0) {
-        baseTHB = tier1Opt.priceTHB;
-      } else if (customerMode === 'WHOLESALE' && variant && variant.wholesalePriceTHB && variant.wholesalePriceTHB > 0) {
+      if (variant && variant.wholesalePriceTHB && variant.wholesalePriceTHB > 0) {
         baseTHB = variant.wholesalePriceTHB;
-      } else if (variant && variant.priceTHB && variant.priceTHB > 0) {
-        baseTHB = variant.priceTHB;
-      } else if (customerMode === 'WHOLESALE' && product.wholesalePriceTHB && product.wholesalePriceTHB > 0) {
+      } else if (product.wholesalePriceTHB && product.wholesalePriceTHB > 0) {
         baseTHB = product.wholesalePriceTHB;
-      } else if (product.priceTHB && product.priceTHB > 0) {
-        baseTHB = product.priceTHB;
+      } else if (tier1Opt?.priceTHB && tier1Opt.priceTHB > 0) {
+        baseTHB = tier1Opt.priceTHB;
       }
       if (baseTHB !== null && tier2Opt?.priceBonusTHB && tier2Opt.priceBonusTHB > 0) {
         baseTHB += tier2Opt.priceBonusTHB;
@@ -385,11 +386,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     return sum;
   }, 0);
 
-  // Kiểm tra giỏ hàng có món nào có giá Baht không
-  const hasTHBItems = cart.some(item => {
-    const thb = getItemPriceTHB(item.product, item.unit, item.variantId, item.tier1Value, item.tier2Value);
-    return thb !== null && thb > 0;
-  });
+  // Kiểm tra giỏ hàng có món nào có giá Baht không (Chỉ áp dụng cho Khách Sỉ)
+  const hasTHBItems = Boolean(
+    customerMode === 'WHOLESALE' &&
+    hasFullPriceAccess &&
+    cart.some(item => {
+      const thb = getItemPriceTHB(item.product, item.unit, item.variantId, item.tier1Value, item.tier2Value);
+      return thb !== null && thb > 0;
+    })
+  );
 
   // Kiểm tra giỏ hàng có món nào KHÔNG có giá Baht không
   const hasNonTHBItems = cart.some(item => {
@@ -397,11 +402,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     return thb === null || thb <= 0;
   });
 
-  // Có cả món trả bằng Baht và món tính thêm bằng Kíp
-  const isMixedPayment = hasTHBItems && hasNonTHBItems;
+  // Có cả món trả bằng Baht và món tính thêm bằng Kíp (chỉ khách sỉ)
+  const isMixedPayment = Boolean(customerMode === 'WHOLESALE' && hasFullPriceAccess && hasTHBItems && hasNonTHBItems);
 
-  // Cho phép thanh toán có Baht nếu trong giỏ có ít nhất 1 món có giá Baht (món không có sẽ tính thêm Kíp)
-  const canPayWithTHB = hasTHBItems;
+  // Cho phép thanh toán có Baht: Chỉ dành riêng cho Khách Sỉ và giỏ hàng có món tính bằng Baht
+  const canPayWithTHB = Boolean(customerMode === 'WHOLESALE' && hasFullPriceAccess && hasTHBItems);
 
   return (
     <CartContext.Provider

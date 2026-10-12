@@ -229284,11 +229284,16 @@
       "categoryId": "cat-4",
       "status": "ACTIVE",
       "images": [
-        "/uploads/phone-upload-1791778550817-sny73m.jpg",
-        "/uploads/phone-upload-1791778474204-p40gqt.jpg"
+        "/uploads/phone-upload-1791778550817-sny73m.jpg"
       ],
       "createdAt": "2026-10-07T07:37:25.000Z",
-      "updatedAt": "2026-10-12T04:15:50.991Z"
+      "updatedAt": "2026-10-12T05:03:49.960Z",
+      "hasPack": false,
+      "packQty": 6,
+      "hasBox": false,
+      "boxQty": 10,
+      "hasCarton": false,
+      "cartonQty": 50
     },
     {
       "id": "prod-9729",

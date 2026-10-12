@@ -24,14 +24,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Phân quyền thanh toán: Khách lẻ KHÔNG ĐƯỢC thanh toán Baht (bị ép 100% về tiền Kíp LAK)
+    const isWholesaleUser = Boolean(
+      user.role === 'ADMIN' ||
+      user.role === 'MANAGER' ||
+      user.role === 'STAFF' ||
+      user.customerType === 'WHOLESALE'
+    );
+    const finalCustomerType = (isWholesaleUser && customerType === 'WHOLESALE') ? 'WHOLESALE' : 'RETAIL';
+    const finalCurrency = (isWholesaleUser && (currency === 'THB' || currency === 'MIXED')) ? 'THB' : 'LAK';
+
     const result = db.orders.create({
       userId: user.id,
       customerName: customerName.trim(),
       customerPhone: customerPhone.trim(),
-      customerType: customerType === 'WHOLESALE' ? 'WHOLESALE' : 'RETAIL',
+      customerType: finalCustomerType,
       shippingAddress: shippingAddress.trim(),
       note: note?.trim() || '',
-      currency: (currency === 'THB' || currency === 'MIXED') ? 'THB' : 'LAK',
+      currency: finalCurrency,
       exchangeRate: typeof exchangeRate === 'number' && exchangeRate > 0 ? exchangeRate : undefined,
       items: items.map(i => ({
         productId: i.productId,

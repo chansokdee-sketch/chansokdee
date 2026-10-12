@@ -453,7 +453,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                     );
                   }
 
-                  // Khách lẻ & khách vãng lai: CHỈ XEM GIÁ LẺ (BỊ GIỚI HẠN)
+                  // Khách lẻ & khách vãng lai: CHỈ XEM GIÁ LẺ TIỀN KÍP (BỎ LẺ BAHT)
                   return (
                     <div className="space-y-2">
                       <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-200">
@@ -466,22 +466,6 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                         <div className="text-2xl sm:text-3xl font-black text-blue-700 font-mono">
                           {formatPrice(activeRetailPrice)}
                         </div>
-                        {activeRetailTHB ? (
-                          <div className="text-xs text-amber-900 font-bold mt-1.5 flex items-center gap-1.5">
-                            <span className="bg-amber-100 text-amber-950 px-2 py-0.5 rounded-lg border border-amber-300 font-mono">
-                              {formatTHB(activeRetailTHB)} ฿
-                            </span>
-                            <span className="text-[11px] text-zinc-500 font-normal">
-                              ({isLao ? 'ຮັບຊຳລະເງິນບາດ' : 'Có hỗ trợ thanh toán Baht'})
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="text-xs text-zinc-500 font-medium mt-1.5 flex items-center gap-1.5">
-                            <span className="bg-zinc-200/80 text-zinc-700 px-2.5 py-0.5 rounded-lg text-[11px]">
-                              🔒 Chỉ thanh toán bằng Tiền Kíp Lào (Không hỗ trợ Baht)
-                            </span>
-                          </div>
-                        )}
                       </div>
                       {!hasFullPriceAccess && (
                         <div className="p-2.5 bg-amber-50/80 border border-amber-200/80 rounded-xl flex items-center justify-between gap-2 text-xs">
@@ -575,7 +559,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                                       : (opt.price && opt.price > 0 ? opt.price : (matchedVar?.price && matchedVar.price > 0 ? matchedVar.price : product.price));
                                     const optPriceTHB = customerMode === 'WHOLESALE' && matchedVar?.wholesalePriceTHB && matchedVar.wholesalePriceTHB > 0
                                       ? matchedVar.wholesalePriceTHB
-                                      : (opt.priceTHB && opt.priceTHB > 0 ? opt.priceTHB : (matchedVar?.priceTHB && matchedVar.priceTHB > 0 ? matchedVar.priceTHB : null));
+                                      : (customerMode === 'WHOLESALE' && opt.priceTHB && opt.priceTHB > 0 ? opt.priceTHB : null);
 
                                     return (
                                       <button
@@ -701,7 +685,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                                 : (v.price && v.price > 0 ? v.price : product.price);
                               const vPriceTHB = customerMode === 'WHOLESALE' && v.wholesalePriceTHB && v.wholesalePriceTHB > 0
                                 ? v.wholesalePriceTHB
-                                : (v.priceTHB && v.priceTHB > 0 ? v.priceTHB : null);
+                                : null;
 
                               return (
                                 <button
@@ -810,7 +794,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                                 {formatPrice(baseUnitPrice)}
                               </p>
                               <span className="text-[9px] text-zinc-500 font-medium">
-                                {baseUnitPriceTHB ? `${formatTHB(baseUnitPriceTHB)} ฿` : 'Chỉ nhận Kíp'}
+                                {customerMode === 'WHOLESALE' && baseUnitPriceTHB ? `${formatTHB(baseUnitPriceTHB)} ฿` : ''}
                               </span>
                             </button>
 
@@ -835,7 +819,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                                   {formatPrice(packPrice)}
                                 </p>
                                 <span className="text-[9px] text-emerald-800 font-medium">
-                                  {product.packPriceTHB && product.packPriceTHB > 0 ? `${formatTHB(product.packPriceTHB)} ฿` : 'Chỉ nhận Kíp'}
+                                  {customerMode === 'WHOLESALE' && product.packPriceTHB && product.packPriceTHB > 0 ? `${formatTHB(product.packPriceTHB)} ฿` : ''}
                                 </span>
                               </button>
                             )}
@@ -861,7 +845,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                                   {formatPrice(boxPrice)}
                                 </p>
                                 <span className="text-[9px] text-purple-800 font-medium">
-                                  {product.boxPriceTHB && product.boxPriceTHB > 0 ? `${formatTHB(product.boxPriceTHB)} ฿` : 'Chỉ nhận Kíp'}
+                                  {customerMode === 'WHOLESALE' && product.boxPriceTHB && product.boxPriceTHB > 0 ? `${formatTHB(product.boxPriceTHB)} ฿` : ''}
                                 </span>
                               </button>
                             )}
@@ -887,7 +871,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                                   {formatPrice(cartonPrice)}
                                 </p>
                                 <span className="text-[9px] text-amber-800 font-bold block">
-                                  {product.cartonPriceTHB && product.cartonPriceTHB > 0 ? `${formatTHB(product.cartonPriceTHB)} ฿` : 'Chỉ nhận Kíp'}
+                                  {customerMode === 'WHOLESALE' && product.cartonPriceTHB && product.cartonPriceTHB > 0 ? `${formatTHB(product.cartonPriceTHB)} ฿` : ''}
                                   {product.cartonBoxQty ? ` (${cartonQty} ${product.baseUnitName || 'gói'})` : ''}
                                 </span>
                               </button>
@@ -976,7 +960,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                               <span className="text-base sm:text-lg font-black text-[#ee4d2d] font-mono block">
                                 {formatPrice(subtotal)}
                               </span>
-                              {subtotalTHB && (
+                              {customerMode === 'WHOLESALE' && subtotalTHB && (
                                 <span className="text-[11px] font-bold text-amber-700 font-mono block">
                                   ≈ {formatTHB(subtotalTHB)} ฿
                                 </span>

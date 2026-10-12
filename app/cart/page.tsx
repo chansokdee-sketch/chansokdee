@@ -45,7 +45,8 @@ export default function CartPage() {
     setCustomerMode,
     getItemPrice,
     getItemPriceTHB,
-    isItemWholesalePrice
+    isItemWholesalePrice,
+    hasFullPriceAccess
   } = useCart();
   const { user, setIsAuthModalOpen, setAuthModalMode } = useAuth();
   const { t, formatPrice, formatDualPrice, currency, isLao, thbRate } = useLanguage();
@@ -461,8 +462,9 @@ export default function CartPage() {
                                 /{unit === 'CARTON' ? (isLao ? 'ລັງ' : 'thùng') : unit === 'BOX' ? (isLao ? 'ກ່ອງ' : 'hộp') : unit === 'PACK' ? (isLao ? 'ແພັກ' : 'lốc') : (isLao ? (item.product.baseUnitNameLao || 'ອັນ') : (item.product.baseUnitName?.toLowerCase() || 'cái'))}
                               </span>
 
-                              {/* Huy hiệu hiển thị giá Baht hoặc chỉ nhận Kíp */}
+                              {/* Huy hiệu hiển thị giá Baht (chỉ cho khách sỉ có giá Baht) */}
                               {(() => {
+                                if (!isWholesale) return null;
                                 const itemTHB = getItemPriceTHB(item.product, unit, item.variantId, item.tier1Value, item.tier2Value);
                                 if (itemTHB && itemTHB > 0) {
                                   return (
@@ -471,11 +473,7 @@ export default function CartPage() {
                                     </span>
                                   );
                                 }
-                                return (
-                                  <span className="text-[10px] bg-zinc-100 text-zinc-600 px-1.5 py-0.2 rounded font-medium border border-zinc-200">
-                                    ₭ Chỉ nhận Kíp
-                                  </span>
-                                );
+                                return null;
                               })()}
 
                               {isWholesale && (
@@ -700,13 +698,15 @@ export default function CartPage() {
                           </div>
                         ) : (
                           <p className={`text-sm font-mono font-black mt-1.5 ${canPayWithTHB ? 'text-amber-700' : 'text-zinc-400'}`}>
-                            {canPayWithTHB ? `${formatTHB(totalPriceTHB)} ฿` : 'Chỉ nhận Kíp'}
+                            {canPayWithTHB ? `${formatTHB(totalPriceTHB)} ฿` : (customerMode === 'RETAIL' || !hasFullPriceAccess ? 'Chỉ dành cho Khách Sỉ' : 'Chỉ nhận Kíp')}
                           </p>
                         )}
 
                         <span className={`text-[10px] mt-0.5 ${canPayWithTHB ? (isMixedPayment ? 'text-purple-700 font-medium' : 'text-amber-800/80') : 'text-red-500 font-medium'}`}>
                           {!canPayWithTHB 
-                            ? (isLao ? 'ທຸກສິນຄ້າຮັບສະເພາະກີບ' : 'Giỏ chỉ nhận Tiền Kíp')
+                            ? (customerMode === 'RETAIL' || !hasFullPriceAccess
+                                ? (isLao ? 'ສະເພາະລູກຄ້າຂາຍສົ່ງ ⚡' : 'Chỉ áp dụng cho Khách Sỉ ⚡')
+                                : (isLao ? 'ທຸກສິນຄ້າຮັບສະເພາະກີບ' : 'Giỏ chỉ nhận Tiền Kíp'))
                             : isMixedPayment
                             ? (isLao ? 'ຈ່າຍບາດ ແລະ ຄິດໄລ່ກີບຕື່ມ' : 'Món thiếu Baht tính thêm Kíp')
                             : (isLao ? 'ຊຳລະດ້ວຍເງິນບາດໄທ' : 'Thanh toán 100% bằng Baht')}

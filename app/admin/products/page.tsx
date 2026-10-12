@@ -166,6 +166,7 @@ export default function AdminProductsPage() {
   const [shopeeItems, setShopeeItems] = useState<ShopeeItemVariant[]>([]);
   const [bulkPriceLAK, setBulkPriceLAK] = useState('');
   const [bulkPriceTHB, setBulkPriceTHB] = useState('');
+  const [bulkWholesaleTHB, setBulkWholesaleTHB] = useState('');
   const [bulkWholesaleLAK, setBulkWholesaleLAK] = useState('');
   const [bulkStock, setBulkStock] = useState('20');
   // Bật/tắt phân loại theo màu/mẫu (Mặc định tắt để thêm thông tin nhanh cho sản phẩm đơn)
@@ -249,12 +250,13 @@ export default function AdminProductsPage() {
 
   // Áp dụng giá nhanh cho toàn bộ danh sách món
   const handleApplyBulkPrices = () => {
-    if (!bulkPriceLAK && !bulkPriceTHB && !bulkWholesaleLAK && !bulkStock) return;
+    if (!bulkPriceLAK && !bulkWholesaleLAK && !bulkWholesaleTHB && !bulkStock) return;
     setShopeeItems(prev => prev.map(item => ({
       ...item,
       price: bulkPriceLAK || item.price,
-      priceTHB: bulkPriceTHB || item.priceTHB,
+      priceTHB: '',
       wholesalePrice: bulkWholesaleLAK || item.wholesalePrice,
+      wholesalePriceTHB: bulkWholesaleTHB || item.wholesalePriceTHB,
       stock: bulkStock || item.stock,
     })));
     setQuickPriceToast('⚡ Đã áp dụng giá và tồn kho cho toàn bộ danh sách món!');
@@ -786,8 +788,7 @@ export default function AdminProductsPage() {
         return;
       }
 
-      const firstPriceTHBNum = Number(validItems[0].priceTHB);
-      priceTHB = firstPriceTHBNum > 0 ? firstPriceTHBNum : (formData.priceTHB && Number(formData.priceTHB) > 0 ? Number(formData.priceTHB) : undefined);
+      priceTHB = undefined; // Bỏ lẻ Baht: Khách lẻ chỉ mua Kíp
 
       const firstWholesaleNum = Number(validItems[0].wholesalePrice);
       wholesalePrice = firstWholesaleNum > 0 ? firstWholesaleNum : (formData.wholesalePrice && Number(formData.wholesalePrice) > 0 ? Number(formData.wholesalePrice) : Math.round(retailPrice * 0.8));
@@ -800,7 +801,7 @@ export default function AdminProductsPage() {
         name: String(it.name || '').trim() || `Phân loại ${idx + 1}`,
         image: String(it.image || '').trim() || undefined,
         price: it.price && Number(it.price) > 0 ? Number(it.price) : retailPrice,
-        priceTHB: it.priceTHB && Number(it.priceTHB) > 0 ? Number(it.priceTHB) : priceTHB,
+        priceTHB: undefined,
         wholesalePrice: it.wholesalePrice && Number(it.wholesalePrice) > 0 ? Number(it.wholesalePrice) : wholesalePrice,
         wholesalePriceTHB: it.wholesalePriceTHB && Number(it.wholesalePriceTHB) > 0 ? Number(it.wholesalePriceTHB) : wholesalePriceTHB,
         stock: Number(it.stock) || 0,
@@ -811,7 +812,7 @@ export default function AdminProductsPage() {
         name: String(it.name || '').trim() || `Phân loại ${idx + 1}`,
         image: String(it.image || '').trim() || undefined,
         price: it.price && Number(it.price) > 0 ? Number(it.price) : retailPrice,
-        priceTHB: it.priceTHB && Number(it.priceTHB) > 0 ? Number(it.priceTHB) : priceTHB,
+        priceTHB: undefined,
       }));
 
       const itemImages = validItems.map(it => String(it.image || '').trim()).filter(Boolean);
@@ -827,7 +828,7 @@ export default function AdminProductsPage() {
         setModalError('Vui lòng nhập giá bán lẻ tiền Kíp (₭)!');
         return;
       }
-      priceTHB = formData.priceTHB && Number(formData.priceTHB) > 0 ? Number(formData.priceTHB) : undefined;
+      priceTHB = undefined; // Bỏ lẻ Baht
       wholesalePrice = formData.wholesalePrice && Number(formData.wholesalePrice) > 0 
         ? Number(formData.wholesalePrice) 
         : Math.round(retailPrice * 0.8);
@@ -1086,7 +1087,7 @@ export default function AdminProductsPage() {
       const payload: Record<string, any> = {
         price: retailLAK,
         wholesalePrice: !isNaN(wholesaleLAK) && wholesaleLAK > 0 ? wholesaleLAK : Math.round(retailLAK * 0.8),
-        priceTHB: quickModalForm.priceTHB && Number(quickModalForm.priceTHB) > 0 ? Number(quickModalForm.priceTHB) : null,
+        priceTHB: null,
         wholesalePriceTHB: quickModalForm.wholesalePriceTHB && Number(quickModalForm.wholesalePriceTHB) > 0 ? Number(quickModalForm.wholesalePriceTHB) : null,
         ...(isBossOrManager && {
           costPrice: quickModalForm.costPrice && Number(quickModalForm.costPrice) > 0 ? Number(quickModalForm.costPrice) : null,
@@ -2091,7 +2092,7 @@ export default function AdminProductsPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {/* Giá lẻ Kíp */}
                   <div>
                     <label className="block text-emerald-400 font-bold mb-1">
@@ -2106,22 +2107,6 @@ export default function AdminProductsPage() {
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                       placeholder="Ví dụ: 85000"
                       className="w-full bg-zinc-900 border border-emerald-500/50 rounded-xl px-3.5 py-2 text-emerald-300 font-mono font-bold focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-
-                  {/* Giá lẻ Baht */}
-                  <div>
-                    <label className="block text-amber-400 font-bold mb-1">
-                      Giá Bán Lẻ Tiền Baht (฿) (Tùy chọn)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="any"
-                      value={formData.priceTHB}
-                      onChange={(e) => setFormData({ ...formData, priceTHB: e.target.value })}
-                      placeholder="Ví dụ: 120 (để trống nếu không nhận Baht)"
-                      className="w-full bg-zinc-900 border border-amber-500/40 rounded-xl px-3.5 py-2 text-amber-300 font-mono font-bold focus:outline-none focus:border-amber-500"
                     />
                   </div>
 
@@ -2859,9 +2844,9 @@ export default function AdminProductsPage() {
                         type="number"
                         step="any"
                         min="0"
-                        value={bulkPriceTHB}
-                        onChange={(e) => setBulkPriceTHB(e.target.value)}
-                        placeholder="Giá lẻ Baht (฿)"
+                        value={bulkWholesaleTHB}
+                        onChange={(e) => setBulkWholesaleTHB(e.target.value)}
+                        placeholder="Giá sỉ Baht (฿)"
                         className="w-full bg-zinc-950 border border-zinc-700 focus:border-amber-500 rounded-lg px-2.5 py-1.5 text-xs text-amber-300 font-mono font-bold outline-none"
                       />
                     </div>
@@ -2971,8 +2956,8 @@ export default function AdminProductsPage() {
                             <th className="py-2.5 px-3 w-28">Ảnh đại diện</th>
                             <th className="py-2.5 px-3">Tên món / màu / loại *</th>
                             <th className="py-2.5 px-3 text-emerald-400 w-36">Giá lẻ Kíp (₭) *</th>
-                            <th className="py-2.5 px-3 text-amber-400 w-28">Giá lẻ Baht (฿)</th>
                             <th className="py-2.5 px-3 text-amber-400 w-32">Giá sỉ Kíp (₭)</th>
+                            <th className="py-2.5 px-3 text-amber-400 w-32">Giá sỉ Baht (฿)</th>
                             <th className="py-2.5 px-3 w-20">Kho</th>
                             <th className="py-2.5 px-3 text-center w-20">Thao tác</th>
                           </tr>
@@ -3055,19 +3040,6 @@ export default function AdminProductsPage() {
                                 />
                               </td>
 
-                              {/* Giá lẻ Baht */}
-                              <td className="py-2.5 px-3">
-                                <input
-                                  type="number"
-                                  step="any"
-                                  min="0"
-                                  value={item.priceTHB}
-                                  onChange={(e) => handleUpdateShopeeItem(item.id, { priceTHB: e.target.value })}
-                                  placeholder="Baht ฿"
-                                  className="w-full bg-zinc-900 border border-amber-500/30 focus:border-amber-500 rounded-lg px-2 py-1.5 text-amber-300 font-mono text-xs outline-none"
-                                />
-                              </td>
-
                               {/* Giá sỉ Kíp */}
                               <td className="py-2.5 px-3">
                                 <div className="flex items-center gap-1">
@@ -3095,6 +3067,19 @@ export default function AdminProductsPage() {
                                     </button>
                                   )}
                                 </div>
+                              </td>
+
+                              {/* Giá sỉ Baht */}
+                              <td className="py-2.5 px-3">
+                                <input
+                                  type="number"
+                                  step="any"
+                                  min="0"
+                                  value={item.wholesalePriceTHB}
+                                  onChange={(e) => handleUpdateShopeeItem(item.id, { wholesalePriceTHB: e.target.value })}
+                                  placeholder="Sỉ Baht ฿"
+                                  className="w-full bg-zinc-900 border border-amber-500/30 focus:border-amber-500 rounded-lg px-2 py-1.5 text-amber-300 font-mono text-xs outline-none"
+                                />
                               </td>
 
                               {/* Tồn kho */}
@@ -3210,15 +3195,14 @@ export default function AdminProductsPage() {
                               />
                             </div>
                             <div>
-                              <label className="text-[10px] text-amber-400 block mb-0.5 font-bold">Giá lẻ Baht (฿)</label>
+                              <label className="text-[10px] text-zinc-400 block mb-0.5 font-bold">Tồn kho</label>
                               <input
                                 type="number"
-                                step="any"
                                 min="0"
-                                value={item.priceTHB}
-                                onChange={(e) => handleUpdateShopeeItem(item.id, { priceTHB: e.target.value })}
-                                placeholder="฿ Baht"
-                                className="w-full bg-zinc-950 border border-amber-500/30 rounded-lg px-2 py-1 text-amber-300 font-mono text-xs outline-none"
+                                value={item.stock}
+                                onChange={(e) => handleUpdateShopeeItem(item.id, { stock: e.target.value })}
+                                placeholder="20"
+                                className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2 py-1 text-white font-mono text-xs outline-none text-center"
                               />
                             </div>
                           </div>
@@ -3237,14 +3221,15 @@ export default function AdminProductsPage() {
                               />
                             </div>
                             <div>
-                              <label className="text-[10px] text-zinc-400 block mb-0.5">Tồn kho</label>
+                              <label className="text-[10px] text-amber-400 block mb-0.5">Giá sỉ Baht (฿)</label>
                               <input
                                 type="number"
+                                step="any"
                                 min="0"
-                                value={item.stock}
-                                onChange={(e) => handleUpdateShopeeItem(item.id, { stock: e.target.value })}
-                                placeholder="20"
-                                className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2 py-1 text-white font-mono text-xs outline-none text-center"
+                                value={item.wholesalePriceTHB}
+                                onChange={(e) => handleUpdateShopeeItem(item.id, { wholesalePriceTHB: e.target.value })}
+                                placeholder="฿ Baht sỉ"
+                                className="w-full bg-zinc-950 border border-amber-500/30 rounded-lg px-2 py-1 text-amber-300 font-mono text-xs outline-none"
                               />
                             </div>
                           </div>
@@ -3421,38 +3406,21 @@ export default function AdminProductsPage() {
                   </label>
                   <span className="text-[10px] text-zinc-500">Bắt buộc</span>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-[10px] text-zinc-400 block mb-1">Tiền Kíp (₭) *</label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        step="any"
-                        required
-                        min="0"
-                        autoFocus
-                        value={quickModalForm.price}
-                        onChange={(e) => setQuickModalForm({ ...quickModalForm, price: e.target.value })}
-                        placeholder="Ví dụ: 59000"
-                        className="w-full bg-zinc-900 border border-zinc-700 focus:border-emerald-500 rounded-xl px-3 py-2 text-white font-mono font-bold outline-none"
-                      />
-                      <span className="absolute right-2.5 top-2 text-emerald-400 font-bold">₭</span>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-zinc-400 block mb-1">Tiền Baht (฿) (Tùy chọn)</label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        step="any"
-                        min="0"
-                        value={quickModalForm.priceTHB}
-                        onChange={(e) => setQuickModalForm({ ...quickModalForm, priceTHB: e.target.value })}
-                        placeholder="Ví dụ: 95"
-                        className="w-full bg-zinc-900 border border-zinc-700 focus:border-amber-500 rounded-xl px-3 py-2 text-white font-mono outline-none"
-                      />
-                      <span className="absolute right-2.5 top-2 text-amber-400 font-bold">฿</span>
-                    </div>
+                <div>
+                  <label className="text-[10px] text-zinc-400 block mb-1">Tiền Kíp Bán Lẻ (₭) *</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="any"
+                      required
+                      min="0"
+                      autoFocus
+                      value={quickModalForm.price}
+                      onChange={(e) => setQuickModalForm({ ...quickModalForm, price: e.target.value })}
+                      placeholder="Ví dụ: 59000"
+                      className="w-full bg-zinc-900 border border-zinc-700 focus:border-emerald-500 rounded-xl px-3 py-2 text-white font-mono font-bold outline-none"
+                    />
+                    <span className="absolute right-2.5 top-2 text-emerald-400 font-bold">₭</span>
                   </div>
                 </div>
               </div>

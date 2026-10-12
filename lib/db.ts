@@ -774,7 +774,7 @@ export const db = {
       let calculatedTotalPrice = 0;
       let calculatedTotalPriceTHB = 0;
       let calculatedTotalPriceLAKNonTHB = 0;
-      const wantsTHB = orderInput.currency === 'THB' || orderInput.currency === 'MIXED';
+      const wantsTHB = (orderInput.customerType === 'WHOLESALE') && (orderInput.currency === 'THB' || orderInput.currency === 'MIXED');
 
       // Lock/check inventory
       for (const item of orderInput.items) {
@@ -841,32 +841,30 @@ export const db = {
           itemPrice = product.cartonPrice && product.cartonPrice > 0 ? product.cartonPrice : basePrice * cartonQty;
         }
 
-        // THB price calculation
+        // THB price calculation: Chỉ dành riêng cho Bán Sỉ (Bỏ lẻ Baht, khách lẻ không mua Baht)
         let itemPriceTHB: number | null = null;
-        if (unit === 'PACK' && product.packPriceTHB && product.packPriceTHB > 0) {
-          itemPriceTHB = product.packPriceTHB;
-        } else if (unit === 'BOX' && product.boxPriceTHB && product.boxPriceTHB > 0) {
-          itemPriceTHB = product.boxPriceTHB;
-        } else if (unit === 'CARTON' && product.cartonPriceTHB && product.cartonPriceTHB > 0) {
-          itemPriceTHB = product.cartonPriceTHB;
-        } else {
-          // PIECE
-          let baseTHB: number | null = null;
-          if (tier1Opt?.priceTHB && tier1Opt.priceTHB > 0) {
-            baseTHB = tier1Opt.priceTHB;
-          } else if (isWholesale && variant && variant.wholesalePriceTHB && variant.wholesalePriceTHB > 0) {
-            baseTHB = variant.wholesalePriceTHB;
-          } else if (variant && variant.priceTHB && variant.priceTHB > 0) {
-            baseTHB = variant.priceTHB;
-          } else if (isWholesale && product.wholesalePriceTHB && product.wholesalePriceTHB > 0) {
-            baseTHB = product.wholesalePriceTHB;
-          } else if (product.priceTHB && product.priceTHB > 0) {
-            baseTHB = product.priceTHB;
+        if (isWholesale) {
+          if (unit === 'PACK' && product.packPriceTHB && product.packPriceTHB > 0) {
+            itemPriceTHB = product.packPriceTHB;
+          } else if (unit === 'BOX' && product.boxPriceTHB && product.boxPriceTHB > 0) {
+            itemPriceTHB = product.boxPriceTHB;
+          } else if (unit === 'CARTON' && product.cartonPriceTHB && product.cartonPriceTHB > 0) {
+            itemPriceTHB = product.cartonPriceTHB;
+          } else {
+            // PIECE - CHỈ LẤY GIÁ SỈ BAHT
+            let baseTHB: number | null = null;
+            if (variant && variant.wholesalePriceTHB && variant.wholesalePriceTHB > 0) {
+              baseTHB = variant.wholesalePriceTHB;
+            } else if (product.wholesalePriceTHB && product.wholesalePriceTHB > 0) {
+              baseTHB = product.wholesalePriceTHB;
+            } else if (tier1Opt?.priceTHB && tier1Opt.priceTHB > 0) {
+              baseTHB = tier1Opt.priceTHB;
+            }
+            if (baseTHB !== null && tier2Opt?.priceBonusTHB && tier2Opt.priceBonusTHB > 0) {
+              baseTHB += tier2Opt.priceBonusTHB;
+            }
+            itemPriceTHB = baseTHB;
           }
-          if (baseTHB !== null && tier2Opt?.priceBonusTHB && tier2Opt.priceBonusTHB > 0) {
-            baseTHB += tier2Opt.priceBonusTHB;
-          }
-          itemPriceTHB = baseTHB;
         }
 
         // Nếu món có giá Baht thì tính vào phần Baht, nếu không có giá Baht thì tính thêm bằng Kíp

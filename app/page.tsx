@@ -1154,14 +1154,10 @@ function HomeContent() {
                         </div>
                       ) : null}
 
-                      {/* Currency Badge on Image */}
-                      {product.priceTHB && product.priceTHB > 0 ? (
+                      {/* Currency Badge on Image - CHỈ HIỂN THỊ KHI Ở CHẾ ĐỘ SỈ */}
+                      {customerMode === 'WHOLESALE' && product.wholesalePriceTHB && product.wholesalePriceTHB > 0 ? (
                         <div className="absolute top-2.5 right-2.5 bg-emerald-600/90 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-0.5">
                           <span>฿ Baht</span>
-                        </div>
-                      ) : (currency === 'THB' || selectedCurrencyFilter === 'THB') ? (
-                        <div className="absolute top-2.5 right-2.5 bg-zinc-800/85 backdrop-blur-xs text-zinc-200 text-[10px] font-medium px-2 py-0.5 rounded-full shadow-sm flex items-center gap-0.5">
-                          <span>₭ Chỉ nhận Kíp</span>
                         </div>
                       ) : null}
                     </Link>
@@ -1186,7 +1182,7 @@ function HomeContent() {
 
                       {/* Packaging & Variants Indicators */}
                       <div className="flex flex-wrap items-center gap-1 pt-1">
-                        {product.priceTHB && product.priceTHB > 0 ? (
+                        {customerMode === 'WHOLESALE' && product.wholesalePriceTHB && product.wholesalePriceTHB > 0 ? (
                           <span className="text-[9px] font-bold bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded border border-emerald-200">
                             {isLao ? 'ຈ່າຍບາດໄດ້ ฿' : 'Có giá Baht ฿'}
                           </span>
@@ -1220,115 +1216,46 @@ function HomeContent() {
                   <div className="mt-3 pt-2.5 border-t border-zinc-100 flex items-center justify-between gap-2">
                     <div>
                       {(() => {
-                        const hasTHB = Boolean(product.priceTHB && product.priceTHB > 0);
-                        const isTHB = currency === 'THB';
-
-                        if (isTHB) {
-                          if (hasTHB) {
-                            const retailTHB = product.priceTHB!;
-                            const wholesaleTHB = product.wholesalePriceTHB && product.wholesalePriceTHB > 0
-                              ? product.wholesalePriceTHB
-                              : Math.round(retailTHB * 0.8 * 100) / 100;
-
-                            if (customerMode === 'WHOLESALE') {
-                              return (
-                                <div>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-sm sm:text-base font-extrabold text-amber-600 font-mono">
-                                      {formatTHB(wholesaleTHB)}
-                                    </span>
-                                    <span className="text-[9px] bg-amber-500/15 text-amber-700 px-1.5 py-0.5 rounded font-black border border-amber-500/20">
-                                      Sỉ ⚡
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-1 text-[10px] text-zinc-400 font-mono">
-                                    <span className="line-through">Lẻ: {formatTHB(retailTHB)}</span>
-                                    <span>•</span>
-                                    <span>{formatLAK(product.price)}</span>
-                                  </div>
-                                </div>
-                              );
-                            }
-
-                            return (
-                              <div>
-                                <div className="flex items-center gap-1.5">
-                                  <span className={`text-sm sm:text-base font-extrabold ${theme.accentText} font-mono`}>
-                                    {formatTHB(retailTHB)}
-                                  </span>
-                                  <span className="text-[9px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-bold border border-emerald-200">
-                                    Baht Thái
-                                  </span>
-                                </div>
-                                <span className="text-[10px] text-zinc-400 font-mono block">
-                                  ≈ {formatLAK(product.price)}
-                                </span>
-                              </div>
-                            );
-                          } else {
-                            // Sản phẩm không có giá Baht
-                            return (
-                              <div>
-                                <div className="flex items-center gap-1.5">
-                                  <span className={`text-sm sm:text-base font-extrabold ${theme.accentText} font-mono`}>
-                                    {formatLAK(product.price)}
-                                  </span>
-                                </div>
-                                <span className="text-[10px] font-bold text-amber-600 flex items-center gap-0.5">
-                                  <span>⚠️ {isLao ? 'ສະເພາະເງິນກີບ' : 'Chỉ nhận tiền Kíp'}</span>
-                                </span>
-                              </div>
-                            );
-                          }
-                        }
-
-                        // Chế độ tiền Kíp (LAK)
-                        const wholesalePrice = product.wholesalePrice !== undefined && product.wholesalePrice > 0
-                          ? product.wholesalePrice
-                          : Math.round(product.price * 0.8 * 100) / 100;
-
-                        if (customerMode === 'WHOLESALE') {
+                        // Khách mua lẻ: Bỏ hoàn toàn số Baht lẻ, CHỈ hiển thị duy nhất giá tiền Kíp Lào (LAK)
+                        if (customerMode === 'RETAIL') {
                           return (
                             <div>
                               <div className="flex items-center gap-1.5">
-                                <span className="text-sm sm:text-base font-extrabold text-amber-600 font-mono">
-                                  {formatLAK(wholesalePrice)}
+                                <span className={`text-sm sm:text-base font-extrabold ${theme.accentText} font-mono`}>
+                                  {formatLAK(product.price)}
                                 </span>
-                                <span className="text-[9px] bg-amber-500/15 text-amber-700 px-1.5 py-0.5 rounded font-black border border-amber-500/20">
-                                  Sỉ ⚡
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1 text-[10px] text-zinc-400 font-mono">
-                                <span className="line-through">Lẻ: {formatLAK(product.price)}</span>
-                                {hasTHB && (
-                                  <>
-                                    <span>•</span>
-                                    <span className="text-emerald-600 font-bold">
-                                      {formatTHB(product.wholesalePriceTHB ? product.wholesalePriceTHB : Math.round(product.priceTHB! * 0.8 * 100) / 100)}
-                                    </span>
-                                  </>
-                                )}
                               </div>
                             </div>
                           );
                         }
 
+                        // Khách mua sỉ: Hiển thị Giá Sỉ Kíp và Giá Sỉ Baht (nếu có)
+                        const wholesalePrice = product.wholesalePrice !== undefined && product.wholesalePrice > 0
+                          ? product.wholesalePrice
+                          : Math.round(product.price * 0.8 * 100) / 100;
+                        const wholesaleTHB = product.wholesalePriceTHB;
+
                         return (
                           <div>
                             <div className="flex items-center gap-1.5">
-                              <span className={`text-sm sm:text-base font-extrabold ${theme.accentText} font-mono`}>
-                                {formatLAK(product.price)}
+                              <span className="text-sm sm:text-base font-extrabold text-amber-600 font-mono">
+                                {formatLAK(wholesalePrice)}
+                              </span>
+                              <span className="text-[9px] bg-amber-500/15 text-amber-700 px-1.5 py-0.5 rounded font-black border border-amber-500/20">
+                                Sỉ ⚡
                               </span>
                             </div>
-                            {hasTHB ? (
-                              <span className="text-[10px] text-emerald-700 font-semibold font-mono block">
-                                {formatTHB(product.priceTHB!)} <span className="text-[9px] text-zinc-400 font-sans">({isLao ? 'ຈ່າຍບາດໄດ້' : 'có giá Baht'})</span>
-                              </span>
-                            ) : (
-                              <span className="text-[10px] text-zinc-400 block">
-                                {isLao ? 'ສະເພາະກີບ' : 'Chỉ nhận Kíp'}
-                              </span>
-                            )}
+                            <div className="flex items-center gap-1 text-[10px] text-zinc-400 font-mono">
+                              <span>Lẻ: {formatLAK(product.price)}</span>
+                              {wholesaleTHB && wholesaleTHB > 0 ? (
+                                <>
+                                  <span>•</span>
+                                  <span className="text-emerald-600 font-bold">
+                                    {formatTHB(wholesaleTHB)} ฿
+                                  </span>
+                                </>
+                              ) : null}
+                            </div>
                           </div>
                         );
                       })()}
