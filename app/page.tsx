@@ -1187,16 +1187,6 @@ function HomeContent() {
                             {isLao ? 'ຈ່າຍບາດໄດ້ ฿' : 'Có giá Baht ฿'}
                           </span>
                         ) : null}
-                        {product.packQty && product.packQty > 1 ? (
-                          <span className="text-[9px] font-bold bg-amber-50 text-amber-700 px-1.5 py-0.2 rounded border border-amber-200">
-                            Lốc x{product.packQty}
-                          </span>
-                        ) : null}
-                        {product.boxQty && product.boxQty > 1 ? (
-                          <span className="text-[9px] font-bold bg-purple-50 text-purple-700 px-1.5 py-0.2 rounded border border-purple-200">
-                            Hộp x{product.boxQty}
-                          </span>
-                        ) : null}
                         {product.colors && product.colors.length > 0 ? (
                           <span className="text-[9px] font-semibold bg-rose-50 text-rose-700 px-1.5 py-0.2 rounded border border-rose-200 flex items-center gap-0.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span>

@@ -740,188 +740,19 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                       );
                     })()}
 
-                    {/* Mục Chọn Quy Cách Đóng Gói (Cái / Lốc / Hộp / Thùng) - CHỈ HIỆN CÁC Ô ĐÃ ĐƯỢC TICK CHỌN */}
-                    {(() => {
-                      const hasPack = product.hasPack === true;
-                      const hasBox = product.hasBox === true;
-                      const hasCarton = product.hasCarton === true;
-
-                      // Nếu không tick bất kỳ quy cách nào (chỉ bán cái) thì không hiển thị bảng chọn quy cách
-                      if (!hasPack && !hasBox && !hasCarton) {
-                        return null;
-                      }
-
-                      const packQty = product.packQty || 6;
-                      const boxQty = product.boxQty || 10;
-                      const cartonQty = product.cartonQty || 50;
-
-                      const { activePrice: baseUnitPrice, activePriceTHB: baseUnitPriceTHB } = getActiveBasePricing();
-
-                      const packPrice = product.packPrice && product.packPrice > 0 ? product.packPrice : baseUnitPrice * packQty;
-                      const boxPrice = product.boxPrice && product.boxPrice > 0 ? product.boxPrice : baseUnitPrice * boxQty;
-                      const cartonPrice = product.cartonPrice && product.cartonPrice > 0 ? product.cartonPrice : baseUnitPrice * cartonQty;
-
-                      return (
-                        <div className="space-y-2 pt-3">
-                          <label className="text-xs font-bold text-zinc-700 flex items-center justify-between">
-                            <span className="flex items-center gap-1.5">
-                              <Boxes className="w-4 h-4 text-amber-600" />
-                              <span>{isLao ? 'ຮູບແບບການຊື້:' : 'Quy cách đóng gói:'}</span>
-                            </span>
-                            <span className="text-[11px] text-zinc-400 font-normal">
-                              {isLao ? 'ເລືອກງ່າຍຂຶ້ນ' : 'Dễ chọn mua theo lô/thùng'}
-                            </span>
-                          </label>
-
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                            {/* Cái - Luôn có */}
-                            <button
-                              type="button"
-                              onClick={() => { setSelectedUnit('PIECE'); setQuantity(1); }}
-                              className={`p-2.5 rounded-2xl border text-left transition flex flex-col justify-between ${
-                                selectedUnit === 'PIECE'
-                                  ? 'bg-blue-50/80 border-blue-600 ring-2 ring-blue-500/20 text-blue-950 font-bold shadow-xs'
-                                  : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
-                              }`}
-                            >
-                              <div className="flex items-center justify-between gap-1">
-                                <span className="text-xs font-black">
-                                  {isLao ? `${product.baseUnitNameLao || 'ອັນ'} (${product.baseUnitName || 'Cái'})` : (product.baseUnitName || 'Cái')}
-                                </span>
-                                <span className="text-[10px] text-zinc-400">x1</span>
-                              </div>
-                              <p className="text-[11px] font-mono font-bold text-blue-600 mt-1">
-                                {formatPrice(baseUnitPrice)}
-                              </p>
-                              <span className="text-[9px] text-zinc-500 font-medium">
-                                {customerMode === 'WHOLESALE' && baseUnitPriceTHB ? `${formatTHB(baseUnitPriceTHB)} ฿` : ''}
-                              </span>
-                            </button>
-
-                            {/* Lốc - Chỉ hiện nếu có tick hasPack */}
-                            {hasPack && (
-                              <button
-                                type="button"
-                                onClick={() => { setSelectedUnit('PACK'); setQuantity(1); }}
-                                className={`p-2.5 rounded-2xl border text-left transition flex flex-col justify-between ${
-                                  selectedUnit === 'PACK'
-                                    ? 'bg-emerald-50/80 border-emerald-600 ring-2 ring-emerald-500/20 text-emerald-950 font-bold shadow-xs'
-                                    : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
-                                }`}
-                              >
-                                <div className="flex items-center justify-between gap-1">
-                                  <span className="text-xs font-black">{isLao ? 'ແພັກ (Lốc)' : 'Lốc'}</span>
-                                  <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1 py-0.2 rounded font-bold">
-                                    x{packQty} {product.baseUnitName || ''}
-                                  </span>
-                                </div>
-                                <p className="text-[11px] font-mono font-bold text-emerald-700 mt-1">
-                                  {formatPrice(packPrice)}
-                                </p>
-                                <span className="text-[9px] text-emerald-800 font-medium">
-                                  {customerMode === 'WHOLESALE' && product.packPriceTHB && product.packPriceTHB > 0 ? `${formatTHB(product.packPriceTHB)} ฿` : ''}
-                                </span>
-                              </button>
-                            )}
-
-                            {/* Hộp - Chỉ hiện nếu có tick hasBox */}
-                            {hasBox && (
-                              <button
-                                type="button"
-                                onClick={() => { setSelectedUnit('BOX'); setQuantity(1); }}
-                                className={`p-2.5 rounded-2xl border text-left transition flex flex-col justify-between ${
-                                  selectedUnit === 'BOX'
-                                    ? 'bg-purple-50/80 border-purple-600 ring-2 ring-purple-500/20 text-purple-950 font-bold shadow-xs'
-                                    : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
-                                }`}
-                              >
-                                <div className="flex items-center justify-between gap-1">
-                                  <span className="text-xs font-black">{isLao ? 'ກ່ອງ (Hộp)' : 'Hộp'}</span>
-                                  <span className="text-[9px] bg-purple-100 text-purple-700 px-1 py-0.2 rounded font-bold">
-                                    x{boxQty} {product.baseUnitName || ''}
-                                  </span>
-                                </div>
-                                <p className="text-[11px] font-mono font-bold text-purple-700 mt-1">
-                                  {formatPrice(boxPrice)}
-                                </p>
-                                <span className="text-[9px] text-purple-800 font-medium">
-                                  {customerMode === 'WHOLESALE' && product.boxPriceTHB && product.boxPriceTHB > 0 ? `${formatTHB(product.boxPriceTHB)} ฿` : ''}
-                                </span>
-                              </button>
-                            )}
-
-                            {/* Thùng - Chỉ hiện nếu có tick hasCarton */}
-                            {hasCarton && (
-                              <button
-                                type="button"
-                                onClick={() => { setSelectedUnit('CARTON'); setQuantity(1); }}
-                                className={`p-2.5 rounded-2xl border text-left transition flex flex-col justify-between ${
-                                  selectedUnit === 'CARTON'
-                                    ? 'bg-amber-500/20 border-amber-600 ring-2 ring-amber-500/30 text-amber-950 font-black shadow-xs'
-                                    : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
-                                }`}
-                              >
-                                <div className="flex items-center justify-between gap-1">
-                                  <span className="text-xs font-black">{isLao ? 'ລັງ (Thùng)' : 'Thùng ⚡'}</span>
-                                  <span className="text-[9px] bg-amber-400 text-amber-950 px-1 py-0.2 rounded font-black">
-                                    {product.cartonBoxQty ? `${product.cartonBoxQty} hộp` : `x${cartonQty}`}
-                                  </span>
-                                </div>
-                                <p className="text-[11px] font-mono font-black text-amber-700 mt-1">
-                                  {formatPrice(cartonPrice)}
-                                </p>
-                                <span className="text-[9px] text-amber-800 font-bold block">
-                                  {customerMode === 'WHOLESALE' && product.cartonPriceTHB && product.cartonPriceTHB > 0 ? `${formatTHB(product.cartonPriceTHB)} ฿` : ''}
-                                  {product.cartonBoxQty ? ` (${cartonQty} ${product.baseUnitName || 'gói'})` : ''}
-                                </span>
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })()}
-
                     {/* Quantity & Subtotal Stepper Shopee Style */}
                     {!isOutOfStock && (() => {
-                      const packQty = product.packQty || 6;
-                      const boxQty = product.boxQty || 10;
-                      const cartonQty = product.cartonQty || 50;
-                      const multiplier = selectedUnit === 'CARTON' ? cartonQty : selectedUnit === 'BOX' ? boxQty : selectedUnit === 'PACK' ? packQty : 1;
-                      const maxUnitAllowed = Math.max(1, Math.floor(product.stock / multiplier));
-
+                      const maxUnitAllowed = Math.max(1, product.stock);
                       const { activePrice: baseUnitPrice, activePriceTHB: baseUnitPriceTHB } = getActiveBasePricing();
-
-                      let currentPricePerUnit = baseUnitPrice;
-                      let currentPriceTHBPerUnit: number | null = baseUnitPriceTHB;
-
-                      if (selectedUnit === 'PACK') {
-                        currentPricePerUnit = product.packPrice && product.packPrice > 0 ? product.packPrice : baseUnitPrice * packQty;
-                        currentPriceTHBPerUnit = product.packPriceTHB && product.packPriceTHB > 0 ? product.packPriceTHB : null;
-                      } else if (selectedUnit === 'BOX') {
-                        currentPricePerUnit = product.boxPrice && product.boxPrice > 0 ? product.boxPrice : baseUnitPrice * boxQty;
-                        currentPriceTHBPerUnit = product.boxPriceTHB && product.boxPriceTHB > 0 ? product.boxPriceTHB : null;
-                      } else if (selectedUnit === 'CARTON') {
-                        currentPricePerUnit = product.cartonPrice && product.cartonPrice > 0 ? product.cartonPrice : baseUnitPrice * cartonQty;
-                        currentPriceTHBPerUnit = product.cartonPriceTHB && product.cartonPriceTHB > 0 ? product.cartonPriceTHB : null;
-                      }
-
-                      const subtotal = currentPricePerUnit * quantity;
-                      const subtotalTHB = currentPriceTHBPerUnit ? currentPriceTHBPerUnit * quantity : null;
-
-                      const currentUnitLabel = selectedUnit === 'CARTON' ? (isLao ? 'ລັງ' : 'Thùng')
-                        : selectedUnit === 'BOX' ? (isLao ? 'ກ່ອງ' : 'Hộp')
-                        : selectedUnit === 'PACK' ? (isLao ? 'ແພັກ' : 'Lốc')
-                        : (isLao ? 'ອັນ' : 'Cái');
+                      const subtotal = baseUnitPrice * quantity;
+                      const subtotalTHB = baseUnitPriceTHB ? baseUnitPriceTHB * quantity : null;
 
                       return (
                         <div className="space-y-3 pt-3">
                           <div className="flex items-center justify-between">
                             <label className="text-xs font-bold text-zinc-700 block">
-                              {isLao ? 'ຈຳນວນ:' : 'Số lượng:'} ({currentUnitLabel})
+                              {isLao ? 'ຈຳນວນ:' : 'Số lượng:'}
                             </label>
-                            <span className="text-xs text-zinc-500 font-semibold">
-                              {isLao ? `ທັງໝົດ ${quantity * multiplier} ອັນ` : `Tương đương ${quantity * multiplier} cái`}
-                            </span>
                           </div>
 
                           <div className="flex items-center justify-between gap-4 p-3.5 bg-zinc-50 rounded-2xl border border-zinc-200/80 flex-wrap sm:flex-nowrap">

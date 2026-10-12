@@ -149000,9 +149000,11 @@
       "stock": 28,
       "categoryId": "cat-4",
       "status": "ACTIVE",
-      "images": [],
+      "images": [
+        "/uploads/phone-upload-1791783388353-zb3m6h.jpg"
+      ],
       "createdAt": "2022-10-28T08:48:55.000Z",
-      "updatedAt": "2026-09-21T08:32:09.000Z"
+      "updatedAt": "2026-10-12T05:36:28.586Z"
     },
     {
       "id": "prod-6303",
@@ -173788,9 +173790,11 @@
       "stock": 50,
       "categoryId": "cat-4",
       "status": "ACTIVE",
-      "images": [],
+      "images": [
+        "/uploads/phone-upload-1791783369982-wled3c.jpg"
+      ],
       "createdAt": "2025-03-27T10:55:33.000Z",
-      "updatedAt": "2026-09-21T08:32:09.000Z"
+      "updatedAt": "2026-10-12T05:36:10.098Z"
     },
     {
       "id": "prod-7355",
@@ -184977,9 +184981,11 @@
       "stock": 50,
       "categoryId": "cat-4",
       "status": "ACTIVE",
-      "images": [],
+      "images": [
+        "/uploads/phone-upload-1791783329604-ztqpd6.jpg"
+      ],
       "createdAt": "2025-05-26T08:19:29.000Z",
-      "updatedAt": "2026-09-21T08:32:09.000Z"
+      "updatedAt": "2026-10-12T05:35:29.795Z"
     },
     {
       "id": "prod-7828",
@@ -185073,9 +185079,11 @@
       "stock": 50,
       "categoryId": "cat-4",
       "status": "ACTIVE",
-      "images": [],
+      "images": [
+        "/uploads/phone-upload-1791783291595-yg2kes.jpg"
+      ],
       "createdAt": "2025-05-28T08:56:57.000Z",
-      "updatedAt": "2026-09-21T08:32:09.000Z"
+      "updatedAt": "2026-10-12T05:34:51.745Z"
     },
     {
       "id": "prod-7832",
@@ -195519,9 +195527,11 @@
       "stock": 50,
       "categoryId": "cat-4",
       "status": "ACTIVE",
-      "images": [],
+      "images": [
+        "/uploads/phone-upload-1791783313871-lxopvc.jpg"
+      ],
       "createdAt": "2025-08-14T07:58:07.000Z",
-      "updatedAt": "2026-09-21T08:32:07.000Z"
+      "updatedAt": "2026-10-12T05:35:14.054Z"
     },
     {
       "id": "prod-8275",
@@ -218194,9 +218204,11 @@
       "stock": 132,
       "categoryId": "cat-4",
       "status": "ACTIVE",
-      "images": [],
+      "images": [
+        "/uploads/phone-upload-1791783232960-qqt54p.jpg"
+      ],
       "createdAt": "2026-04-04T07:55:41.000Z",
-      "updatedAt": "2026-09-21T08:32:09.000Z"
+      "updatedAt": "2026-10-12T05:33:53.099Z"
     },
     {
       "id": "prod-9254",
@@ -229287,13 +229299,14 @@
         "/uploads/phone-upload-1791778550817-sny73m.jpg"
       ],
       "createdAt": "2026-10-07T07:37:25.000Z",
-      "updatedAt": "2026-10-12T05:03:49.960Z",
+      "updatedAt": "2026-10-12T05:27:47.978Z",
       "hasPack": false,
       "packQty": 6,
       "hasBox": false,
       "boxQty": 10,
       "hasCarton": false,
-      "cartonQty": 50
+      "cartonQty": 50,
+      "brand": "vipada"
     },
     {
       "id": "prod-9729",

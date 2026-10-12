@@ -841,17 +841,10 @@ export default function AdminProductsPage() {
       validTier1 = undefined;
     }
 
-    const minWholesaleQty = Math.max(1, Number(formData.minWholesaleQty) || 3);
     setSubmitting(true);
 
     const selectedCat = categories.find(c => c.id === formData.categoryId);
     const selectedSub = selectedCat?.subCategories?.find(s => s.id === formData.subCategoryId);
-
-    const cartonBoxQtyNum = formData.cartonBoxQty && Number(formData.cartonBoxQty) > 0 ? Number(formData.cartonBoxQty) : undefined;
-    const boxQtyNum = Number(formData.boxQty) || 10;
-    const calculatedCartonQty = (formData.hasBox && cartonBoxQtyNum && cartonBoxQtyNum > 0)
-      ? (cartonBoxQtyNum * boxQtyNum)
-      : (Number(formData.cartonQty) || 50);
 
     const payload = {
       name: formData.name.trim(),
@@ -865,21 +858,21 @@ export default function AdminProductsPage() {
       wholesalePriceTHB,
       costPrice: isBossOrManager && formData.costPrice && Number(formData.costPrice) > 0 ? Number(formData.costPrice) : undefined,
       costPriceTHB: isBossOrManager && formData.costPriceTHB && Number(formData.costPriceTHB) > 0 ? Number(formData.costPriceTHB) : undefined,
-      minWholesaleQty,
-      baseUnitName: formData.baseUnitName?.trim() || 'Cái',
-      hasPack: formData.hasPack,
-      packQty: Number(formData.packQty) || 6,
-      packPrice: formData.hasPack && formData.packPrice && Number(formData.packPrice) > 0 ? Number(formData.packPrice) : undefined,
-      packPriceTHB: formData.hasPack && formData.packPriceTHB && Number(formData.packPriceTHB) > 0 ? Number(formData.packPriceTHB) : undefined,
-      hasBox: formData.hasBox,
-      boxQty: boxQtyNum,
-      boxPrice: formData.hasBox && formData.boxPrice && Number(formData.boxPrice) > 0 ? Number(formData.boxPrice) : undefined,
-      boxPriceTHB: formData.hasBox && formData.boxPriceTHB && Number(formData.boxPriceTHB) > 0 ? Number(formData.boxPriceTHB) : undefined,
-      hasCarton: formData.hasCarton,
-      cartonBoxQty: cartonBoxQtyNum,
-      cartonQty: calculatedCartonQty,
-      cartonPrice: formData.hasCarton && formData.cartonPrice && Number(formData.cartonPrice) > 0 ? Number(formData.cartonPrice) : undefined,
-      cartonPriceTHB: formData.hasCarton && formData.cartonPriceTHB && Number(formData.cartonPriceTHB) > 0 ? Number(formData.cartonPriceTHB) : undefined,
+      minWholesaleQty: 1,
+      baseUnitName: 'Cái',
+      hasPack: false,
+      packQty: 1,
+      packPrice: undefined,
+      packPriceTHB: undefined,
+      hasBox: false,
+      boxQty: 1,
+      boxPrice: undefined,
+      boxPriceTHB: undefined,
+      hasCarton: false,
+      cartonBoxQty: undefined,
+      cartonQty: 1,
+      cartonPrice: undefined,
+      cartonPriceTHB: undefined,
       tier1Name: (hasVariants && validTier1 && validTier1.length > 1) ? 'Phân Loại' : undefined,
       tier1Options: (hasVariants && validTier1 && validTier1.length > 0) ? validTier1 : undefined,
       variants: (hasVariants && syncedVariants && syncedVariants.length > 0) ? syncedVariants : undefined,
@@ -1022,9 +1015,7 @@ export default function AdminProductsPage() {
       const payload: Record<string, any> = {};
       if (field === 'price') {
         payload.price = numLAK;
-        if (priceTHB.trim() !== '') {
-          payload.priceTHB = Number(priceTHB) > 0 ? Number(priceTHB) : null;
-        }
+        payload.priceTHB = null;
       } else {
         payload.wholesalePrice = numLAK;
         if (priceTHB.trim() !== '') {
@@ -1567,25 +1558,6 @@ export default function AdminProductsPage() {
                               <span className="absolute right-1.5 top-1 text-emerald-500 text-xs font-bold">₭</span>
                             </div>
                           </div>
-                          <div>
-                            <label className="text-[9px] text-zinc-400 block mb-0.5">Tiền Baht (฿)</label>
-                            <div className="relative">
-                              <input
-                                type="number"
-                                min="0"
-                                step="any"
-                                value={editingPrice.priceTHB}
-                                onChange={(e) => setEditingPrice({ ...editingPrice, priceTHB: e.target.value })}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') handleSaveInline(p.id);
-                                  if (e.key === 'Escape') cancelInlineEdit();
-                                }}
-                                placeholder="Baht (nếu có)"
-                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg pl-2 pr-5 py-1 text-amber-300 font-mono text-[11px] outline-none focus:border-amber-500"
-                              />
-                              <span className="absolute right-1.5 top-1 text-amber-500 text-xs font-bold">฿</span>
-                            </div>
-                          </div>
                           <div className="flex items-center gap-1.5 pt-1">
                             <button
                               type="button"
@@ -2126,8 +2098,8 @@ export default function AdminProductsPage() {
                   </div>
                 </div>
 
-                {/* Hàng 2: Giá sỉ Kíp, Giá sỉ Baht, SL tối thiểu */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-zinc-800/80">
+                {/* Hàng 2: Giá sỉ Kíp, Giá sỉ Baht */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-zinc-800/80">
                   {/* Giá sỉ Kíp */}
                   <div>
                     <div className="flex items-center justify-between mb-1">
@@ -2165,21 +2137,6 @@ export default function AdminProductsPage() {
                       onChange={(e) => setFormData({ ...formData, wholesalePriceTHB: e.target.value })}
                       placeholder="Ví dụ: 95 (nếu có)"
                       className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2 text-amber-300 font-mono focus:outline-none focus:border-amber-500"
-                    />
-                  </div>
-
-                  {/* Số lượng sỉ tối thiểu */}
-                  <div>
-                    <label className="block text-zinc-400 font-semibold mb-1">
-                      Mua từ bao nhiêu {formData.baseUnitName || 'cái'} được giá sỉ?
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={formData.minWholesaleQty}
-                      onChange={(e) => setFormData({ ...formData, minWholesaleQty: e.target.value })}
-                      placeholder="Ví dụ: 3"
-                      className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2 text-white font-mono focus:outline-none focus:border-blue-500"
                     />
                   </div>
                 </div>
@@ -2239,301 +2196,6 @@ export default function AdminProductsPage() {
                     </div>
                   </div>
                 )}
-              </div>
-
-              {/* QUY CÁCH ĐÓNG GÓI: LỐC, HỘP, THÙNG (DÙNG Ô TICK, TỰ CHỈNH GIÁ, KHÔNG TỰ ĐỘNG TÍNH) */}
-              <div className="p-4 bg-zinc-950 rounded-2xl border border-zinc-800 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                  <label className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <Boxes className="w-4 h-4 text-amber-500" />
-                    <span>Quy Cách Bán Hàng: Lốc, Hộp, Thùng (ຮູບແບບການຊື້)</span>
-                  </label>
-                  <span className="text-[10px] text-zinc-400">
-                    Tick chọn nếu sản phẩm có bán theo lốc, hộp hoặc thùng
-                  </span>
-                </div>
-
-                {/* Chọn đơn vị tính cơ sở (Gói, Cái, Tuýp, Chai, Hũ...) */}
-                <div className="p-3 bg-zinc-900/60 rounded-xl border border-zinc-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-bold text-zinc-300">
-                      Đơn vị tính cơ sở (Đơn vị nhỏ nhất để bán lẻ):
-                    </label>
-                    <span className="text-[10px] text-amber-400 font-medium">
-                      Hiện tại: <strong>{formData.baseUnitName || 'Cái'}</strong>
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {['Gói', 'Cái', 'Tuýp', 'Chai', 'Hũ', 'Miếng', 'Thỏi', 'Túi', 'Bịch', 'Lon'].map((unit) => (
-                      <button
-                        key={unit}
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, baseUnitName: unit }))}
-                        className={`text-xs px-2.5 py-1 rounded-lg border font-bold transition active:scale-95 ${
-                          (formData.baseUnitName || 'Cái').toLowerCase() === unit.toLowerCase()
-                            ? 'bg-amber-500 text-black border-amber-400 shadow-sm'
-                            : 'bg-zinc-900 text-zinc-300 border-zinc-700/80 hover:bg-zinc-800 hover:text-white'
-                        }`}
-                      >
-                        {unit}
-                      </button>
-                    ))}
-                    <input
-                      type="text"
-                      value={formData.baseUnitName}
-                      onChange={(e) => setFormData(prev => ({ ...prev, baseUnitName: e.target.value }))}
-                      placeholder="Hoặc tự gõ đơn vị..."
-                      className="bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1 text-xs text-white w-32 focus:border-amber-500 outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {/* Lốc (PACK) */}
-                  <div className={`p-3.5 rounded-xl border transition space-y-2.5 ${
-                    formData.hasPack 
-                      ? 'bg-zinc-900 border-emerald-500/50 ring-1 ring-emerald-500/30' 
-                      : 'bg-zinc-900/40 border-zinc-800'
-                  }`}>
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={formData.hasPack}
-                        onChange={(e) => setFormData({ ...formData, hasPack: e.target.checked })}
-                        className="w-4 h-4 rounded accent-emerald-500 cursor-pointer"
-                      />
-                      <span className="text-xs font-bold text-emerald-400">
-                        📦 Bán theo Lốc (ແພັກ)
-                      </span>
-                    </label>
-
-                    {formData.hasPack ? (
-                      <div className="space-y-2 pt-1 border-t border-zinc-800 animate-in fade-in">
-                        <div>
-                          <label className="text-[10px] text-zinc-400 block mb-0.5">Số {formData.baseUnitName || 'cái'} / 1 Lốc</label>
-                          <input
-                            type="number"
-                            min="1"
-                            value={formData.packQty}
-                            onChange={(e) => setFormData({ ...formData, packQty: e.target.value })}
-                            placeholder="Ví dụ: 6"
-                            className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-white font-mono text-xs focus:outline-none focus:border-emerald-500"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] text-emerald-400 block mb-0.5 font-bold">Giá 1 Lốc Tiền Kíp (₭)</label>
-                          <input
-                            type="number"
-                            step="any"
-                            min="0"
-                            value={formData.packPrice}
-                            onChange={(e) => setFormData({ ...formData, packPrice: e.target.value })}
-                            placeholder="Ví dụ: 320000"
-                            className="w-full bg-zinc-950 border border-emerald-500/40 rounded-lg px-2.5 py-1.5 text-emerald-300 font-mono text-xs focus:outline-none focus:border-emerald-500 font-bold"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] text-amber-400 block mb-0.5 font-bold">Giá 1 Lốc Tiền Baht (฿)</label>
-                          <input
-                            type="number"
-                            step="any"
-                            min="0"
-                            value={formData.packPriceTHB}
-                            onChange={(e) => setFormData({ ...formData, packPriceTHB: e.target.value })}
-                            placeholder="Ví dụ: 490 (nếu có)"
-                            className="w-full bg-zinc-950 border border-amber-500/30 rounded-lg px-2.5 py-1.5 text-amber-300 font-mono text-xs focus:outline-none focus:border-amber-500"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-[10px] text-zinc-500 italic">Không bán theo Lốc</p>
-                    )}
-                  </div>
-
-                  {/* Hộp (BOX) */}
-                  <div className={`p-3.5 rounded-xl border transition space-y-2.5 ${
-                    formData.hasBox 
-                      ? 'bg-zinc-900 border-purple-500/50 ring-1 ring-purple-500/30' 
-                      : 'bg-zinc-900/40 border-zinc-800'
-                  }`}>
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={formData.hasBox}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          setFormData(prev => {
-                            const bQty = Number(prev.boxQty) || 6;
-                            const autoCarton = (prev.hasCarton && prev.cartonBoxQty) ? (Number(prev.cartonBoxQty) * bQty).toString() : prev.cartonQty;
-                            return {
-                              ...prev,
-                              hasBox: checked,
-                              cartonQty: autoCarton,
-                            };
-                          });
-                        }}
-                        className="w-4 h-4 rounded accent-purple-500 cursor-pointer"
-                      />
-                      <span className="text-xs font-bold text-purple-400">
-                        📦 Bán theo Hộp (ກ່ອງ)
-                      </span>
-                    </label>
-
-                    {formData.hasBox ? (
-                      <div className="space-y-2 pt-1 border-t border-zinc-800 animate-in fade-in">
-                        <div>
-                          <label className="text-[10px] text-zinc-400 block mb-0.5">Số {formData.baseUnitName || 'cái'} / 1 Hộp</label>
-                          <input
-                            type="number"
-                            min="1"
-                            value={formData.boxQty}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setFormData(prev => {
-                                const bQty = Number(val) || 1;
-                                const autoCarton = prev.cartonBoxQty ? (Number(prev.cartonBoxQty) * bQty).toString() : prev.cartonQty;
-                                return {
-                                  ...prev,
-                                  boxQty: val,
-                                  ...(prev.cartonBoxQty ? { cartonQty: autoCarton } : {}),
-                                };
-                              });
-                            }}
-                            placeholder="Ví dụ: 6"
-                            className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-white font-mono text-xs focus:outline-none focus:border-purple-500"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] text-purple-400 block mb-0.5 font-bold">Giá 1 Hộp Tiền Kíp (₭)</label>
-                          <input
-                            type="number"
-                            step="any"
-                            min="0"
-                            value={formData.boxPrice}
-                            onChange={(e) => setFormData({ ...formData, boxPrice: e.target.value })}
-                            placeholder="Ví dụ: 85000"
-                            className="w-full bg-zinc-950 border border-purple-500/40 rounded-lg px-2.5 py-1.5 text-purple-300 font-mono text-xs focus:outline-none focus:border-purple-500 font-bold"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] text-amber-400 block mb-0.5 font-bold">Giá 1 Hộp Tiền Baht (฿)</label>
-                          <input
-                            type="number"
-                            step="any"
-                            min="0"
-                            value={formData.boxPriceTHB}
-                            onChange={(e) => setFormData({ ...formData, boxPriceTHB: e.target.value })}
-                            placeholder="Ví dụ: 125 (nếu có)"
-                            className="w-full bg-zinc-950 border border-amber-500/30 rounded-lg px-2.5 py-1.5 text-amber-300 font-mono text-xs focus:outline-none focus:border-amber-500"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-[10px] text-zinc-500 italic">Không bán theo Hộp</p>
-                    )}
-                  </div>
-
-                  {/* Thùng (CARTON) */}
-                  <div className={`p-3.5 rounded-xl border transition space-y-2.5 ${
-                    formData.hasCarton 
-                      ? 'bg-zinc-900 border-amber-500/50 ring-1 ring-amber-500/30' 
-                      : 'bg-zinc-900/40 border-zinc-800'
-                  }`}>
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={formData.hasCarton}
-                        onChange={(e) => setFormData({ ...formData, hasCarton: e.target.checked })}
-                        className="w-4 h-4 rounded accent-amber-500 cursor-pointer"
-                      />
-                      <span className="text-xs font-bold text-amber-400">
-                        📦 Bán theo Thùng (ລັງ)
-                      </span>
-                    </label>
-
-                    {formData.hasCarton ? (
-                      <div className="space-y-2 pt-1 border-t border-zinc-800 animate-in fade-in">
-                        {/* Hỗ trợ nhập số Hộp trong 1 Thùng (cho bài toán: 1 thùng = 24 hộp) */}
-                        {formData.hasBox && (
-                          <div className="p-2 bg-amber-500/10 rounded-lg border border-amber-500/30">
-                            <label className="text-[10px] text-amber-300 block mb-0.5 font-bold">
-                              ⚡ Số Hộp / 1 Thùng (tự động nhân số {formData.baseUnitName || 'gói'})
-                            </label>
-                            <input
-                              type="number"
-                              min="1"
-                              value={formData.cartonBoxQty}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                const bQty = Number(formData.boxQty) || 6;
-                                const autoCartonQty = val ? (Number(val) * bQty).toString() : '';
-                                setFormData(prev => ({
-                                  ...prev,
-                                  cartonBoxQty: val,
-                                  ...(autoCartonQty ? { cartonQty: autoCartonQty } : {}),
-                                }));
-                              }}
-                              placeholder="Ví dụ: 24 (24 hộp/thùng)"
-                              className="w-full bg-zinc-950 border border-amber-500/50 rounded-lg px-2.5 py-1.5 text-amber-300 font-mono text-xs focus:outline-none focus:border-amber-400 font-bold"
-                            />
-                            {formData.cartonBoxQty && formData.boxQty && (
-                              <div className="text-[9px] text-amber-200/90 font-mono font-medium mt-1">
-                                💡 Quy đổi: {formData.cartonBoxQty} hộp × {formData.boxQty} {formData.baseUnitName || 'gói'} = <strong className="text-amber-300 font-black">{(Number(formData.cartonBoxQty) || 0) * (Number(formData.boxQty) || 0)}</strong> {formData.baseUnitName || 'gói'}
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        <div>
-                          <div className="flex items-center justify-between mb-0.5">
-                            <label className="text-[10px] text-zinc-400">
-                              Tổng số {formData.baseUnitName || 'cái'} / 1 Thùng
-                            </label>
-                            {formData.cartonBoxQty && formData.hasBox && (
-                              <span className="text-[9px] text-zinc-500 font-mono">
-                                (tự tính)
-                              </span>
-                            )}
-                          </div>
-                          <input
-                            type="number"
-                            min="1"
-                            value={formData.cartonQty}
-                            onChange={(e) => setFormData({ ...formData, cartonQty: e.target.value })}
-                            placeholder="Ví dụ: 144"
-                            className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-white font-mono text-xs focus:outline-none focus:border-amber-500"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] text-amber-400 block mb-0.5 font-bold">Giá 1 Thùng Tiền Kíp (₭)</label>
-                          <input
-                            type="number"
-                            step="any"
-                            min="0"
-                            value={formData.cartonPrice}
-                            onChange={(e) => setFormData({ ...formData, cartonPrice: e.target.value })}
-                            placeholder="Ví dụ: 1950000"
-                            className="w-full bg-zinc-950 border border-amber-500/40 rounded-lg px-2.5 py-1.5 text-amber-300 font-mono text-xs focus:outline-none focus:border-amber-500 font-bold"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] text-amber-400 block mb-0.5 font-bold">Giá 1 Thùng Tiền Baht (฿)</label>
-                          <input
-                            type="number"
-                            step="any"
-                            min="0"
-                            value={formData.cartonPriceTHB}
-                            onChange={(e) => setFormData({ ...formData, cartonPriceTHB: e.target.value })}
-                            placeholder="Ví dụ: 2850 (nếu có)"
-                            className="w-full bg-zinc-950 border border-amber-500/30 rounded-lg px-2.5 py-1.5 text-amber-300 font-mono text-xs focus:outline-none focus:border-amber-500"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-[10px] text-zinc-500 italic">Không bán theo Thùng</p>
-                    )}
-                  </div>
-                </div>
               </div>
 
               {/* KHỐI ẢNH SẢN PHẨM (TÙY CHỌN - CÓ THỂ ĐỂ TRỐNG VÀ THÊM SAU) */}
