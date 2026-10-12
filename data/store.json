@@ -229283,9 +229283,12 @@
       "stock": 120,
       "categoryId": "cat-4",
       "status": "ACTIVE",
-      "images": [],
+      "images": [
+        "/uploads/phone-upload-1791778550817-sny73m.jpg",
+        "/uploads/phone-upload-1791778474204-p40gqt.jpg"
+      ],
       "createdAt": "2026-10-07T07:37:25.000Z",
-      "updatedAt": "2026-10-07T07:37:25.000Z"
+      "updatedAt": "2026-10-12T04:15:50.991Z"
     },
     {
       "id": "prod-9729",
