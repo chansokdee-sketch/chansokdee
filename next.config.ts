@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
     "127.0.0.1:3000",
     "*.trycloudflare.com",
     "*.loca.lt",
+    "*.workers.dev",
   ],
   turbopack: {
     rules: {
