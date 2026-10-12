@@ -22,8 +22,8 @@ try {
 } catch {}
 
 if (!$isPort3000Open) {
-    Write-Host "      -> May chu chua chay, dang khoi dong Next.js..." -ForegroundColor Gray
-    Start-Process -FilePath "cmd.exe" -ArgumentList "/c cd /d `"$projectDir`" && npm run dev" -WindowStyle Minimized
+    Write-Host "      -> May chu chua chay, dang khoi dong che do Production (sieu nhanh)..." -ForegroundColor Gray
+    Start-Process -FilePath "cmd.exe" -ArgumentList "/c cd /d `"$projectDir`" && npm run start" -WindowStyle Minimized
     $retries = 0
     while ($retries -lt 25) {
         Start-Sleep -Seconds 1
@@ -52,7 +52,7 @@ Get-Process cloudflared -ErrorAction SilentlyContinue | Stop-Process -Force -Err
 $logFile = Join-Path $projectDir "tunnel_live.log"
 if (Test-Path $logFile) { Remove-Item $logFile -Force }
 
-$cfProcess = Start-Process -FilePath $cloudflaredExe -ArgumentList "tunnel --protocol http2 --url http://localhost:3000" -RedirectStandardError $logFile -WindowStyle Hidden -PassThru
+$cfProcess = Start-Process -FilePath $cloudflaredExe -ArgumentList "tunnel --ha-connections 4 --url http://localhost:3000" -RedirectStandardError $logFile -WindowStyle Hidden -PassThru
 
 Write-Host "[3/4] Dang ket noi va lay duong link online tu internet..." -ForegroundColor White
 $tunnelUrl = ""

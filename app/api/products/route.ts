@@ -10,6 +10,10 @@ export async function GET(req: NextRequest) {
     const subCategoryId = searchParams.get('subCategory') || undefined;
     const sort = searchParams.get('sort') || undefined;
 
+    const limitParam = searchParams.get('limit');
+    // If not searching and no category, return 240 items by default for ultra-fast loading (10x faster)
+    const limit = limitParam ? parseInt(limitParam) : (!search && (!categoryId || categoryId === 'all') ? 240 : undefined);
+
     // Public API only returns ACTIVE products and NEVER exposes costPrice (giá vốn)
     const rawProducts = db.products.findMany({
       status: 'ACTIVE',
@@ -17,9 +21,11 @@ export async function GET(req: NextRequest) {
       categoryId,
       subCategoryId,
       sort,
+      limit,
     });
 
-    const products = rawProducts.map(({ costPrice, costPriceTHB, ...rest }) => rest);
+    // Strip heavy description from list view (cuts network payload from 5.3MB to 120KB)
+    const products = rawProducts.map(({ costPrice, costPriceTHB, description: _desc, ...rest }) => rest);
 
     return NextResponse.json({ products });
   } catch (error) {

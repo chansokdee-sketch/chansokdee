@@ -612,7 +612,7 @@ export const db = {
 
   // PRODUCT OPERATIONS
   products: {
-    findMany: (options?: { categoryId?: string; subCategoryId?: string; search?: string; status?: ProductStatus; sort?: string }): Product[] => {
+    findMany: (options?: { categoryId?: string; subCategoryId?: string; search?: string; status?: ProductStatus; sort?: string; limit?: number; offset?: number }): Product[] => {
       const data = readData();
       let result = [...data.products];
 
@@ -645,6 +645,13 @@ export const db = {
         result.sort((a, b) => b.price - a.price);
       } else {
         result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      }
+
+      if (options?.offset && options.offset > 0) {
+        result = result.slice(options.offset);
+      }
+      if (options?.limit && options.limit > 0) {
+        result = result.slice(0, options.limit);
       }
 
       return result;
