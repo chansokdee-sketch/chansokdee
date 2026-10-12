@@ -85,7 +85,7 @@ function HomeContent() {
 
   const { addToCart, setIsCartOpen, customerMode, hasFullPriceAccess } = useCart();
   const { user, setIsAuthModalOpen, setAuthModalMode } = useAuth();
-  const { t, formatPrice, isLao } = useLanguage();
+  const { t, formatPrice, isLao, currency, setCurrency } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -94,7 +94,8 @@ function HomeContent() {
   const [loading, setLoading] = useState(true);
   const [addedNotice, setAddedNotice] = useState<string | null>(null);
 
-  // Bộ lọc sản phẩm (Filter: Quy cách đóng gói, màu sắc, kích cỡ, khoảng giá, tình trạng kho)
+  // Bộ lọc sản phẩm (Filter: Tiền tệ Baht/Kíp, Quy cách đóng gói, màu sắc, kích cỡ, khoảng giá, tình trạng kho)
+  const [selectedCurrencyFilter, setSelectedCurrencyFilter] = useState<'all' | 'THB' | 'LAK'>('all');
   const [selectedPackagingFilter, setSelectedPackagingFilter] = useState<'all' | 'PACK' | 'BOX' | 'CARTON'>('all');
   const [selectedColorFilter, setSelectedColorFilter] = useState<string>('all');
   const [selectedSizeFilter, setSelectedSizeFilter] = useState<string>('all');
@@ -211,6 +212,7 @@ function HomeContent() {
       if (selectedCategory !== 'all') params.set('category', selectedCategory);
       if (selectedSubCategory !== 'all') params.set('subCategory', selectedSubCategory);
       if (sortBy) params.set('sort', sortBy);
+      if (selectedCurrencyFilter !== 'all') params.set('currencyFilter', selectedCurrencyFilter);
 
       const res = await fetch(`/api/products?${params.toString()}`);
       const data = await res.json();
@@ -234,7 +236,7 @@ function HomeContent() {
 
   useEffect(() => {
     fetchProducts();
-  }, [initialSearch, selectedCategory, selectedSubCategory, sortBy]);
+  }, [initialSearch, selectedCategory, selectedSubCategory, sortBy, selectedCurrencyFilter]);
 
   // Promo popup trigger
   useEffect(() => {
@@ -441,9 +443,6 @@ function HomeContent() {
       case 'dung-cu-hoc-tap':
       case 'cat-26':
         return '✏️';
-      case 'thuoc-la':
-      case 'cat-27':
-        return '🚬';
       case 'tat-vo-gang-tay':
       case 'cat-28':
         return '🧤';
@@ -479,15 +478,29 @@ function HomeContent() {
   // Bộ lọc sản phẩm (Client-side filtering kết hợp đa điều kiện)
   const filteredProducts = React.useMemo(() => {
     return products.filter(product => {
+      // 0. Phân loại theo tiền tệ (Baht / Kíp)
+      const hasTHB = Boolean(product.priceTHB && product.priceTHB > 0);
+      if (selectedCurrencyFilter === 'THB' && !hasTHB) return false;
+      if (selectedCurrencyFilter === 'LAK' && hasTHB) return false;
+
       // 1. Tồn kho
       if (onlyInStock && product.stock <= 0) return false;
 
       // 2. Khoảng giá tiền
-      const p = product.price;
-      if (selectedPriceRange === 'under300k' && p >= 300000) return false;
-      if (selectedPriceRange === '300k-1m' && (p < 300000 || p > 1000000)) return false;
-      if (selectedPriceRange === '1m-3m' && (p < 1000000 || p > 3000000)) return false;
-      if (selectedPriceRange === 'above3m' && p <= 3000000) return false;
+      const isTHBMode = currency === 'THB' || selectedCurrencyFilter === 'THB';
+      if (isTHBMode) {
+        const pTHB = hasTHB ? product.priceTHB! : Math.round(product.price / 650);
+        if (selectedPriceRange === 'under200thb' && pTHB >= 200) return false;
+        if (selectedPriceRange === '200-500thb' && (pTHB < 200 || pTHB > 500)) return false;
+        if (selectedPriceRange === '500-1500thb' && (pTHB < 500 || pTHB > 1500)) return false;
+        if (selectedPriceRange === 'above1500thb' && pTHB <= 1500) return false;
+      } else {
+        const p = product.price;
+        if (selectedPriceRange === 'under300k' && p >= 300000) return false;
+        if (selectedPriceRange === '300k-1m' && (p < 300000 || p > 1000000)) return false;
+        if (selectedPriceRange === '1m-3m' && (p < 1000000 || p > 3000000)) return false;
+        if (selectedPriceRange === 'above3m' && p <= 3000000) return false;
+      }
 
       // 3. Quy cách mua hàng (Lốc, Hộp, Thùng)
       if (selectedPackagingFilter === 'PACK' && (!product.packQty || product.packQty <= 1)) return false;
@@ -506,25 +519,27 @@ function HomeContent() {
 
       return true;
     });
-  }, [products, onlyInStock, selectedPriceRange, selectedPackagingFilter, selectedColorFilter, selectedSizeFilter]);
+  }, [products, onlyInStock, selectedPriceRange, selectedPackagingFilter, selectedColorFilter, selectedSizeFilter, selectedCurrencyFilter, currency]);
 
   const activeFiltersCount = (selectedPriceRange !== 'all' ? 1 : 0) +
     (selectedPackagingFilter !== 'all' ? 1 : 0) +
     (selectedColorFilter !== 'all' ? 1 : 0) +
     (selectedSizeFilter !== 'all' ? 1 : 0) +
+    (selectedCurrencyFilter !== 'all' ? 1 : 0) +
     (onlyInStock ? 1 : 0);
 
   const [visibleCount, setVisibleCount] = useState<number>(48);
 
   useEffect(() => {
     setVisibleCount(48);
-  }, [initialSearch, selectedCategory, selectedSubCategory, sortBy, selectedPriceRange, selectedPackagingFilter, selectedColorFilter, selectedSizeFilter, onlyInStock]);
+  }, [initialSearch, selectedCategory, selectedSubCategory, sortBy, selectedPriceRange, selectedPackagingFilter, selectedColorFilter, selectedSizeFilter, selectedCurrencyFilter, onlyInStock]);
 
   const displayedProducts = React.useMemo(() => {
     return filteredProducts.slice(0, visibleCount);
   }, [filteredProducts, visibleCount]);
 
   const resetAllFilters = () => {
+    setSelectedCurrencyFilter('all');
     setSelectedPriceRange('all');
     setSelectedPackagingFilter('all');
     setSelectedColorFilter('all');
@@ -871,6 +886,61 @@ function HomeContent() {
 
           {/* Quick Filter Chips (Hiển thị ngay cho khách bấm nhanh) */}
           <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-100">
+            {/* Phân loại theo tiền tệ Baht / Kíp */}
+            <div className="flex items-center gap-1 flex-wrap">
+              <span className="text-[11px] font-bold text-zinc-400 mr-0.5">
+                {isLao ? '💵 ສະກຸນເງິນ:' : '💵 Tiền tệ:'}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedCurrencyFilter('all');
+                  setSelectedPriceRange('all');
+                }}
+                className={`text-[11px] px-2.5 py-1 rounded-lg font-bold transition border ${
+                  selectedCurrencyFilter === 'all'
+                    ? 'bg-zinc-800 text-white border-zinc-800 shadow-2xs'
+                    : 'bg-zinc-50 text-zinc-600 border-zinc-200 hover:bg-zinc-100'
+                }`}
+              >
+                {isLao ? 'ທັງໝົດ' : 'Tất cả'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedCurrencyFilter('THB');
+                  setSelectedPriceRange('all');
+                  setCurrency('THB');
+                }}
+                className={`text-[11px] px-2.5 py-1 rounded-lg font-bold transition border flex items-center gap-1 ${
+                  selectedCurrencyFilter === 'THB'
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs ring-2 ring-emerald-300'
+                    : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                }`}
+              >
+                <span className="font-mono">฿</span>
+                <span>{isLao ? 'ຈ່າຍບາດໄດ້ (Baht)' : 'Có giá Baht ฿'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedCurrencyFilter('LAK');
+                  setSelectedPriceRange('all');
+                  setCurrency('LAK');
+                }}
+                className={`text-[11px] px-2.5 py-1 rounded-lg font-bold transition border flex items-center gap-1 ${
+                  selectedCurrencyFilter === 'LAK'
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-2xs ring-2 ring-blue-300'
+                    : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+                }`}
+              >
+                <span className="font-mono">₭</span>
+                <span>{isLao ? 'ສະເພາະກີບ (Kíp)' : 'Chỉ nhận Kíp ₭'}</span>
+              </button>
+            </div>
+
+            <div className="h-4 w-px bg-zinc-200 mx-1 hidden sm:block"></div>
+
             {/* Lọc theo quy cách */}
             <div className="flex items-center gap-1 flex-wrap">
               <span className="text-[11px] font-bold text-zinc-400 mr-0.5">📦 Quy cách:</span>
@@ -895,16 +965,22 @@ function HomeContent() {
 
             <div className="h-4 w-px bg-zinc-200 mx-1 hidden sm:block"></div>
 
-            {/* Lọc theo mức giá */}
+            {/* Lọc theo mức giá (Tự động thích ứng Baht / Kíp) */}
             <div className="flex items-center gap-1 flex-wrap">
               <span className="text-[11px] font-bold text-zinc-400 mr-0.5">💰 Giá:</span>
-              {[
+              {(currency === 'THB' || selectedCurrencyFilter === 'THB' ? [
+                { id: 'all', label: isLao ? 'ທັງໝົດ' : 'Tất cả' },
+                { id: 'under200thb', label: '< 200 ฿' },
+                { id: '200-500thb', label: '200 - 500 ฿' },
+                { id: '500-1500thb', label: '500 - 1.500 ฿' },
+                { id: 'above1500thb', label: '> 1.500 ฿' },
+              ] : [
                 { id: 'all', label: isLao ? 'ທັງໝົດ' : 'Tất cả' },
                 { id: 'under300k', label: '< 300k' },
                 { id: '300k-1m', label: '300k - 1M' },
                 { id: '1m-3m', label: '1M - 3M' },
                 { id: 'above3m', label: '> 3M' },
-              ].map(pr => (
+              ]).map(pr => (
                 <button
                   key={pr.id}
                   type="button"
@@ -1076,6 +1152,17 @@ function HomeContent() {
                           {isLao ? `ເຫຼືອ ${product.stock}` : `Còn ${product.stock}`}
                         </div>
                       ) : null}
+
+                      {/* Currency Badge on Image */}
+                      {product.priceTHB && product.priceTHB > 0 ? (
+                        <div className="absolute top-2.5 right-2.5 bg-emerald-600/90 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-0.5">
+                          <span>฿ Baht</span>
+                        </div>
+                      ) : (currency === 'THB' || selectedCurrencyFilter === 'THB') ? (
+                        <div className="absolute top-2.5 right-2.5 bg-zinc-800/85 backdrop-blur-xs text-zinc-200 text-[10px] font-medium px-2 py-0.5 rounded-full shadow-sm flex items-center gap-0.5">
+                          <span>₭ Chỉ nhận Kíp</span>
+                        </div>
+                      ) : null}
                     </Link>
 
                     {/* Brand / Subcategory Line */}
@@ -1098,8 +1185,13 @@ function HomeContent() {
 
                       {/* Packaging & Variants Indicators */}
                       <div className="flex flex-wrap items-center gap-1 pt-1">
-                        {product.packQty && product.packQty > 1 ? (
+                        {product.priceTHB && product.priceTHB > 0 ? (
                           <span className="text-[9px] font-bold bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded border border-emerald-200">
+                            {isLao ? 'ຈ່າຍບາດໄດ້ ฿' : 'Có giá Baht ฿'}
+                          </span>
+                        ) : null}
+                        {product.packQty && product.packQty > 1 ? (
+                          <span className="text-[9px] font-bold bg-amber-50 text-amber-700 px-1.5 py-0.2 rounded border border-amber-200">
                             Lốc x{product.packQty}
                           </span>
                         ) : null}
@@ -1127,34 +1219,115 @@ function HomeContent() {
                   <div className="mt-3 pt-2.5 border-t border-zinc-100 flex items-center justify-between gap-2">
                     <div>
                       {(() => {
+                        const hasTHB = Boolean(product.priceTHB && product.priceTHB > 0);
+                        const isTHB = currency === 'THB';
+
+                        if (isTHB) {
+                          if (hasTHB) {
+                            const retailTHB = product.priceTHB!;
+                            const wholesaleTHB = product.wholesalePriceTHB && product.wholesalePriceTHB > 0
+                              ? product.wholesalePriceTHB
+                              : Math.round(retailTHB * 0.8);
+
+                            if (customerMode === 'WHOLESALE') {
+                              return (
+                                <div>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-sm sm:text-base font-extrabold text-amber-600 font-mono">
+                                      {wholesaleTHB.toLocaleString('en-US')} ฿
+                                    </span>
+                                    <span className="text-[9px] bg-amber-500/15 text-amber-700 px-1.5 py-0.5 rounded font-black border border-amber-500/20">
+                                      Sỉ ⚡
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-1 text-[10px] text-zinc-400 font-mono">
+                                    <span className="line-through">Lẻ: {retailTHB.toLocaleString('en-US')} ฿</span>
+                                    <span>•</span>
+                                    <span>{product.price.toLocaleString('en-US')} ₭</span>
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div>
+                                <div className="flex items-center gap-1.5">
+                                  <span className={`text-sm sm:text-base font-extrabold ${theme.accentText} font-mono`}>
+                                    {retailTHB.toLocaleString('en-US')} ฿
+                                  </span>
+                                  <span className="text-[9px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-bold border border-emerald-200">
+                                    Baht Thái
+                                  </span>
+                                </div>
+                                <span className="text-[10px] text-zinc-400 font-mono block">
+                                  ≈ {product.price.toLocaleString('en-US')} ₭
+                                </span>
+                              </div>
+                            );
+                          } else {
+                            // Sản phẩm không có giá Baht
+                            return (
+                              <div>
+                                <div className="flex items-center gap-1.5">
+                                  <span className={`text-sm sm:text-base font-extrabold ${theme.accentText} font-mono`}>
+                                    {product.price.toLocaleString('en-US')} ₭
+                                  </span>
+                                </div>
+                                <span className="text-[10px] font-bold text-amber-600 flex items-center gap-0.5">
+                                  <span>⚠️ {isLao ? 'ສະເພາະເງິນກີບ' : 'Chỉ nhận tiền Kíp'}</span>
+                                </span>
+                              </div>
+                            );
+                          }
+                        }
+
+                        // Chế độ tiền Kíp (LAK)
                         const wholesalePrice = product.wholesalePrice !== undefined && product.wholesalePrice > 0
                           ? product.wholesalePrice
                           : Math.round(product.price * 0.8);
-                        const minQty = product.minWholesaleQty || 3;
 
                         if (customerMode === 'WHOLESALE') {
                           return (
                             <div>
                               <div className="flex items-center gap-1.5">
                                 <span className="text-sm sm:text-base font-extrabold text-amber-600 font-mono">
-                                  {formatPrice(wholesalePrice)}
+                                  {wholesalePrice.toLocaleString('en-US')} ₭
                                 </span>
                                 <span className="text-[9px] bg-amber-500/15 text-amber-700 px-1.5 py-0.5 rounded font-black border border-amber-500/20">
                                   Sỉ ⚡
                                 </span>
                               </div>
-                              <span className="text-[10px] text-zinc-400 line-through block font-mono">
-                                Lẻ: {formatPrice(product.price)}
-                              </span>
+                              <div className="flex items-center gap-1 text-[10px] text-zinc-400 font-mono">
+                                <span className="line-through">Lẻ: {product.price.toLocaleString('en-US')} ₭</span>
+                                {hasTHB && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="text-emerald-600 font-bold">
+                                      {product.wholesalePriceTHB ? product.wholesalePriceTHB.toLocaleString('en-US') + ' ฿' : Math.round(product.priceTHB! * 0.8).toLocaleString('en-US') + ' ฿'}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
                             </div>
                           );
                         }
 
                         return (
                           <div>
-                            <span className={`text-sm sm:text-base font-extrabold ${theme.accentText} font-mono`}>
-                              {formatPrice(product.price)}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className={`text-sm sm:text-base font-extrabold ${theme.accentText} font-mono`}>
+                                {product.price.toLocaleString('en-US')} ₭
+                              </span>
+                            </div>
+                            {hasTHB ? (
+                              <span className="text-[10px] text-emerald-700 font-semibold font-mono block">
+                                ฿ {product.priceTHB!.toLocaleString('en-US')} ฿ <span className="text-[9px] text-zinc-400 font-sans">({isLao ? 'ຈ່າຍບາດໄດ້' : 'có giá Baht'})</span>
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-zinc-400 block">
+                                {isLao ? 'ສະເພາະກີບ' : 'Chỉ nhận Kíp'}
+                              </span>
+                            )}
                           </div>
                         );
                       })()}

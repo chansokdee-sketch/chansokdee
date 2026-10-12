@@ -612,7 +612,7 @@ export const db = {
 
   // PRODUCT OPERATIONS
   products: {
-    findMany: (options?: { categoryId?: string; subCategoryId?: string; search?: string; status?: ProductStatus; sort?: string; limit?: number; offset?: number }): Product[] => {
+    findMany: (options?: { categoryId?: string; subCategoryId?: string; search?: string; status?: ProductStatus; sort?: string; limit?: number; offset?: number; currencyFilter?: string }): Product[] => {
       const data = readData();
       let result = [...data.products];
 
@@ -626,6 +626,12 @@ export const db = {
 
       if (options?.subCategoryId && options.subCategoryId !== 'all') {
         result = result.filter(p => p.subCategoryId === options.subCategoryId);
+      }
+
+      if (options?.currencyFilter === 'THB') {
+        result = result.filter(p => Boolean(p.priceTHB && p.priceTHB > 0));
+      } else if (options?.currencyFilter === 'LAK') {
+        result = result.filter(p => !p.priceTHB || p.priceTHB <= 0);
       }
 
       if (options?.search) {

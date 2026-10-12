@@ -9,6 +9,7 @@ export async function GET(req: NextRequest) {
     const categoryId = searchParams.get('category') || undefined;
     const subCategoryId = searchParams.get('subCategory') || undefined;
     const sort = searchParams.get('sort') || undefined;
+    const currencyFilter = searchParams.get('currencyFilter') || undefined;
 
     const limitParam = searchParams.get('limit');
     // If not searching and no category, return 240 items by default for ultra-fast loading (10x faster)
@@ -21,6 +22,7 @@ export async function GET(req: NextRequest) {
       categoryId,
       subCategoryId,
       sort,
+      currencyFilter,
       limit,
     });
 
