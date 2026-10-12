@@ -972,11 +972,13 @@ export default function AdminProductsPage() {
   };
 
   const formatPriceLAK = (price: number) => {
-    return new Intl.NumberFormat('lo-LA').format(price) + ' ₭';
+    if (typeof price !== 'number' || isNaN(price)) return '0 ₭';
+    return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(price) + ' ₭';
   };
 
   const formatPriceTHB = (price: number) => {
-    return new Intl.NumberFormat('th-TH').format(price) + ' ฿';
+    if (typeof price !== 'number' || isNaN(price)) return '0 ฿';
+    return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(price) + ' ฿';
   };
 
   const startInlineEdit = (p: Product, field: 'price' | 'wholesalePrice') => {
@@ -1551,6 +1553,7 @@ export default function AdminProductsPage() {
                                 type="number"
                                 autoFocus
                                 min="0"
+                                step="any"
                                 value={editingPrice.priceLAK}
                                 onChange={(e) => setEditingPrice({ ...editingPrice, priceLAK: e.target.value })}
                                 onKeyDown={(e) => {
@@ -1569,6 +1572,7 @@ export default function AdminProductsPage() {
                               <input
                                 type="number"
                                 min="0"
+                                step="any"
                                 value={editingPrice.priceTHB}
                                 onChange={(e) => setEditingPrice({ ...editingPrice, priceTHB: e.target.value })}
                                 onKeyDown={(e) => {
@@ -1654,6 +1658,7 @@ export default function AdminProductsPage() {
                                 type="number"
                                 autoFocus
                                 min="0"
+                                step="any"
                                 value={editingPrice.priceLAK}
                                 onChange={(e) => setEditingPrice({ ...editingPrice, priceLAK: e.target.value })}
                                 onKeyDown={(e) => {
@@ -1672,6 +1677,7 @@ export default function AdminProductsPage() {
                               <input
                                 type="number"
                                 min="0"
+                                step="any"
                                 value={editingPrice.priceTHB}
                                 onChange={(e) => setEditingPrice({ ...editingPrice, priceTHB: e.target.value })}
                                 onKeyDown={(e) => {
@@ -2095,6 +2101,7 @@ export default function AdminProductsPage() {
                       type="number"
                       required={!hasVariants}
                       min="0"
+                      step="any"
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                       placeholder="Ví dụ: 85000"
@@ -2110,6 +2117,7 @@ export default function AdminProductsPage() {
                     <input
                       type="number"
                       min="0"
+                      step="any"
                       value={formData.priceTHB}
                       onChange={(e) => setFormData({ ...formData, priceTHB: e.target.value })}
                       placeholder="Ví dụ: 120 (để trống nếu không nhận Baht)"
@@ -2151,6 +2159,7 @@ export default function AdminProductsPage() {
                     <input
                       type="number"
                       min="0"
+                      step="any"
                       value={formData.wholesalePrice}
                       onChange={(e) => setFormData({ ...formData, wholesalePrice: e.target.value })}
                       placeholder="Ví dụ: 68000"
@@ -2166,6 +2175,7 @@ export default function AdminProductsPage() {
                     <input
                       type="number"
                       min="0"
+                      step="any"
                       value={formData.wholesalePriceTHB}
                       onChange={(e) => setFormData({ ...formData, wholesalePriceTHB: e.target.value })}
                       placeholder="Ví dụ: 95 (nếu có)"
@@ -2232,6 +2242,7 @@ export default function AdminProductsPage() {
                           <input
                             type="number"
                             min="0"
+                            step="any"
                             value={formData.costPrice}
                             onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
                             placeholder="Ví dụ: 24000"
@@ -2328,6 +2339,7 @@ export default function AdminProductsPage() {
                           <label className="text-[10px] text-emerald-400 block mb-0.5 font-bold">Giá 1 Lốc Tiền Kíp (₭)</label>
                           <input
                             type="number"
+                            step="any"
                             min="0"
                             value={formData.packPrice}
                             onChange={(e) => setFormData({ ...formData, packPrice: e.target.value })}
@@ -2339,6 +2351,7 @@ export default function AdminProductsPage() {
                           <label className="text-[10px] text-amber-400 block mb-0.5 font-bold">Giá 1 Lốc Tiền Baht (฿)</label>
                           <input
                             type="number"
+                            step="any"
                             min="0"
                             value={formData.packPriceTHB}
                             onChange={(e) => setFormData({ ...formData, packPriceTHB: e.target.value })}
@@ -2409,6 +2422,7 @@ export default function AdminProductsPage() {
                           <label className="text-[10px] text-purple-400 block mb-0.5 font-bold">Giá 1 Hộp Tiền Kíp (₭)</label>
                           <input
                             type="number"
+                            step="any"
                             min="0"
                             value={formData.boxPrice}
                             onChange={(e) => setFormData({ ...formData, boxPrice: e.target.value })}
@@ -2420,6 +2434,7 @@ export default function AdminProductsPage() {
                           <label className="text-[10px] text-amber-400 block mb-0.5 font-bold">Giá 1 Hộp Tiền Baht (฿)</label>
                           <input
                             type="number"
+                            step="any"
                             min="0"
                             value={formData.boxPriceTHB}
                             onChange={(e) => setFormData({ ...formData, boxPriceTHB: e.target.value })}
@@ -2508,6 +2523,7 @@ export default function AdminProductsPage() {
                           <label className="text-[10px] text-amber-400 block mb-0.5 font-bold">Giá 1 Thùng Tiền Kíp (₭)</label>
                           <input
                             type="number"
+                            step="any"
                             min="0"
                             value={formData.cartonPrice}
                             onChange={(e) => setFormData({ ...formData, cartonPrice: e.target.value })}
@@ -2519,6 +2535,7 @@ export default function AdminProductsPage() {
                           <label className="text-[10px] text-amber-400 block mb-0.5 font-bold">Giá 1 Thùng Tiền Baht (฿)</label>
                           <input
                             type="number"
+                            step="any"
                             min="0"
                             value={formData.cartonPriceTHB}
                             onChange={(e) => setFormData({ ...formData, cartonPriceTHB: e.target.value })}
@@ -2829,6 +2846,7 @@ export default function AdminProductsPage() {
                     <div>
                       <input
                         type="number"
+                        step="any"
                         min="0"
                         value={bulkPriceLAK}
                         onChange={(e) => setBulkPriceLAK(e.target.value)}
@@ -2839,6 +2857,7 @@ export default function AdminProductsPage() {
                     <div>
                       <input
                         type="number"
+                        step="any"
                         min="0"
                         value={bulkPriceTHB}
                         onChange={(e) => setBulkPriceTHB(e.target.value)}
@@ -2849,6 +2868,7 @@ export default function AdminProductsPage() {
                     <div>
                       <input
                         type="number"
+                        step="any"
                         min="0"
                         value={bulkWholesaleLAK}
                         onChange={(e) => setBulkWholesaleLAK(e.target.value)}
@@ -3026,6 +3046,7 @@ export default function AdminProductsPage() {
                               <td className="py-2.5 px-3">
                                 <input
                                   type="number"
+                                  step="any"
                                   min="0"
                                   value={item.price}
                                   onChange={(e) => handleUpdateShopeeItem(item.id, { price: e.target.value })}
@@ -3038,6 +3059,7 @@ export default function AdminProductsPage() {
                               <td className="py-2.5 px-3">
                                 <input
                                   type="number"
+                                  step="any"
                                   min="0"
                                   value={item.priceTHB}
                                   onChange={(e) => handleUpdateShopeeItem(item.id, { priceTHB: e.target.value })}
@@ -3051,6 +3073,7 @@ export default function AdminProductsPage() {
                                 <div className="flex items-center gap-1">
                                   <input
                                     type="number"
+                                    step="any"
                                     min="0"
                                     value={item.wholesalePrice}
                                     onChange={(e) => handleUpdateShopeeItem(item.id, { wholesalePrice: e.target.value })}
@@ -3178,6 +3201,7 @@ export default function AdminProductsPage() {
                               <label className="text-[10px] text-emerald-400 block mb-0.5 font-bold">Giá lẻ Kíp (₭) *</label>
                               <input
                                 type="number"
+                                step="any"
                                 min="0"
                                 value={item.price}
                                 onChange={(e) => handleUpdateShopeeItem(item.id, { price: e.target.value })}
@@ -3189,6 +3213,7 @@ export default function AdminProductsPage() {
                               <label className="text-[10px] text-amber-400 block mb-0.5 font-bold">Giá lẻ Baht (฿)</label>
                               <input
                                 type="number"
+                                step="any"
                                 min="0"
                                 value={item.priceTHB}
                                 onChange={(e) => handleUpdateShopeeItem(item.id, { priceTHB: e.target.value })}
@@ -3203,6 +3228,7 @@ export default function AdminProductsPage() {
                               <label className="text-[10px] text-amber-400 block mb-0.5">Giá sỉ Kíp (₭)</label>
                               <input
                                 type="number"
+                                step="any"
                                 min="0"
                                 value={item.wholesalePrice}
                                 onChange={(e) => handleUpdateShopeeItem(item.id, { wholesalePrice: e.target.value })}
@@ -3401,6 +3427,7 @@ export default function AdminProductsPage() {
                     <div className="relative">
                       <input
                         type="number"
+                        step="any"
                         required
                         min="0"
                         autoFocus
@@ -3417,6 +3444,7 @@ export default function AdminProductsPage() {
                     <div className="relative">
                       <input
                         type="number"
+                        step="any"
                         min="0"
                         value={quickModalForm.priceTHB}
                         onChange={(e) => setQuickModalForm({ ...quickModalForm, priceTHB: e.target.value })}
@@ -3456,6 +3484,7 @@ export default function AdminProductsPage() {
                     <div className="relative">
                       <input
                         type="number"
+                        step="any"
                         min="0"
                         value={quickModalForm.wholesalePrice}
                         onChange={(e) => setQuickModalForm({ ...quickModalForm, wholesalePrice: e.target.value })}
@@ -3470,6 +3499,7 @@ export default function AdminProductsPage() {
                     <div className="relative">
                       <input
                         type="number"
+                        step="any"
                         min="0"
                         value={quickModalForm.wholesalePriceTHB}
                         onChange={(e) => setQuickModalForm({ ...quickModalForm, wholesalePriceTHB: e.target.value })}
@@ -3513,6 +3543,7 @@ export default function AdminProductsPage() {
                       <div className="relative">
                         <input
                           type="number"
+                          step="any"
                           min="0"
                           value={quickModalForm.costPrice}
                           onChange={(e) => setQuickModalForm({ ...quickModalForm, costPrice: e.target.value })}

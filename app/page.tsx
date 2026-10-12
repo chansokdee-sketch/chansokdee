@@ -10,6 +10,7 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { Product, Category, SiteSettings } from '@/lib/types';
+import { formatLAK, formatTHB } from '@/lib/currency';
 import { 
   ShoppingBag, 
   ArrowRight, 
@@ -1227,23 +1228,23 @@ function HomeContent() {
                             const retailTHB = product.priceTHB!;
                             const wholesaleTHB = product.wholesalePriceTHB && product.wholesalePriceTHB > 0
                               ? product.wholesalePriceTHB
-                              : Math.round(retailTHB * 0.8);
+                              : Math.round(retailTHB * 0.8 * 100) / 100;
 
                             if (customerMode === 'WHOLESALE') {
                               return (
                                 <div>
                                   <div className="flex items-center gap-1.5">
                                     <span className="text-sm sm:text-base font-extrabold text-amber-600 font-mono">
-                                      {wholesaleTHB.toLocaleString('en-US')} ฿
+                                      {formatTHB(wholesaleTHB)}
                                     </span>
                                     <span className="text-[9px] bg-amber-500/15 text-amber-700 px-1.5 py-0.5 rounded font-black border border-amber-500/20">
                                       Sỉ ⚡
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-1 text-[10px] text-zinc-400 font-mono">
-                                    <span className="line-through">Lẻ: {retailTHB.toLocaleString('en-US')} ฿</span>
+                                    <span className="line-through">Lẻ: {formatTHB(retailTHB)}</span>
                                     <span>•</span>
-                                    <span>{product.price.toLocaleString('en-US')} ₭</span>
+                                    <span>{formatLAK(product.price)}</span>
                                   </div>
                                 </div>
                               );
@@ -1253,14 +1254,14 @@ function HomeContent() {
                               <div>
                                 <div className="flex items-center gap-1.5">
                                   <span className={`text-sm sm:text-base font-extrabold ${theme.accentText} font-mono`}>
-                                    {retailTHB.toLocaleString('en-US')} ฿
+                                    {formatTHB(retailTHB)}
                                   </span>
                                   <span className="text-[9px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-bold border border-emerald-200">
                                     Baht Thái
                                   </span>
                                 </div>
                                 <span className="text-[10px] text-zinc-400 font-mono block">
-                                  ≈ {product.price.toLocaleString('en-US')} ₭
+                                  ≈ {formatLAK(product.price)}
                                 </span>
                               </div>
                             );
@@ -1270,7 +1271,7 @@ function HomeContent() {
                               <div>
                                 <div className="flex items-center gap-1.5">
                                   <span className={`text-sm sm:text-base font-extrabold ${theme.accentText} font-mono`}>
-                                    {product.price.toLocaleString('en-US')} ₭
+                                    {formatLAK(product.price)}
                                   </span>
                                 </div>
                                 <span className="text-[10px] font-bold text-amber-600 flex items-center gap-0.5">
@@ -1284,26 +1285,26 @@ function HomeContent() {
                         // Chế độ tiền Kíp (LAK)
                         const wholesalePrice = product.wholesalePrice !== undefined && product.wholesalePrice > 0
                           ? product.wholesalePrice
-                          : Math.round(product.price * 0.8);
+                          : Math.round(product.price * 0.8 * 100) / 100;
 
                         if (customerMode === 'WHOLESALE') {
                           return (
                             <div>
                               <div className="flex items-center gap-1.5">
                                 <span className="text-sm sm:text-base font-extrabold text-amber-600 font-mono">
-                                  {wholesalePrice.toLocaleString('en-US')} ₭
+                                  {formatLAK(wholesalePrice)}
                                 </span>
                                 <span className="text-[9px] bg-amber-500/15 text-amber-700 px-1.5 py-0.5 rounded font-black border border-amber-500/20">
                                   Sỉ ⚡
                                 </span>
                               </div>
                               <div className="flex items-center gap-1 text-[10px] text-zinc-400 font-mono">
-                                <span className="line-through">Lẻ: {product.price.toLocaleString('en-US')} ₭</span>
+                                <span className="line-through">Lẻ: {formatLAK(product.price)}</span>
                                 {hasTHB && (
                                   <>
                                     <span>•</span>
                                     <span className="text-emerald-600 font-bold">
-                                      {product.wholesalePriceTHB ? product.wholesalePriceTHB.toLocaleString('en-US') + ' ฿' : Math.round(product.priceTHB! * 0.8).toLocaleString('en-US') + ' ฿'}
+                                      {formatTHB(product.wholesalePriceTHB ? product.wholesalePriceTHB : Math.round(product.priceTHB! * 0.8 * 100) / 100)}
                                     </span>
                                   </>
                                 )}
@@ -1316,12 +1317,12 @@ function HomeContent() {
                           <div>
                             <div className="flex items-center gap-1.5">
                               <span className={`text-sm sm:text-base font-extrabold ${theme.accentText} font-mono`}>
-                                {product.price.toLocaleString('en-US')} ₭
+                                {formatLAK(product.price)}
                               </span>
                             </div>
                             {hasTHB ? (
                               <span className="text-[10px] text-emerald-700 font-semibold font-mono block">
-                                ฿ {product.priceTHB!.toLocaleString('en-US')} ฿ <span className="text-[9px] text-zinc-400 font-sans">({isLao ? 'ຈ່າຍບາດໄດ້' : 'có giá Baht'})</span>
+                                {formatTHB(product.priceTHB!)} <span className="text-[9px] text-zinc-400 font-sans">({isLao ? 'ຈ່າຍບາດໄດ້' : 'có giá Baht'})</span>
                               </span>
                             ) : (
                               <span className="text-[10px] text-zinc-400 block">

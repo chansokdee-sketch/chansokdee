@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
 
     const numWholesale = wholesalePrice !== undefined && !isNaN(Number(wholesalePrice))
       ? Math.max(0, Number(wholesalePrice))
-      : Math.round(numPrice * 0.8);
+      : Math.round(numPrice * 0.8 * 100) / 100;
 
     const numWholesaleTHB = wholesalePriceTHB !== undefined && !isNaN(Number(wholesalePriceTHB)) && Number(wholesalePriceTHB) > 0
       ? Number(wholesalePriceTHB)

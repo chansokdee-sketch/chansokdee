@@ -101,7 +101,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     price: number,
     options?: { currency?: Currency; showDual?: boolean; isRawThb?: boolean }
   ): string => {
-    const safePrice = typeof price === 'number' && !isNaN(price) ? Math.round(price) : 0;
+    const safePrice = typeof price === 'number' && !isNaN(price) ? price : 0;
     const targetCurrency = options?.currency || currency;
 
     if (options?.showDual) {
@@ -120,7 +120,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   };
 
   const formatDualPriceHelper = (priceInLak: number) => {
-    const safePrice = typeof priceInLak === 'number' && !isNaN(priceInLak) ? Math.round(priceInLak) : 0;
+    const safePrice = typeof priceInLak === 'number' && !isNaN(priceInLak) ? priceInLak : 0;
     const thbVal = convertLakToThb(safePrice, thbRate);
     const lakFormatted = formatLAK(safePrice);
     const thbFormatted = formatTHB(thbVal);

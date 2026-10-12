@@ -134,7 +134,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     let baseWholesale = (product.wholesalePrice !== undefined && product.wholesalePrice > 0)
       ? product.wholesalePrice
-      : Math.round(baseRetail * 0.8);
+      : Math.round(baseRetail * 0.8 * 100) / 100;
     if (variant && variant.wholesalePrice !== undefined && variant.wholesalePrice > 0) {
       baseWholesale = variant.wholesalePrice;
     }

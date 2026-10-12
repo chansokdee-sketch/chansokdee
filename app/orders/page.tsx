@@ -21,6 +21,7 @@ import {
   UserCheck,
   Check
 } from 'lucide-react';
+import { formatTHB, formatLAK } from '@/lib/currency';
 
 export default function MyOrdersPage() {
   const { user, loading: authLoading, setIsAuthModalOpen, setAuthModalMode } = useAuth();
@@ -315,9 +316,9 @@ export default function MyOrdersPage() {
                               )}
                               <span className="text-xs text-zinc-400">
                                 • {order.currency === 'MIXED'
-                                    ? (item.priceTHB && item.priceTHB > 0 ? `${new Intl.NumberFormat('de-DE').format(item.priceTHB)} ฿` : formatPrice(item.price))
+                                    ? (item.priceTHB && item.priceTHB > 0 ? `${formatTHB(item.priceTHB)} ฿` : formatPrice(item.price))
                                     : order.currency === 'THB'
-                                    ? (item.priceTHB && item.priceTHB > 0 ? `${new Intl.NumberFormat('de-DE').format(item.priceTHB)} ฿` : formatPrice(item.price))
+                                    ? (item.priceTHB && item.priceTHB > 0 ? `${formatTHB(item.priceTHB)} ฿` : formatPrice(item.price))
                                     : formatPrice(item.price)}
                               </span>
                             </div>
@@ -329,7 +330,7 @@ export default function MyOrdersPage() {
                             {(() => {
                               const qty = item.unitQuantity !== undefined ? item.unitQuantity : item.quantity;
                               if ((order.currency === 'MIXED' || order.currency === 'THB') && item.priceTHB && item.priceTHB > 0) {
-                                return `${new Intl.NumberFormat('de-DE').format(item.priceTHB * qty)} ฿`;
+                                return `${formatTHB(item.priceTHB * qty)} ฿`;
                               }
                               return formatPrice(item.price * qty);
                             })()}
@@ -355,10 +356,10 @@ export default function MyOrdersPage() {
                             return (
                               <>
                                 <strong className="text-base font-black text-purple-700 font-mono block">
-                                  {new Intl.NumberFormat('de-DE').format(order.paidTHB || 0)} ฿ + {new Intl.NumberFormat('de-DE').format(order.paidLAK || 0)} ₭
+                                  {formatTHB(order.paidTHB || 0)} ฿ + {formatLAK(order.paidLAK || 0)} ₭
                                 </strong>
                                 <span className="text-[10px] text-zinc-400 font-medium font-mono block">
-                                  ≈ {new Intl.NumberFormat('de-DE').format(Math.round((order.paidTHB || 0) * (order.exchangeRate || 650) + (order.paidLAK || 0)))} ₭
+                                  ≈ {formatLAK(Math.round((order.paidTHB || 0) * (order.exchangeRate || 650) + (order.paidLAK || 0)))} ₭
                                 </span>
                               </>
                             );
@@ -367,13 +368,13 @@ export default function MyOrdersPage() {
                             <>
                               <strong className="text-base font-black text-blue-600 font-mono block">
                                 {order.currency === 'THB'
-                                  ? `${new Intl.NumberFormat('de-DE').format(order.totalPrice)} ฿`
-                                  : `${new Intl.NumberFormat('de-DE').format(order.totalPrice)} ₭`}
+                                  ? `${formatTHB(order.totalPrice)} ฿`
+                                  : `${formatLAK(order.totalPrice)} ₭`}
                               </strong>
                               <span className="text-[10px] text-zinc-400 font-medium font-mono block">
                                 ≈ {order.currency === 'THB'
-                                  ? `${new Intl.NumberFormat('de-DE').format(order.totalPriceLAK || order.totalPrice * (order.exchangeRate || 650))} ₭`
-                                  : `${new Intl.NumberFormat('de-DE').format(order.totalPriceTHB || Math.round(order.totalPrice / (order.exchangeRate || 650)))} ฿`}
+                                  ? `${formatLAK(order.totalPriceLAK || order.totalPrice * (order.exchangeRate || 650))} ₭`
+                                  : `${formatTHB(order.totalPriceTHB || Math.round(order.totalPrice / (order.exchangeRate || 650)))} ฿`}
                               </span>
                             </>
                           );

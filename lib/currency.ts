@@ -9,7 +9,7 @@ export const DEFAULT_THB_RATE = 650;
 export function convertLakToThb(lakAmount: number, rate = DEFAULT_THB_RATE): number {
   if (!lakAmount || isNaN(lakAmount)) return 0;
   const validRate = rate && rate > 0 ? rate : DEFAULT_THB_RATE;
-  return Math.round(lakAmount / validRate);
+  return Math.round((lakAmount / validRate) * 100) / 100;
 }
 
 /**
@@ -18,23 +18,29 @@ export function convertLakToThb(lakAmount: number, rate = DEFAULT_THB_RATE): num
 export function convertThbToLak(thbAmount: number, rate = DEFAULT_THB_RATE): number {
   if (!thbAmount || isNaN(thbAmount)) return 0;
   const validRate = rate && rate > 0 ? rate : DEFAULT_THB_RATE;
-  return Math.round(thbAmount * validRate);
+  return Math.round((thbAmount * validRate) * 100) / 100;
 }
 
 /**
- * Định dạng số tiền Kíp Lào (₭)
+ * Định dạng số tiền Kíp Lào (₭) - Hỗ trợ số thập phân nếu có
  */
 export function formatLAK(amount: number): string {
-  const safe = typeof amount === 'number' && !isNaN(amount) ? Math.round(amount) : 0;
-  return new Intl.NumberFormat('de-DE').format(safe) + ' ₭';
+  if (typeof amount !== 'number' || isNaN(amount)) return '0 ₭';
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(amount) + ' ₭';
 }
 
 /**
- * Định dạng số tiền Baht Thái (฿)
+ * Định dạng số tiền Baht Thái (฿) - Hỗ trợ số thập phân nếu có (Ví dụ: 12.5 ฿, 99.75 ฿)
  */
 export function formatTHB(amount: number): string {
-  const safe = typeof amount === 'number' && !isNaN(amount) ? Math.round(amount) : 0;
-  return new Intl.NumberFormat('de-DE').format(safe) + ' ฿';
+  if (typeof amount !== 'number' || isNaN(amount)) return '0 ฿';
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(amount) + ' ฿';
 }
 
 /**

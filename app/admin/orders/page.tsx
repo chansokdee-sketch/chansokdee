@@ -327,11 +327,17 @@ export default function AdminOrdersPage() {
   };
 
   const formatPriceLAK = (price: number) => {
-    return new Intl.NumberFormat('de-DE').format(Math.round(price || 0)) + ' ₭';
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(price || 0) + ' ₭';
   };
 
   const formatPriceTHB = (price: number) => {
-    return new Intl.NumberFormat('de-DE').format(Math.round(price || 0)) + ' ฿';
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(price || 0) + ' ฿';
   };
 
   const formatOrderPrice = (o: Order) => {

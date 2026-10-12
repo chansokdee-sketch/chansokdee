@@ -822,7 +822,7 @@ export const db = {
 
         let baseWholesale = (product.wholesalePrice !== undefined && product.wholesalePrice > 0)
           ? product.wholesalePrice
-          : Math.round(baseRetail * 0.8);
+          : Math.round(baseRetail * 0.8 * 100) / 100;
         if (variant && variant.wholesalePrice !== undefined && variant.wholesalePrice > 0) {
           baseWholesale = variant.wholesalePrice;
         }
@@ -940,7 +940,7 @@ export const db = {
       let paidLAK = 0;
       let finalTotalPrice = 0;
       let finalTotalPriceLAK = calculatedTotalPrice;
-      let finalTotalPriceTHB = Math.round(calculatedTotalPrice / thbRate);
+      let finalTotalPriceTHB = Math.round(calculatedTotalPrice / thbRate * 100) / 100;
 
       if (wantsTHB && calculatedTotalPriceTHB > 0) {
         if (calculatedTotalPriceLAKNonTHB > 0) {
@@ -967,7 +967,7 @@ export const db = {
         paidLAK = calculatedTotalPrice;
         finalTotalPrice = calculatedTotalPrice;
         finalTotalPriceLAK = calculatedTotalPrice;
-        finalTotalPriceTHB = Math.round(calculatedTotalPrice / thbRate);
+        finalTotalPriceTHB = Math.round(calculatedTotalPrice / thbRate * 100) / 100;
       }
 
       const newOrder: Order = {
